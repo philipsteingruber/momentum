@@ -1,4 +1,6 @@
 import { Header } from "@/_components/header";
+import { AppSidebar } from "@/_components/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { TRPCProvider } from "@/trpc/client";
@@ -38,9 +40,14 @@ const RootLayout = ({
           <body className={`${geist.variable} ${lora.variable} ${robotoMono.variable} h-full w-full antialiased`}>
             <TooltipProvider>
               <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                <Header />
-                <div className="flex min-h-screen w-full flex-col items-center justify-center">{children}</div>
-                <Toaster />
+                <SidebarProvider>
+                  <AppSidebar />
+                  <div className="flex min-h-screen w-full flex-col items-center justify-center">
+                    <Header />
+                    {children}
+                  </div>
+                  <Toaster />
+                </SidebarProvider>
               </ThemeProvider>
             </TooltipProvider>
           </body>

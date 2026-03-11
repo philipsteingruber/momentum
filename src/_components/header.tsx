@@ -3,7 +3,7 @@ import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 
 export const Header = () => {
   return (
-    <header className="flex items-center justify-between p-4 text-lg">
+    <header className="flex items-center justify-between p-4 text-lg w-full">
       <span className="font-semibold">MOMENTUM</span>
       <Show when={"signed-in"}>
         <UserButton />

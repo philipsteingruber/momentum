@@ -32,7 +32,10 @@ export const taskRouter = createTRPCRouter({
     }),
 
   getById: authedProcedure.input(z.object({ taskId: z.cuid() })).query(async ({ ctx, input }) => {
-    const task = await ctx.db.task.findUnique({ where: { id: input.taskId, userId: ctx.currentUser.id } });
+    const task = await ctx.db.task.findUnique({
+      where: { id: input.taskId, userId: ctx.currentUser.id },
+      include: { notes: true },
+    });
 
     if (!task) {
       throw new TRPCError({ code: "NOT_FOUND" });

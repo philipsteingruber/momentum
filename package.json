@@ -4,19 +4,24 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:fresh": "prisma db push --force-reset && prisma generate && prisma db seed && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",
+    "@prisma/adapter-pg": "^7.5.0",
+    "@prisma/client": "^7.5.0",
     "@tanstack/react-query": "^5.90.21",
     "@trpc/client": "^11.12.0",
     "@trpc/react-query": "^11.12.0",
     "@trpc/server": "^11.12.0",
     "@trpc/tanstack-react-query": "^11.12.0",
     "client-only": "^0.0.1",
+    "dotenv": "^17.3.1",
     "next": "16.1.6",
+    "pg": "^8.20.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "server-only": "^0.0.1",
@@ -26,13 +31,16 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.18.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-unused-imports": "^4.4.1",
+    "prisma": "^7.5.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

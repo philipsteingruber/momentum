@@ -1,15 +1,15 @@
-import Header from "@/_components/header";
+import { Header } from "@/_components/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { TRPCProvider } from "@/trpc/client";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
-import { Lora, Plus_Jakarta_Sans, Roboto_Mono, Geist } from "next/font/google";
+import { Geist, Lora, Roboto_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const lora = Lora({
   variable: "--font-serif",
@@ -35,9 +35,7 @@ const RootLayout = ({
     <ClerkProvider>
       <TRPCProvider>
         <html lang="en" className={cn("h-full w-full", "font-sans", geist.variable)} suppressHydrationWarning>
-          <body
-            className={`${geist.variable} ${lora.variable} ${robotoMono.variable} h-full w-full antialiased`}
-          >
+          <body className={`${geist.variable} ${lora.variable} ${robotoMono.variable} h-full w-full antialiased`}>
             <TooltipProvider>
               <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                 <Header />

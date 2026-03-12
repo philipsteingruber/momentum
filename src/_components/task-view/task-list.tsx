@@ -9,7 +9,7 @@ import { useTaskColumns } from "@/hooks/use-task-columns";
 import { trpc } from "@/trpc/client";
 import { useState } from "react";
 import { toast } from "sonner";
-import { DataTable } from "../data-table";
+import { TaskDataTable } from "../data-table";
 
 export const TaskList = () => {
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
@@ -70,7 +70,7 @@ export const TaskList = () => {
           <TabsContent value={selectedCategory.id}>
             <Card>
               <CardContent>
-                <DataTable
+                <TaskDataTable
                   columns={columns}
                   data={tasks ?? []}
                   isPending={isLoadingTasks}

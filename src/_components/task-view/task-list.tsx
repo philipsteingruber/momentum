@@ -8,10 +8,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTaskColumns } from "@/hooks/use-task-columns";
 import { trpc } from "@/trpc/client";
 import { useState } from "react";
+import { toast } from "sonner";
 import { DataTable } from "../data-table";
 
 export const TaskList = () => {
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
+
+  const trpcUtils = trpc.useUtils();
+  const { mutate: deleteTask, isPending: isDeletingTask } = trpc.task.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Successfully deleted task(s)");
+      trpcUtils.task.getAllTasks.invalidate();
+    },
+  });
+  const { mutate: updateTaskStatus, isPending: isUpdatingTaskStatus } = trpc.task.updateStatus.useMutation({
+    onSuccess: () => {
+      toast.success("Successfully marked task(s) as Completed");
+      trpcUtils.task.getAllTasks.invalidate();
+    },
+  });
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -60,6 +75,10 @@ export const TaskList = () => {
                   data={tasks ?? []}
                   isPending={isLoadingTasks}
                   taskNameFilter={searchQuery}
+                  deleteTask={deleteTask}
+                  isDeletingTask={isDeletingTask}
+                  updateTaskStatus={updateTaskStatus}
+                  isUpdatingTaskStatus={isUpdatingTaskStatus}
                 />
               </CardContent>
             </Card>

@@ -1,7 +1,7 @@
 import { TaskStatus } from "@/generated/prisma/enums";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
-import { isAfter } from "date-fns";
+import { addDays, isAfter } from "date-fns";
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
 
@@ -133,4 +133,24 @@ export const taskRouter = createTRPCRouter({
       }
     }
   }),
+
+  snooze: authedProcedure
+    .input(z.object({ taskId: z.cuid(), days: z.int().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      return await ctx.db.$transaction(async (tx) => {
+        const task = await tx.task.findUnique({ where: { id: input.taskId, userId: ctx.currentUser.id } });
+
+        if (!task) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        if (!task.dueDate) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED" });
+        }
+
+        return await tx.task.update({
+          where: { id: input.taskId, userId: ctx.currentUser.id },
+          data: { dueDate: addDays(task.dueDate, input.days) },
+        });
+      });
+    }),
 });

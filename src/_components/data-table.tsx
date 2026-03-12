@@ -1,18 +1,51 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
+import type { SortingState } from "@tanstack/react-table";
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+  type ColumnDef,
+} from "@tanstack/react-table";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  taskNameFilter?: string;
   isPending: boolean;
 }
 
-export const DataTable = <TData, TValue>({ columns, data, isPending }: DataTableProps<TData, TValue>) => {
+export const DataTable = <TData, TValue>({
+  columns,
+  data,
+  taskNameFilter,
+  isPending,
+}: DataTableProps<TData, TValue>) => {
+  const columnFilters = useMemo(
+    () => (taskNameFilter ? [{ id: "title", value: taskNameFilter }] : []),
+    [taskNameFilter],
+  );
+
+  const [sorting, setSorting] = useState<SortingState>([]);
   // eslint-disable-next-line react-hooks/incompatible-library
-  const table = useReactTable({ data, columns, getCoreRowModel: getCoreRowModel() });
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: { sorting, columnFilters },
+  });
 
   return (
     <div className="overflow-hidden rounded-md border">
@@ -54,6 +87,19 @@ export const DataTable = <TData, TValue>({ columns, data, isPending }: DataTable
           )}
         </TableBody>
       </Table>
+      <div className="flex items-center justify-end gap-x-2 py-4 mr-4">
+        <Button
+          variant={"outline"}
+          size={"sm"}
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <ChevronLeft />
+        </Button>
+        <Button variant={"outline"} size={"sm"} onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <ChevronRight />
+        </Button>
+      </div>
     </div>
   );
 };

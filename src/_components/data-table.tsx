@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TaskStatus } from "@/generated/prisma/enums";
 import type { SortingState } from "@tanstack/react-table";
 import {
   flexRender,
@@ -23,6 +24,10 @@ interface DataTableProps<TData extends { id: string }, TValue> {
   data: TData[];
   taskNameFilter?: string;
   isPending: boolean;
+  deleteTask: ({ taskId }: { taskId: string }) => void;
+  isDeletingTask: boolean;
+  updateTaskStatus: ({ taskId, newStatus }: { taskId: string; newStatus: TaskStatus }) => void;
+  isUpdatingTaskStatus: boolean;
 }
 
 export const DataTable = <TData extends { id: string }, TValue>({
@@ -30,6 +35,10 @@ export const DataTable = <TData extends { id: string }, TValue>({
   data,
   taskNameFilter,
   isPending,
+  deleteTask,
+  isDeletingTask,
+  updateTaskStatus,
+  isUpdatingTaskStatus,
 }: DataTableProps<TData, TValue>) => {
   const columnFilters = useMemo(
     () => (taskNameFilter ? [{ id: "title", value: taskNameFilter }] : []),
@@ -38,6 +47,7 @@ export const DataTable = <TData extends { id: string }, TValue>({
   const router = useRouter();
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "dueDate", desc: false }]);
+  const [rowSelection, setRowSelection] = useState({});
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
@@ -48,7 +58,9 @@ export const DataTable = <TData extends { id: string }, TValue>({
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    state: { sorting, columnFilters },
+    onRowSelectionChange: setRowSelection,
+    getRowId: (row) => row.id,
+    state: { sorting, columnFilters, rowSelection },
   });
 
   return (
@@ -97,18 +109,46 @@ export const DataTable = <TData extends { id: string }, TValue>({
         </TableBody>
       </Table>
       <Separator />
-      <div className="flex items-center justify-end gap-x-2 py-4 mr-4">
-        <Button
-          variant={"outline"}
-          size={"sm"}
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          <ChevronLeft />
-        </Button>
-        <Button variant={"outline"} size={"sm"} onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          <ChevronRight />
-        </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center justify-start gap-x-2 ml-4">
+          <Button
+            variant={"destructive"}
+            onClick={() => {
+              Object.keys(rowSelection).forEach((taskId) => {
+                deleteTask({ taskId });
+              });
+              setRowSelection({});
+            }}
+            disabled={isDeletingTask || isUpdatingTaskStatus || Object.keys(rowSelection).length === 0}
+          >
+            {isDeletingTask ? <Spinner /> : "Delete"}
+          </Button>
+          <Button
+            variant={"outline"}
+            onClick={() => {
+              Object.keys(rowSelection).forEach((taskId) => {
+                updateTaskStatus({ taskId, newStatus: TaskStatus.COMPLETED });
+              });
+              setRowSelection({});
+            }}
+            disabled={isDeletingTask || isUpdatingTaskStatus || Object.keys(rowSelection).length === 0}
+          >
+            {isUpdatingTaskStatus ? <Spinner /> : "Complete"}
+          </Button>
+        </div>
+        <div className="flex items-center justify-end gap-x-2 py-4 mr-4">
+          <Button
+            variant={"outline"}
+            size={"sm"}
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            <ChevronLeft />
+          </Button>
+          <Button variant={"outline"} size={"sm"} onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+            <ChevronRight />
+          </Button>
+        </div>
       </div>
     </div>
   );

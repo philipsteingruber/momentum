@@ -47,6 +47,14 @@ export function useTaskColumns() {
           </Button>
         ),
         cell: ({ row }) => (row.original.dueDate ? format(row.original.dueDate, "yyyy-MM-dd") : ""),
+        sortingFn: (rowA, rowB) => {
+          const a = rowA.original.dueDate;
+          const b = rowB.original.dueDate;
+          if (!a && !b) return 0;
+          if (!a) return 1;
+          if (!b) return -1;
+          return a.getTime() - b.getTime();
+        },
       },
       {
         accessorKey: "status",

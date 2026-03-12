@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { SortingState } from "@tanstack/react-table";
@@ -14,16 +15,17 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends { id: string }, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   taskNameFilter?: string;
   isPending: boolean;
 }
 
-export const DataTable = <TData, TValue>({
+export const DataTable = <TData extends { id: string }, TValue>({
   columns,
   data,
   taskNameFilter,
@@ -33,8 +35,10 @@ export const DataTable = <TData, TValue>({
     () => (taskNameFilter ? [{ id: "title", value: taskNameFilter }] : []),
     [taskNameFilter],
   );
+  const router = useRouter();
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: "dueDate", desc: false }]);
+
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
@@ -72,7 +76,12 @@ export const DataTable = <TData, TValue>({
             </TableRow>
           ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+                onClick={() => router.push(`/task/${row.original.id}`)}
+                className="cursor-pointer"
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
                 ))}
@@ -87,6 +96,7 @@ export const DataTable = <TData, TValue>({
           )}
         </TableBody>
       </Table>
+      <Separator />
       <div className="flex items-center justify-end gap-x-2 py-4 mr-4">
         <Button
           variant={"outline"}

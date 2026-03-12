@@ -15,9 +15,24 @@ import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatRelative, isAfter, isBefore } from "date-fns";
+import { enUS } from "date-fns/locale";
 import { ArrowUpDownIcon, MoreHorizontalIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
+
+const dateOnlyRelativeLocale = {
+  lastWeek: "'last' eeee",
+  yesterday: "'yesterday'",
+  today: "'today'",
+  tomorrow: "'tomorrow'",
+  nextWeek: "eeee",
+  other: "MM/dd/yyyy",
+} as const;
+
+const dateOnlyLocale = {
+  ...enUS,
+  formatRelative: (token: keyof typeof dateOnlyRelativeLocale) => dateOnlyRelativeLocale[token],
+};
 
 export function useTaskColumns() {
   const trpcUtils = trpc.useUtils();
@@ -68,7 +83,9 @@ export function useTaskColumns() {
           </Button>
         ),
         cell: ({ row }) =>
-          row.original.dueDate ? formatRelative(row.original.dueDate, new Date(), { weekStartsOn: 1 }) : "",
+          row.original.dueDate
+            ? formatRelative(row.original.dueDate, new Date(), { locale: dateOnlyLocale, weekStartsOn: 1 })
+            : "",
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.dueDate;
           const b = rowB.original.dueDate;
@@ -81,7 +98,8 @@ export function useTaskColumns() {
       {
         accessorKey: "createdAt",
         header: "Created",
-        cell: ({ row }) => formatRelative(row.original.createdAt, new Date(), { weekStartsOn: 1 }),
+        cell: ({ row }) =>
+          formatRelative(row.original.createdAt, new Date(), { locale: dateOnlyLocale, weekStartsOn: 1 }),
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.createdAt;
           const b = rowB.original.createdAt;

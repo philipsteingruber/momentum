@@ -119,7 +119,9 @@ export function useTaskColumns() {
                     : "in_progress"
             }
           >
-            {row.original.dueDate && isBefore(row.original.dueDate, new Date())
+            {row.original.dueDate &&
+            isBefore(row.original.dueDate, new Date()) &&
+            row.original.status !== TaskStatus.COMPLETED
               ? "Overdue"
               : parseTaskStatus(row.original.status)}
           </Badge>

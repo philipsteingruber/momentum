@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
+import { cn } from "@/lib/utils";
 import type { SortingState } from "@tanstack/react-table";
 import {
   flexRender,
@@ -15,13 +17,14 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
+import { isBefore } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-interface DataTableProps<TData extends { id: string }, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+interface DataTableProps {
+  columns: ColumnDef<Task, unknown>[];
+  data: Task[];
   taskNameFilter?: string;
   isPending: boolean;
   deleteTask: ({ taskId }: { taskId: string }) => void;
@@ -30,7 +33,7 @@ interface DataTableProps<TData extends { id: string }, TValue> {
   isUpdatingTaskStatus: boolean;
 }
 
-export const DataTable = <TData extends { id: string }, TValue>({
+export const TaskDataTable = ({
   columns,
   data,
   taskNameFilter,
@@ -39,7 +42,7 @@ export const DataTable = <TData extends { id: string }, TValue>({
   isDeletingTask,
   updateTaskStatus,
   isUpdatingTaskStatus,
-}: DataTableProps<TData, TValue>) => {
+}: DataTableProps) => {
   const columnFilters = useMemo(
     () => (taskNameFilter ? [{ id: "title", value: taskNameFilter }] : []),
     [taskNameFilter],
@@ -92,7 +95,16 @@ export const DataTable = <TData extends { id: string }, TValue>({
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
                 onClick={() => router.push(`/task/${row.original.id}`)}
-                className="cursor-pointer"
+                className={cn(
+                  "cursor-pointer",
+                  (() => {
+                    const isOverdue =
+                      !!row.original.dueDate &&
+                      isBefore(row.original.dueDate, new Date()) &&
+                      row.original.status !== TaskStatus.COMPLETED;
+                    return isOverdue && "bg-red-300/10 text-red-300";
+                  })(),
+                )}
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>

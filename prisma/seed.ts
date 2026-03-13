@@ -31,23 +31,6 @@ async function main() {
     ),
   );
 
-  // Tags
-  const [urgent, lowPriority, recurring, quickWin, research] = await Promise.all(
-    [
-      { name: "urgent", color: "#ef4444" },
-      { name: "low-priority", color: "#94a3b8" },
-      { name: "recurring", color: "#06b6d4" },
-      { name: "quick-win", color: "#10b981" },
-      { name: "research", color: "#8b5cf6" },
-    ].map((tag) =>
-      prisma.tag.upsert({
-        where: { userId_name: { userId: user.id, name: tag.name } },
-        update: {},
-        create: { ...tag, userId: user.id },
-      }),
-    ),
-  );
-
   // Tasks
   const tasks = await Promise.all(
     [
@@ -57,7 +40,6 @@ async function main() {
         status: "IN_PROGRESS" as const,
         dueDate: new Date(2026, 2, 18),
         categoryId: work.id,
-        tags: [urgent],
       },
       {
         title: "Write API documentation",
@@ -65,7 +47,6 @@ async function main() {
         status: "PENDING" as const,
         dueDate: new Date(2026, 2, 25),
         categoryId: work.id,
-        tags: [research],
       },
       {
         title: "Refactor auth middleware",
@@ -73,7 +54,6 @@ async function main() {
         status: "BLOCKED" as const,
         dueDate: null,
         categoryId: work.id,
-        tags: [urgent],
       },
       {
         title: "Grocery shopping",
@@ -81,7 +61,6 @@ async function main() {
         status: "PENDING" as const,
         dueDate: new Date(2026, 2, 12),
         categoryId: personal.id,
-        tags: [recurring, quickWin],
       },
       {
         title: "Schedule dentist appointment",
@@ -89,7 +68,6 @@ async function main() {
         status: "COMPLETED" as const,
         dueDate: new Date(2026, 2, 5),
         categoryId: health.id,
-        tags: [quickWin],
       },
       {
         title: "Morning run routine",
@@ -97,7 +75,6 @@ async function main() {
         status: "IN_PROGRESS" as const,
         dueDate: null,
         categoryId: health.id,
-        tags: [recurring],
       },
       {
         title: "Read 'Designing Data-Intensive Applications'",
@@ -105,7 +82,6 @@ async function main() {
         status: "IN_PROGRESS" as const,
         dueDate: new Date(2026, 3, 1),
         categoryId: learning.id,
-        tags: [lowPriority, research],
       },
       {
         title: "Clean up desktop files",
@@ -113,7 +89,6 @@ async function main() {
         status: "CANCELLED" as const,
         dueDate: null,
         categoryId: personal.id,
-        tags: [lowPriority, quickWin],
       },
     ].map((task) =>
       prisma.task.create({
@@ -124,7 +99,6 @@ async function main() {
           dueDate: task.dueDate,
           userId: user.id,
           categoryId: task.categoryId,
-          tags: { connect: task.tags.map((t) => ({ id: t.id })) },
         },
       }),
     ),
@@ -169,7 +143,7 @@ async function main() {
     }),
   ]);
 
-  console.log(`Seeded: 1 user, 4 categories, 5 tags, ${tasks.length} tasks, 5 notes`);
+  console.log(`Seeded: 1 user, 4 categories, ${tasks.length} tasks, 5 notes`);
 }
 
 main()

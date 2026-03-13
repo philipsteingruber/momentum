@@ -25,11 +25,25 @@ export const TaskList = () => {
       trpcUtils.task.getAllTasks.invalidate();
     },
   });
+
   const { mutate: updateTaskStatus, isPending: isUpdatingTaskStatus } = trpc.task.updateStatus.useMutation({
     onSuccess: (_data, variables) => {
       toast.success(`Successfully marked task(s) as ${parseTaskStatus(variables.newStatus)}`);
       trpcUtils.task.getAllTasks.invalidate();
     },
+    onMutate: async ({ taskId, newStatus }) => {
+      await trpcUtils.task.getAllTasks.cancel({ categoryId: activeCategoryId });
+      const taskCache = trpcUtils.task.getAllTasks.getData({ categoryId: activeCategoryId });
+      trpcUtils.task.getAllTasks.setData({ categoryId: activeCategoryId }, (oldTasks) => {
+        return oldTasks?.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task));
+      });
+      return taskCache;
+    },
+    onError: (_error, _variables, context) => {
+      toast.error("Failed to update task status");
+      trpcUtils.task.getAllTasks.setData({ categoryId: activeCategoryId }, () => context);
+    },
+    onSettled: () => trpcUtils.task.getAllTasks.invalidate({ categoryId: activeCategoryId }),
   });
 
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);

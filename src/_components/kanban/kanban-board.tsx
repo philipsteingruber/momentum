@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import type { TaskStatus } from "@/generated/prisma/enums";
+import { TaskStatus } from "@/generated/prisma/enums";
 import type { TaskWithTags } from "@/lib/types/task";
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useState } from "react";
@@ -34,14 +34,21 @@ export const KanbanBoard = ({
       onDragStart={({ active }) => setActiveTask(tasks.find((task) => task.id === active.id) ?? null)}
       onDragEnd={({ active, over }) => {
         setActiveTask(null);
-        if (over && activeTask?.status !== over.id) {
-          const task = tasks.find((task) => task.id === active.id);
-          if (!task) {
-            console.error("Drag/Drop Error");
-            return;
-          }
-          updateTaskStatus({ taskId: task.id, newStatus: over.id as TaskStatus });
+        if (!over) return;
+
+        const validStatuses = Object.values(TaskStatus);
+        const targetStatus = validStatuses.includes(over.id as TaskStatus)
+          ? (over.id as TaskStatus)
+          : tasks.find((t) => t.id === over.id)?.status;
+
+        if (!targetStatus || activeTask?.status === targetStatus) return;
+
+        const task = tasks.find((task) => task.id === active.id);
+        if (!task) {
+          console.error("Drag/Drop Error");
+          return;
         }
+        updateTaskStatus({ taskId: task.id, newStatus: targetStatus });
       }}
       onDragCancel={() => setActiveTask(null)}
       sensors={sensors}

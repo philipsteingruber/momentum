@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -14,9 +15,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { TaskDataTable } from "../data-table";
 import { KanbanBoard } from "../kanban/kanban-board";
+import CreateTaskDialog from "../task/create-task-dialog";
 
 export const TaskList = () => {
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
+  const { data: tags } = trpc.tag.getAll.useQuery();
 
   const trpcUtils = trpc.useUtils();
   const { mutate: deleteTask, isPending: isDeletingTask } = trpc.task.delete.useMutation({
@@ -96,6 +99,7 @@ export const TaskList = () => {
                   id="switchView"
                 />
               </div>
+              <CreateTaskDialog categories={categories ?? []} />
             </div>
           </div>
         </TabsList>

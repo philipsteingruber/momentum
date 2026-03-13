@@ -26,6 +26,10 @@ export const taskRouter = createTRPCRouter({
           title: { contains: input.search, mode: "insensitive" },
           categoryId: input.categoryId,
         },
+        include: {
+          notes: true,
+          tags: true,
+        },
       });
 
       return tasks;

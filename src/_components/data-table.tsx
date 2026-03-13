@@ -20,12 +20,11 @@ import {
 import { isBefore } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 interface DataTableProps {
   columns: ColumnDef<Task, unknown>[];
   data: Task[];
-  taskNameFilter?: string;
   isPending: boolean;
   deleteTask: ({ taskId }: { taskId: string }) => void;
   isDeletingTask: boolean;
@@ -36,17 +35,12 @@ interface DataTableProps {
 export const TaskDataTable = ({
   columns,
   data,
-  taskNameFilter,
   isPending,
   deleteTask,
   isDeletingTask,
   updateTaskStatus,
   isUpdatingTaskStatus,
 }: DataTableProps) => {
-  const columnFilters = useMemo(
-    () => (taskNameFilter ? [{ id: "title", value: taskNameFilter }] : []),
-    [taskNameFilter],
-  );
   const router = useRouter();
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "dueDate", desc: false }]);
@@ -63,7 +57,7 @@ export const TaskDataTable = ({
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
     getRowId: (row) => row.id,
-    state: { sorting, columnFilters, rowSelection },
+    state: { sorting, rowSelection },
   });
 
   return (
@@ -122,7 +116,7 @@ export const TaskDataTable = ({
       </Table>
       <Separator />
       <div className="flex items-center justify-between">
-        <div className="flex items-center justify-start gap-x-2 ml-4">
+        <div className="ml-4 flex items-center justify-start gap-x-2">
           <Button
             variant={"destructive"}
             onClick={() => {
@@ -148,7 +142,7 @@ export const TaskDataTable = ({
             {isUpdatingTaskStatus ? <Spinner /> : "Complete"}
           </Button>
         </div>
-        <div className="flex items-center justify-end gap-x-2 py-4 mr-4">
+        <div className="mr-4 flex items-center justify-end gap-x-2 py-4">
           <Button
             variant={"outline"}
             size={"sm"}

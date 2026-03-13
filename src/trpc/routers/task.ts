@@ -30,6 +30,7 @@ export const taskRouter = createTRPCRouter({
           notes: true,
           tags: true,
         },
+        orderBy: { createdAt: "asc" },
       });
 
       return tasks;

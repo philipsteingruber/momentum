@@ -56,6 +56,10 @@ const eslintConfig = defineConfig([
               group: ["@radix-ui", "@radix-ui/*"],
               message: "Import from ui/components or add new ShadCN component instead",
             },
+            {
+              group: ["@base-ui/*"],
+              message: "Import from ui/components or add new ShadCN component instead",
+            },
           ],
         },
       ],

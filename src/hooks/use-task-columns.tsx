@@ -11,28 +11,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { type Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
+import { dateOnlyLocale } from "@/lib/date-utils";
 import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { formatRelative, isAfter, isBefore } from "date-fns";
-import { enUS } from "date-fns/locale";
 import { ArrowUpDownIcon, MoreHorizontalIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
-
-const dateOnlyRelativeLocale = {
-  lastWeek: "'last' eeee",
-  yesterday: "'yesterday'",
-  today: "'today'",
-  tomorrow: "'tomorrow'",
-  nextWeek: "eeee",
-  other: "MM/dd/yyyy",
-} as const;
-
-const dateOnlyLocale = {
-  ...enUS,
-  formatRelative: (token: keyof typeof dateOnlyRelativeLocale) => dateOnlyRelativeLocale[token],
-};
 
 export function useTaskColumns() {
   const trpcUtils = trpc.useUtils();

@@ -2,6 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
@@ -10,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTaskColumns } from "@/hooks/use-task-columns";
 import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
-import { KanbanSquareIcon } from "lucide-react";
+import { KanbanSquareIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { TaskDataTable } from "../data-table";
@@ -64,7 +65,12 @@ export const TaskList = () => {
 
   const isEmpty = !isLoadingCategories && (!categories || categories.length === 0);
   const columns = useTaskColumns();
-  const filteredTasks = tasks?.filter((task) => task.title.toLowerCase().includes(searchQuery.toLowerCase())) ?? [];
+  const filteredTasks =
+    tasks?.filter(
+      (task) =>
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.description?.toLowerCase().includes(searchQuery.toLowerCase()),
+    ) ?? [];
 
   return (
     <div className="flex w-full items-center justify-between">
@@ -85,7 +91,16 @@ export const TaskList = () => {
             <div className="flex items-center gap-x-8">
               <div className="flex items-center gap-x-4">
                 <Label>Search</Label>
-                <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                <div className="flex items-center gap-x-0">
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="focus-visible:border-ring border-ring rounded-r-none focus-visible:ring-0"
+                  />
+                  <Button className="border-ring rounded-l-none" onClick={() => setSearchQuery("")}>
+                    <XIcon />
+                  </Button>
+                </div>
               </div>
               <div className="flex items-center gap-x-2">
                 <Label htmlFor="switchView">

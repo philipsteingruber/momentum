@@ -12,7 +12,7 @@ const KanbanCard = ({ task }: { task: TaskWithTags }) => {
 
   return (
     <div
-      className="flex w-full flex-col items-center"
+      className="flex w-full cursor-pointer flex-col items-center"
       ref={setNodeRef}
       {...attributes}
       style={{ transform: CSS.Transform.toString(transform), transition }}
@@ -20,7 +20,7 @@ const KanbanCard = ({ task }: { task: TaskWithTags }) => {
       <Card
         {...listeners}
         className={cn(
-          "border-primary h-[150px] w-full border",
+          "border-primary h-[175px] w-full border",
           isDragging ? "opacity-40" : "opacity-100",
           task.dueDate &&
             isAfter(new Date(), task.dueDate) &&

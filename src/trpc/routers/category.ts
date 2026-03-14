@@ -1,3 +1,4 @@
+import { createCategorySchema, updateCategorySchema } from "@/lib/schemas";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -8,55 +9,50 @@ export const categoryRouter = createTRPCRouter({
     const categories = await ctx.db.category.findMany({
       where: { userId: ctx.currentUser.id },
       include: { _count: { select: { tasks: true } } },
+      orderBy: { name: "asc" },
     });
 
     return categories.map((category) => ({ ...category, taskCount: category._count.tasks }));
   }),
 
-  create: authedProcedure
-    .input(z.object({ name: z.string().min(1), color: z.hex().optional() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const category = await ctx.db.category.create({
-          data: { name: input.name, color: input.color, userId: ctx.currentUser.id },
-        });
+  create: authedProcedure.input(createCategorySchema).mutation(async ({ ctx, input }) => {
+    try {
+      const category = await ctx.db.category.create({
+        data: { name: input.name, color: input.color, userId: ctx.currentUser.id },
+      });
 
-        return category;
-      } catch (err) {
-        if (err instanceof PrismaClientKnownRequestError) {
-          if (err.code === "P2025") {
-            throw new TRPCError({ code: "NOT_FOUND" });
-          } else if (err.code === "P2002") {
-            throw new TRPCError({ code: "CONFLICT" });
-          }
+      return category;
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === "P2002") {
+          throw new TRPCError({ code: "CONFLICT" });
         }
-
-        throw err;
       }
-    }),
 
-  update: authedProcedure
-    .input(z.object({ categoryId: z.cuid(), data: z.object({ name: z.string().min(1), color: z.hex() }).partial() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const updatedCategory = await ctx.db.category.update({
-          where: { id: input.categoryId, userId: ctx.currentUser.id },
-          data: input.data,
-        });
+      throw err;
+    }
+  }),
 
-        return updatedCategory;
-      } catch (err) {
-        if (err instanceof PrismaClientKnownRequestError) {
-          if (err.code === "P2025") {
-            throw new TRPCError({ code: "NOT_FOUND" });
-          } else if (err.code === "P2002") {
-            throw new TRPCError({ code: "CONFLICT" });
-          }
+  update: authedProcedure.input(updateCategorySchema).mutation(async ({ ctx, input }) => {
+    try {
+      const updatedCategory = await ctx.db.category.update({
+        where: { id: input.categoryId, userId: ctx.currentUser.id },
+        data: input.data,
+      });
+
+      return updatedCategory;
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError) {
+        if (err.code === "P2025") {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        } else if (err.code === "P2002") {
+          throw new TRPCError({ code: "CONFLICT" });
         }
-
-        throw err;
       }
-    }),
+
+      throw err;
+    }
+  }),
 
   delete: authedProcedure.input(z.object({ categoryId: z.cuid() })).mutation(async ({ ctx, input }) => {
     return await ctx.db.$transaction(async (tx) => {

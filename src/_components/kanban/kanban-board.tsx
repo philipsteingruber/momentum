@@ -60,7 +60,7 @@ export const KanbanBoard = ({
       </div>
       {activeTask && (
         <DragOverlay>
-          <Card>
+          <Card className="h-[150px]">
             <KanbanCardContent task={activeTask} />
           </Card>
         </DragOverlay>

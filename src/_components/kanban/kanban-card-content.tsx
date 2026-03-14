@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TaskStatus } from "@/generated/prisma/enums";
@@ -13,34 +12,29 @@ export const KanbanCardContent = ({ task }: { task: TaskWithTags }) => {
     <>
       <CardHeader>
         <CardTitle>{task.title}</CardTitle>
-        <CardDescription>{task.description}</CardDescription>
+        <CardDescription className="line-clamp-2">{task.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-y-4">
         <Tooltip>
           <TooltipTrigger className="flex items-center gap-x-2">
-            <CalendarIcon />
             {task.dueDate && (
-              <span
-                className={cn(
-                  isAfter(new Date(), task.dueDate) &&
-                    task.status !== TaskStatus.CANCELLED &&
-                    task.status !== TaskStatus.COMPLETED &&
-                    "text-red-200",
-                )}
-              >
-                {formatRelative(task.dueDate, new Date(), { locale: dateOnlyLocale, weekStartsOn: 1 })}
-              </span>
+              <div className="flex items-center gap-x-2">
+                <CalendarIcon />
+                <span
+                  className={cn(
+                    isAfter(new Date(), task.dueDate) &&
+                      task.status !== TaskStatus.CANCELLED &&
+                      task.status !== TaskStatus.COMPLETED &&
+                      "text-red-200",
+                  )}
+                >
+                  {formatRelative(task.dueDate, new Date(), { locale: dateOnlyLocale, weekStartsOn: 1 })}
+                </span>
+              </div>
             )}
           </TooltipTrigger>
-          <TooltipContent>Due Date</TooltipContent>
+          <TooltipContent align="start">Due Date</TooltipContent>
         </Tooltip>
-        <div className="flex flex-wrap gap-x-2">
-          {task.tags.map((tag) => (
-            <Badge key={tag.id} className="text-primary-foreground" style={{ background: tag.color ?? "#6366f1" }}>
-              {tag.name}
-            </Badge>
-          ))}
-        </div>
       </CardContent>
     </>
   );

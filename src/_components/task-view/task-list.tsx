@@ -19,7 +19,6 @@ import CreateTaskDialog from "../task/create-task-dialog";
 
 export const TaskList = () => {
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
-  const { data: tags } = trpc.tag.getAll.useQuery();
 
   const trpcUtils = trpc.useUtils();
   const { mutate: deleteTask, isPending: isDeletingTask } = trpc.task.delete.useMutation({

@@ -36,7 +36,8 @@ async function main() {
     [
       {
         title: "Set up CI/CD pipeline",
-        description: "Configure GitHub Actions for automated testing and deployment",
+        description:
+          "Configure GitHub Actions for automated testing and deployment. Configure GitHub Actions for automated testing and deployment. Configure GitHub Actions for automated testing and deployment. Configure GitHub Actions for automated testing and deployment.",
         status: "IN_PROGRESS" as const,
         dueDate: new Date(2026, 2, 18),
         categoryId: work.id,

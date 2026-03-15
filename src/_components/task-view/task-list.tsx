@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTaskColumns } from "@/hooks/use-task-columns";
 import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
@@ -18,45 +19,46 @@ import { TaskDataTable } from "../data-table";
 import { KanbanBoard } from "../kanban/kanban-board";
 import CreateTaskDialog from "../task/create-task-dialog";
 
-export const TaskList = () => {
+export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) => {
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
 
   const trpcUtils = trpc.useUtils();
   const { mutate: deleteTask, isPending: isDeletingTask } = trpc.task.delete.useMutation({
     onSuccess: () => {
       toast.success("Successfully deleted task(s)");
-      trpcUtils.task.getAllTasks.invalidate();
+      trpcUtils.task.getAll.invalidate();
     },
   });
 
   const { mutate: updateTaskStatus, isPending: isUpdatingTaskStatus } = trpc.task.updateStatus.useMutation({
     onSuccess: (_data, variables) => {
       toast.success(`Successfully marked task(s) as ${parseTaskStatus(variables.newStatus)}`);
-      trpcUtils.task.getAllTasks.invalidate();
+      trpcUtils.task.getAll.invalidate();
+      trpcUtils.category.getAll.invalidate();
     },
     onMutate: async ({ taskId, newStatus }) => {
-      await trpcUtils.task.getAllTasks.cancel({ categoryId: activeCategoryId });
-      const taskCache = trpcUtils.task.getAllTasks.getData({ categoryId: activeCategoryId });
-      trpcUtils.task.getAllTasks.setData({ categoryId: activeCategoryId }, (oldTasks) => {
+      await trpcUtils.task.getAll.cancel({ categoryId: activeCategoryId });
+      const taskCache = trpcUtils.task.getAll.getData({ categoryId: activeCategoryId });
+      trpcUtils.task.getAll.setData({ categoryId: activeCategoryId }, (oldTasks) => {
         return oldTasks?.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task));
       });
       return taskCache;
     },
     onError: (_error, _variables, context) => {
       toast.error("Failed to update task status");
-      trpcUtils.task.getAllTasks.setData({ categoryId: activeCategoryId }, () => context);
+      trpcUtils.task.getAll.setData({ categoryId: activeCategoryId }, () => context);
     },
-    onSettled: () => trpcUtils.task.getAllTasks.invalidate({ categoryId: activeCategoryId }),
+    onSettled: () => trpcUtils.task.getAll.invalidate({ categoryId: activeCategoryId }),
   });
 
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);
+  const [selectedCategoryId, setSelectedCategoryId] = useLocalStorage<string | undefined>("task-category", undefined);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedView, setSelectedView] = useState<"list" | "kanban">("list");
+  const [selectedView, setSelectedView] = useLocalStorage<"list" | "kanban">("task-view", "list");
 
-  const activeCategoryId = selectedCategoryId ?? categories?.[0]?.id;
+  const activeCategoryId = defaultCategoryId ?? selectedCategoryId ?? categories?.[0]?.id;
   const selectedCategory = categories?.find((c) => c.id === activeCategoryId);
 
-  const { data: tasks, isPending: isLoadingTasks } = trpc.task.getAllTasks.useQuery(
+  const { data: tasks, isPending: isLoadingTasks } = trpc.task.getAll.useQuery(
     {
       categoryId: activeCategoryId,
     },

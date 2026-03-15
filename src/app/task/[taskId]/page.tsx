@@ -1,15 +1,207 @@
 "use client";
 
+import { EmptyCard } from "@/_components/cards/empty-card";
+import { ErrorCard } from "@/_components/cards/error-card";
+import { LoadingCard } from "@/_components/cards/loading-card";
 import { MaxWidthWrapper } from "@/_components/max-width-wrapper";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
+import { Textarea } from "@/components/ui/textarea";
+import { TaskStatus } from "@/generated/prisma/enums";
+import { useDialogState } from "@/hooks/use-dialog-state";
+import { dateOnlyLocale } from "@/lib/date-utils";
+import { capitaliseFirstCharacter, parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
-import { use } from "react";
+import { differenceInDays, format, formatRelative } from "date-fns";
+import { CalendarIcon, FileIcon, WorkflowIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { use, useState } from "react";
+import { toast } from "sonner";
 
 const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const { taskId } = use(params);
 
-  const { data: task, isPending: isLoadingTask } = trpc.task.getById.useQuery({ taskId });
+  const trpcUtils = trpc.useUtils();
+  const router = useRouter();
 
-  return <MaxWidthWrapper>{JSON.stringify(task)}</MaxWidthWrapper>;
+  const { data: task, isPending: isLoadingTask, isError, error } = trpc.task.getById.useQuery({ taskId });
+  const { mutate: createNote, isPending: isCreatingNote } = trpc.note.create.useMutation({
+    onSuccess: () => {
+      toast.success("Note created");
+      setNoteValue("");
+      trpcUtils.task.getById.invalidate({ taskId });
+    },
+  });
+  const { mutate: updateTaskStatus, isPending: isUpdatingStatus } = trpc.task.updateStatus.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Updated task status to ${parseTaskStatus(data.status)}`);
+      trpcUtils.task.getById.invalidate({ taskId });
+    },
+  });
+  const { mutate: deleteTask, isPending: isDeletingTask } = trpc.task.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Task successfully deleted");
+      trpcUtils.task.getAll.invalidate();
+      trpcUtils.category.getAll.invalidate();
+      setIsOpen(false);
+      router.push("/");
+    },
+  });
+  const { mutate: snoozeTask, isPending: isSnoozingTask } = trpc.task.snooze.useMutation({
+    onSuccess: (_data, variables) => {
+      toast.success(`Task successfully snoozed for ${variables.days} day${variables.days > 1 ? "s" : ""}`);
+      trpcUtils.task.getAll.invalidate();
+      trpcUtils.task.getById.invalidate({ taskId });
+      trpcUtils.category.getAll.invalidate();
+    },
+  });
+
+  const isMutationRunning = isCreatingNote || isDeletingTask || isSnoozingTask;
+  const [noteValue, setNoteValue] = useState<string>("");
+  const { handleOpenChange, isOpen, setIsOpen } = useDialogState({ preventClose: isDeletingTask });
+
+  if (isError) {
+    return (
+      <MaxWidthWrapper>
+        <ErrorCard className="w-full" title="Task Details" error={error.message} />
+      </MaxWidthWrapper>
+    );
+  }
+  if (isLoadingTask) {
+    return (
+      <MaxWidthWrapper>
+        <LoadingCard className="w-full" title="Task Details" />
+      </MaxWidthWrapper>
+    );
+  }
+  if (!task) {
+    return (
+      <MaxWidthWrapper>
+        <EmptyCard className="w-full" title="Task Details" />
+      </MaxWidthWrapper>
+    );
+  }
+
+  return (
+    <MaxWidthWrapper>
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>{task.title}</CardTitle>
+          <CardDescription>{task.description}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-y-4">
+          <div className="flex items-center gap-x-2">
+            <WorkflowIcon />{" "}
+            <Select
+              onValueChange={(val) => updateTaskStatus({ taskId, newStatus: val as TaskStatus })}
+              value={task.status}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={parseTaskStatus(task.status)} />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(TaskStatus).map((choice) => (
+                  <SelectItem key={choice} value={choice}>
+                    {parseTaskStatus(choice as TaskStatus)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {isUpdatingStatus && <Spinner />}
+          </div>
+          {task.category && (
+            <div className="flex items-center gap-x-2">
+              <FileIcon />
+              {task.category.name}
+            </div>
+          )}
+          {task.dueDate && (
+            <div className="flex items-center gap-x-2">
+              <CalendarIcon />
+              {`${format(task.dueDate, "yyyy-MM-dd")}${Math.abs(differenceInDays(task.dueDate, new Date())) < 7 ? ` (${capitaliseFirstCharacter(formatRelative(task.dueDate, new Date(), { locale: dateOnlyLocale }))})` : ""}`}
+            </div>
+          )}
+          <div className="flex items-center gap-x-4">
+            <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+              <DialogTrigger asChild>
+                <Button variant={"destructive"} disabled={isMutationRunning}>
+                  Delete
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Really delete task?</DialogTitle>
+                  <DialogDescription>{`This will permanently delete the task and its ${task.notes.length} associated note(s).`}</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant={"outline"}>Back</Button>
+                  </DialogClose>
+                  <Button onClick={() => deleteTask({ taskId })} disabled={isMutationRunning} variant={"destructive"}>
+                    {isDeletingTask ? <Spinner /> : "Confirm"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            {task.dueDate && (
+              <>
+                <Button onClick={() => snoozeTask({ taskId, days: 1 })} disabled={isMutationRunning} className="w-30">
+                  {isSnoozingTask ? <Spinner /> : "Snooze 1 day"}
+                </Button>
+                <Button onClick={() => snoozeTask({ taskId, days: 3 })} disabled={isMutationRunning} className="w-30">
+                  {isSnoozingTask ? <Spinner /> : "Snooze 3 days"}
+                </Button>
+                <Button onClick={() => snoozeTask({ taskId, days: 7 })} disabled={isMutationRunning} className="w-30">
+                  {isSnoozingTask ? <Spinner /> : "Snooze 7 days"}
+                </Button>
+              </>
+            )}
+          </div>
+          <Separator className="mt-4 mb-2" />
+          <div className="flex flex-col gap-y-2">
+            <div className="flex items-start gap-x-4 rounded border p-2">
+              <Textarea
+                value={noteValue}
+                onChange={(e) => setNoteValue(e.target.value)}
+                className="flex-1 resize-none"
+              />
+              <Button
+                disabled={isMutationRunning || noteValue.trim() === ""}
+                onClick={() => createNote({ content: noteValue, taskId })}
+                className="w-40"
+              >
+                {isCreatingNote ? <Spinner /> : "Add Note"}
+              </Button>
+            </div>
+            {task.notes.map((note) => (
+              <div key={note.id} className="flex items-start gap-x-4 rounded border p-2">
+                <Textarea value={note.content} className="flex-1 resize-none" readOnly />
+                <div className="flex w-40 items-center gap-x-2">
+                  <CalendarIcon />
+                  <span className="truncate">
+                    {capitaliseFirstCharacter(formatRelative(note.createdAt, new Date(), { locale: dateOnlyLocale }))}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </MaxWidthWrapper>
+  );
 };
 
 export default Page;

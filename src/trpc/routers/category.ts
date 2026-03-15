@@ -1,19 +1,39 @@
+import { TaskStatus } from "@/generated/prisma/enums";
 import { createCategorySchema, updateCategorySchema } from "@/lib/schemas";
+import { isOverdue } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
 
 export const categoryRouter = createTRPCRouter({
-  getAll: authedProcedure.query(async ({ ctx }) => {
-    const categories = await ctx.db.category.findMany({
-      where: { userId: ctx.currentUser.id },
-      include: { _count: { select: { tasks: true } } },
-      orderBy: { name: "asc" },
-    });
+  getAll: authedProcedure
+    .input(z.object({ includeTasks: z.boolean().optional() }).optional())
+    .query(async ({ ctx, input }) => {
+      const categories = await ctx.db.category.findMany({
+        where: { userId: ctx.currentUser.id },
+        include: {
+          _count: {
+            select: {
+              tasks: {
+                where: { status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] } },
+              },
+            },
+          },
+          ...(input?.includeTasks
+            ? { tasks: { where: { status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] } } } }
+            : {}),
+        },
+        orderBy: { name: "asc" },
+      });
 
-    return categories.map((category) => ({ ...category, taskCount: category._count.tasks }));
-  }),
+      return categories.map((category) => ({
+        ...category,
+        taskCount: category._count.tasks,
+        overdueTaskCount:
+          category.tasks?.filter((task) => isOverdue(task.dueDate)).length ?? 0,
+      }));
+    }),
 
   create: authedProcedure.input(createCategorySchema).mutation(async ({ ctx, input }) => {
     try {

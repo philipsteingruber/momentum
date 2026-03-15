@@ -7,7 +7,8 @@
     "dev:fresh": "prisma db push --force-reset && prisma generate && prisma db seed && next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

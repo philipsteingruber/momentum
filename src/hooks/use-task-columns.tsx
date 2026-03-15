@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/_components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -10,12 +10,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type Task } from "@/generated/prisma/client";
-import { TaskStatus } from "@/generated/prisma/enums";
 import { dateOnlyLocale } from "@/lib/date-utils";
-import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
-import { formatRelative, isAfter, isBefore } from "date-fns";
+import { formatRelative } from "date-fns";
 import { ArrowUpDownIcon, MoreHorizontalIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
@@ -25,7 +23,7 @@ export function useTaskColumns() {
   const { mutate: snoozeTask } = trpc.task.snooze.useMutation({
     onSuccess: (_data, variables) => {
       toast.success(`Snoozed task by ${variables.days} day(s)`);
-      trpcUtils.task.getAllTasks.invalidate();
+      trpcUtils.task.getAll.invalidate();
     },
   });
 
@@ -110,26 +108,7 @@ export function useTaskColumns() {
             <ArrowUpDownIcon className="ml-2 size-4" />
           </Button>
         ),
-        cell: ({ row }) => (
-          <Badge
-            variant={
-              row.original.status === TaskStatus.BLOCKED ||
-              (row.original.dueDate && isAfter(new Date(), row.original.dueDate))
-                ? "warn"
-                : row.original.status === TaskStatus.COMPLETED
-                  ? "completed"
-                  : row.original.status === TaskStatus.CANCELLED
-                    ? "cancelled"
-                    : "in_progress"
-            }
-          >
-            {row.original.dueDate &&
-            isBefore(row.original.dueDate, new Date()) &&
-            row.original.status !== TaskStatus.COMPLETED
-              ? "Overdue"
-              : parseTaskStatus(row.original.status)}
-          </Badge>
-        ),
+        cell: ({ row }) => <StatusBadge task={row.original} />,
       },
       {
         id: "actions",

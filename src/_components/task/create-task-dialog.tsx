@@ -22,19 +22,28 @@ import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format } from "date-fns";
 import { CalendarIcon, PlusIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
 
-const CreateTaskDialog = ({ categories }: { categories: Category[] }) => {
+const CreateTaskDialog = ({
+  categories,
+  defaultCategoryId,
+}: {
+  categories: Category[];
+  defaultCategoryId?: string;
+}) => {
   const form = useForm<z.infer<typeof createTaskSchema>>({
     resolver: zodResolver(createTaskSchema),
     defaultValues: {
       title: "",
       description: "",
+      categoryId: defaultCategoryId ?? undefined,
+      externalContact: "",
+      link: "",
     },
-    mode: "onBlur",
+    mode: "all",
   });
   const [datePickerOpen, setDatePickerOpen] = useState<boolean>(false);
   const trpcUtils = trpc.useUtils();
@@ -45,12 +54,25 @@ const CreateTaskDialog = ({ categories }: { categories: Category[] }) => {
       setIsOpen(false);
       form.reset();
       trpcUtils.task.getAll.invalidate();
+      trpcUtils.category.getAll.invalidate();
     },
   });
   const { isOpen, setIsOpen, handleOpenChange } = useDialogState({
     preventClose: isCreatingTask,
     onClose: () => form.reset(),
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      form.reset({
+        title: "",
+        description: "",
+        categoryId: defaultCategoryId ?? undefined,
+        externalContact: "",
+        link: "",
+      });
+    }
+  }, [isOpen, defaultCategoryId, form]);
 
   const onSubmit = (data: z.infer<typeof createTaskSchema>) => {
     createTask(data);
@@ -128,6 +150,7 @@ const CreateTaskDialog = ({ categories }: { categories: Category[] }) => {
                         defaultMonth={field.value ?? new Date()}
                         onSelect={field.onChange}
                         onDayClick={() => setDatePickerOpen(false)}
+                        weekStartsOn={1}
                       />
                     </PopoverContent>
                   </Popover>
@@ -177,12 +200,12 @@ const CreateTaskDialog = ({ categories }: { categories: Category[] }) => {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="link">External Contact</FieldLabel>
+                  <FieldLabel htmlFor="link">External Link</FieldLabel>
                   <Input
                     {...field}
                     id="link"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Enter any External Links"
+                    placeholder="Enter any External Link"
                     autoComplete="off"
                   />
                 </Field>

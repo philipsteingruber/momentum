@@ -1,4 +1,4 @@
-import { isAfter } from "date-fns";
+import { isBefore, startOfDay } from "date-fns";
 import z from "zod";
 
 export const createTaskSchema = z.object({
@@ -6,11 +6,11 @@ export const createTaskSchema = z.object({
   description: z.string().max(100, "Description cannot be more than 100 characters long").optional(),
   dueDate: z
     .date()
-    .refine((date) => isAfter(date, new Date()), "Due Date must be in the future")
+    .refine((date) => !isBefore(startOfDay(date), startOfDay(new Date())), "Due Date cannot be in the past")
     .optional(),
   categoryId: z.cuid("Incorrectly formatted category ID").optional(),
   externalContact: z.string().optional(),
-  link: z.url().optional(),
+  link: z.url("Must be a valid URL").or(z.literal("")).optional(),
 });
 export const updateTaskSchema = z.object({ taskId: z.cuid(), data: createTaskSchema.partial() });
 

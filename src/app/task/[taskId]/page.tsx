@@ -144,7 +144,9 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
           {task.link && (
             <div className="flex items-center gap-x-2">
               <LinkIcon />
-              <Link href={task.link}>{task.link}</Link>
+              <Link href={task.link} className="hover:underline">
+                {task.link}
+              </Link>
             </div>
           )}
           <div className="flex items-center gap-x-4">

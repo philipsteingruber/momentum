@@ -15,7 +15,7 @@ export const ErrorCard = ({ title, error, className }: ErrorCardProps): React.Re
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center gap-y-4">
+      <CardContent className="flex h-full flex-col items-center justify-center gap-y-4">
         <AlertTriangleIcon />
         <span className="text-destructive">{error}</span>
       </CardContent>

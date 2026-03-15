@@ -4,7 +4,7 @@ import type { TaskWithTags } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { isAfter } from "date-fns";
+import { isAfter, startOfDay } from "date-fns";
 import { KanbanCardContent } from "./kanban-card-content";
 
 const KanbanCard = ({ task }: { task: TaskWithTags }) => {
@@ -23,7 +23,7 @@ const KanbanCard = ({ task }: { task: TaskWithTags }) => {
           "border-primary h-[175px] w-full border",
           isDragging ? "opacity-40" : "opacity-100",
           task.dueDate &&
-            isAfter(new Date(), task.dueDate) &&
+            isAfter(startOfDay(new Date()), startOfDay(task.dueDate)) &&
             task.status !== TaskStatus.CANCELLED &&
             task.status !== TaskStatus.COMPLETED &&
             "bg-red-500/30",

@@ -9,6 +9,8 @@ export const createTaskSchema = z.object({
     .refine((date) => isAfter(date, new Date()), "Due Date must be in the future")
     .optional(),
   categoryId: z.cuid("Incorrectly formatted category ID").optional(),
+  externalContact: z.string().optional(),
+  link: z.url().optional(),
 });
 export const updateTaskSchema = z.object({ taskId: z.cuid(), data: createTaskSchema.partial() });
 

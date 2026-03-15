@@ -1,4 +1,5 @@
 import { TaskStatus } from "@/generated/prisma/enums";
+import { createTaskSchema } from "@/lib/schemas";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
 import { addDays, isAfter } from "date-fns";
@@ -43,37 +44,30 @@ export const taskRouter = createTRPCRouter({
     });
 
     if (!task) {
-      throw new TRPCError({ code: "NOT_FOUND" });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "This task doesn't exist or you don't have access to see it.",
+      });
     }
 
     return task;
   }),
 
-  create: authedProcedure
-    .input(
-      z.object({
-        title: z.string().min(1, "Title is required"),
-        description: z.string().optional(),
-        dueDate: z
-          .date()
-          .refine((date) => isAfter(date, new Date()))
-          .optional(),
-        categoryId: z.cuid().optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const newTask = await ctx.db.task.create({
-        data: {
-          title: input.title,
-          description: input.description,
-          dueDate: input.dueDate,
-          categoryId: input.categoryId ?? null,
-          userId: ctx.currentUser.id,
-        },
-      });
+  create: authedProcedure.input(createTaskSchema).mutation(async ({ ctx, input }) => {
+    const newTask = await ctx.db.task.create({
+      data: {
+        title: input.title,
+        description: input.description,
+        dueDate: input.dueDate,
+        categoryId: input.categoryId ?? null,
+        externalContact: input.externalContact || null,
+        link: input.link || null,
+        userId: ctx.currentUser.id,
+      },
+    });
 
-      return newTask;
-    }),
+    return newTask;
+  }),
 
   update: authedProcedure
     .input(

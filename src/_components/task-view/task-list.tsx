@@ -13,7 +13,7 @@ import { useTaskColumns } from "@/hooks/use-task-columns";
 import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { KanbanSquareIcon, XIcon } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TaskDataTable } from "../data-table";
 import { KanbanBoard } from "../kanban/kanban-board";
@@ -55,7 +55,13 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedView, setSelectedView] = useLocalStorage<"list" | "kanban">("task-view", "list");
 
-  const activeCategoryId = defaultCategoryId ?? selectedCategoryId ?? categories?.[0]?.id;
+  useEffect(() => {
+    if (defaultCategoryId) {
+      setSelectedCategoryId(defaultCategoryId);
+    }
+  }, [defaultCategoryId, setSelectedCategoryId]);
+
+  const activeCategoryId = selectedCategoryId ?? categories?.[0]?.id;
   const selectedCategory = categories?.find((c) => c.id === activeCategoryId);
 
   const { data: tasks, isPending: isLoadingTasks } = trpc.task.getAll.useQuery(
@@ -115,7 +121,7 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
                   id="switchView"
                 />
               </div>
-              <CreateTaskDialog categories={categories ?? []} />
+              <CreateTaskDialog categories={categories ?? []} defaultCategoryId={selectedCategoryId ?? undefined} />
             </div>
           </div>
         </TabsList>

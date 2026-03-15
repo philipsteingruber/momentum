@@ -15,7 +15,7 @@ export const EmptyCard = ({ title, message, className }: EmptyCardProps): React.
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col items-center justify-center gap-y-4">
+      <CardContent className="flex h-full flex-col items-center justify-center gap-y-4">
         <SearchIcon />
         <span>{message ?? "No items found."}</span>
       </CardContent>

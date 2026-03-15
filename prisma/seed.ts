@@ -106,12 +106,12 @@ async function main() {
   );
 
   // Notes (attached to specific tasks)
+  // Distribution: CI/CD=5, API docs=3, Auth=2, Grocery=0, Dentist=1, Run=4, DDIA=5, Desktop=0
   await Promise.all([
-    // Notes on "Set up CI/CD pipeline"
+    // "Set up CI/CD pipeline" — 5 notes
     prisma.note.create({
       data: {
-        content:
-          "Looked into GitHub Actions vs. GitLab CI — sticking with GH Actions since the repo is already on GitHub.",
+        content: "Looked into GitHub Actions vs. GitLab CI — sticking with GH Actions since the repo is already on GitHub.",
         taskId: tasks[0].id,
       },
     }),
@@ -121,30 +121,131 @@ async function main() {
         taskId: tasks[0].id,
       },
     }),
-    // Note on "Write API documentation"
+    prisma.note.create({
+      data: {
+        content: "Added a caching step for pnpm node_modules — cut build time from ~2min to ~40s.",
+        taskId: tasks[0].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Deploy step should only run on pushes to main, not on PRs — update the workflow trigger.",
+        taskId: tasks[0].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Consider adding a Lighthouse CI step to catch performance regressions automatically.",
+        taskId: tasks[0].id,
+      },
+    }),
+
+    // "Write API documentation" — 3 notes
     prisma.note.create({
       data: {
         content: "Check if tRPC-panel or trpc-openapi can auto-generate some of this.",
         taskId: tasks[1].id,
       },
     }),
-    // Note on "Refactor auth middleware"
+    prisma.note.create({
+      data: {
+        content: "Priority endpoints to document first: task CRUD, category management, and auth flows.",
+        taskId: tasks[1].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Add request/response examples directly in the tRPC router files as JSDoc comments.",
+        taskId: tasks[1].id,
+      },
+    }),
+
+    // "Refactor auth middleware" — 2 notes
     prisma.note.create({
       data: {
         content: "Blocked on Clerk SDK v7 migration — waiting for updated docs on middleware pattern.",
         taskId: tasks[2].id,
       },
     }),
-    // Note on "Read DDIA"
+    prisma.note.create({
+      data: {
+        content: "Role-based access will need a custom claim in the Clerk JWT — look into `publicMetadata`.",
+        taskId: tasks[2].id,
+      },
+    }),
+
+    // "Grocery shopping" — 0 notes (intentionally omitted)
+
+    // "Schedule dentist appointment" — 1 note
+    prisma.note.create({
+      data: {
+        content: "Called the dentist's office — appointment confirmed for March 5th at 10:00.",
+        taskId: tasks[4].id,
+      },
+    }),
+
+    // "Morning run routine" — 4 notes
+    prisma.note.create({
+      data: {
+        content: "Current pace is around 5:45/km — aiming to get it under 5:30 by end of April.",
+        taskId: tasks[5].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Tuesday and Thursday mornings work best — Friday is hit or miss depending on work schedule.",
+        taskId: tasks[5].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Left knee felt tight after last run — look into better warm-up stretches.",
+        taskId: tasks[5].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Tried a new route through the park — adds an extra 800m but much more pleasant.",
+        taskId: tasks[5].id,
+      },
+    }),
+
+    // "Read DDIA" — 5 notes
     prisma.note.create({
       data: {
         content: "Chapter 5 on replication was excellent — revisit the section on leaderless replication.",
         taskId: tasks[6].id,
       },
     }),
+    prisma.note.create({
+      data: {
+        content: "Chapter 6 covers partitioning strategies — good mental model for how Postgres sharding works.",
+        taskId: tasks[6].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Make a summary note of the consistency models (linearizability vs. eventual) before moving to ch. 9.",
+        taskId: tasks[6].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "The two-phase commit explanation in ch. 9 finally made XA transactions click.",
+        taskId: tasks[6].id,
+      },
+    }),
+    prisma.note.create({
+      data: {
+        content: "Cross-reference the batch processing chapter with the Kafka docs — a lot of overlap.",
+        taskId: tasks[6].id,
+      },
+    }),
+
+    // "Clean up desktop files" — 0 notes (intentionally omitted)
   ]);
 
-  console.log(`Seeded: 1 user, 4 categories, ${tasks.length} tasks, 5 notes`);
+  console.log(`Seeded: 1 user, 4 categories, ${tasks.length} tasks, 20 notes`);
 }
 
 main()

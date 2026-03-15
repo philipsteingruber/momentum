@@ -41,6 +41,8 @@ async function main() {
         status: "IN_PROGRESS" as const,
         dueDate: new Date(2026, 2, 18),
         categoryId: work.id,
+        link: "https://docs.github.com/en/actions",
+        externalContact: "DevOps team",
       },
       {
         title: "Write API documentation",
@@ -48,6 +50,8 @@ async function main() {
         status: "PENDING" as const,
         dueDate: new Date(2026, 2, 25),
         categoryId: work.id,
+        link: "https://trpc.io/docs",
+        externalContact: null,
       },
       {
         title: "Refactor auth middleware",
@@ -55,6 +59,8 @@ async function main() {
         status: "BLOCKED" as const,
         dueDate: null,
         categoryId: work.id,
+        link: "https://clerk.com/docs/references/nextjs/clerk-middleware",
+        externalContact: "Clerk support",
       },
       {
         title: "Grocery shopping",
@@ -62,6 +68,8 @@ async function main() {
         status: "PENDING" as const,
         dueDate: new Date(2026, 2, 12),
         categoryId: personal.id,
+        link: null,
+        externalContact: null,
       },
       {
         title: "Schedule dentist appointment",
@@ -69,6 +77,8 @@ async function main() {
         status: "COMPLETED" as const,
         dueDate: new Date(2026, 2, 5),
         categoryId: health.id,
+        link: null,
+        externalContact: "the dentist's office",
       },
       {
         title: "Morning run routine",
@@ -76,6 +86,8 @@ async function main() {
         status: "IN_PROGRESS" as const,
         dueDate: null,
         categoryId: health.id,
+        link: null,
+        externalContact: null,
       },
       {
         title: "Read 'Designing Data-Intensive Applications'",
@@ -83,6 +95,8 @@ async function main() {
         status: "IN_PROGRESS" as const,
         dueDate: new Date(2026, 3, 1),
         categoryId: learning.id,
+        link: "https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/",
+        externalContact: null,
       },
       {
         title: "Clean up desktop files",
@@ -90,6 +104,8 @@ async function main() {
         status: "CANCELLED" as const,
         dueDate: null,
         categoryId: personal.id,
+        link: null,
+        externalContact: null,
       },
     ].map((task) =>
       prisma.task.create({
@@ -100,10 +116,18 @@ async function main() {
           dueDate: task.dueDate,
           userId: user.id,
           categoryId: task.categoryId,
+          link: task.link,
+          externalContact: task.externalContact,
         },
       }),
     ),
   );
+
+  // Wire up blocked task: "Refactor auth middleware" is blocked by "Set up CI/CD pipeline"
+  await prisma.task.update({
+    where: { id: tasks[2].id },
+    data: { blockedById: tasks[0].id },
+  });
 
   // Notes (attached to specific tasks)
   // Distribution: CI/CD=5, API docs=3, Auth=2, Grocery=0, Dentist=1, Run=4, DDIA=5, Desktop=0

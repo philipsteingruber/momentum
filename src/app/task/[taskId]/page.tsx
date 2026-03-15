@@ -26,7 +26,8 @@ import { dateOnlyLocale } from "@/lib/date-utils";
 import { capitaliseFirstCharacter, parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { differenceInDays, format, formatRelative } from "date-fns";
-import { CalendarIcon, FileIcon, WorkflowIcon } from "lucide-react";
+import { CalendarIcon, FileIcon, LinkIcon, UserIcon, WorkflowIcon } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { toast } from "sonner";
@@ -132,6 +133,18 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
             <div className="flex items-center gap-x-2">
               <CalendarIcon />
               {`${format(task.dueDate, "yyyy-MM-dd")}${Math.abs(differenceInDays(task.dueDate, new Date())) < 7 ? ` (${capitaliseFirstCharacter(formatRelative(task.dueDate, new Date(), { locale: dateOnlyLocale }))})` : ""}`}
+            </div>
+          )}
+          {task.externalContact && (
+            <div className="flex items-center gap-x-2">
+              <UserIcon />
+              {task.externalContact}
+            </div>
+          )}
+          {task.link && (
+            <div className="flex items-center gap-x-2">
+              <LinkIcon />
+              <Link href={task.link}>{task.link}</Link>
             </div>
           )}
           <div className="flex items-center gap-x-4">

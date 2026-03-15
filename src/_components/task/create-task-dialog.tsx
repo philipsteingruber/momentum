@@ -156,6 +156,38 @@ const CreateTaskDialog = ({ categories }: { categories: Category[] }) => {
                 </Field>
               )}
             />
+            <Controller
+              name="externalContact"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="externalContact">External Contact</FieldLabel>
+                  <Input
+                    {...field}
+                    id="externalContact"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Enter any External Contacts"
+                    autoComplete="off"
+                  />
+                </Field>
+              )}
+            />
+            <Controller
+              name="link"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="link">External Contact</FieldLabel>
+                  <Input
+                    {...field}
+                    id="link"
+                    aria-invalid={fieldState.invalid}
+                    placeholder="Enter any External Links"
+                    autoComplete="off"
+                  />
+                </Field>
+              )}
+            />
           </FieldGroup>
           <Separator className="my-4" />
           <div className="flex w-full items-center justify-end gap-x-4">

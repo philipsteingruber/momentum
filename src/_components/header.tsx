@@ -29,9 +29,6 @@ export const Header = () => {
               <Link href={"/categories"}>
                 <DropdownMenuItem>Categories</DropdownMenuItem>
               </Link>
-              <Link href={"/tags"}>
-                <DropdownMenuItem>Tags</DropdownMenuItem>
-              </Link>
             </DropdownMenuContent>
           </DropdownMenu>
           <UserButton />

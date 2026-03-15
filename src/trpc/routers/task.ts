@@ -6,7 +6,7 @@ import { z } from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
 
 export const taskRouter = createTRPCRouter({
-  getAllTasks: authedProcedure
+  getAll: authedProcedure
     .input(
       z
         .object({
@@ -39,7 +39,7 @@ export const taskRouter = createTRPCRouter({
   getById: authedProcedure.input(z.object({ taskId: z.cuid() })).query(async ({ ctx, input }) => {
     const task = await ctx.db.task.findUnique({
       where: { id: input.taskId, userId: ctx.currentUser.id },
-      include: { notes: true },
+      include: { notes: { orderBy: { createdAt: "desc" } }, category: true },
     });
 
     if (!task) {

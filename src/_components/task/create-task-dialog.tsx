@@ -44,7 +44,7 @@ const CreateTaskDialog = ({ categories }: { categories: Category[] }) => {
       toast.success("Successfully created task");
       setIsOpen(false);
       form.reset();
-      trpcUtils.task.getAllTasks.invalidate();
+      trpcUtils.task.getAll.invalidate();
     },
   });
   const { isOpen, setIsOpen, handleOpenChange } = useDialogState({

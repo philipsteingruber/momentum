@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -18,7 +19,7 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 
 export const AppSidebar = () => {
-  const { data: categories } = trpc.category.getAll.useQuery();
+  const { data: categories } = trpc.category.getAll.useQuery({ includeTasks: true });
 
   return (
     <Sidebar>
@@ -35,12 +36,20 @@ export const AppSidebar = () => {
                 categories?.map((category) => (
                   <SidebarMenuItem key={category.id}>
                     <SidebarMenuButton asChild>
-                      <Link href={`/category/${category.id}`}>{category.name}</Link>
+                      <Link href={`/category/${category.id}`} className="flex items-center justify-between">
+                        <span>{category.name}</span>
+                        <div className="flex items-center gap-x-2">
+                          {category.overdueTaskCount > 0 && (
+                            <Badge variant={"destructive"}>{category.overdueTaskCount}</Badge>
+                          )}
+                          <Badge>{category.taskCount}</Badge>
+                        </div>
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))
               ) : (
-                <div className="w-full flex items-center justify-center">
+                <div className="flex w-full items-center justify-center">
                   <Spinner />
                 </div>
               )}

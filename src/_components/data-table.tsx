@@ -17,7 +17,7 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { isBefore } from "date-fns";
+import { isBefore, startOfDay } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -94,7 +94,7 @@ export const TaskDataTable = ({
                   (() => {
                     const isOverdue =
                       !!row.original.dueDate &&
-                      isBefore(row.original.dueDate, new Date()) &&
+                      isBefore(startOfDay(row.original.dueDate), startOfDay(new Date())) &&
                       row.original.status !== TaskStatus.COMPLETED;
                     return isOverdue && "bg-red-300/10 text-red-300";
                   })(),

@@ -1,3 +1,4 @@
+import { RecurrenceType } from "@/generated/prisma/enums";
 import { isBefore, startOfDay } from "date-fns";
 import z from "zod";
 
@@ -22,3 +23,28 @@ export const createCategorySchema = z.object({
     .optional(),
 });
 export const updateCategorySchema = z.object({ categoryId: z.cuid(), data: createCategorySchema.partial() });
+
+const baseRecurringTemplateSchema = createTaskSchema
+  .extend({
+    recurrenceType: z.enum(RecurrenceType),
+    dayOfWeek: z.int().nonnegative().max(6).optional(),
+    dayOfMonth: z.int().nonnegative().max(30).optional(),
+  })
+  .omit({ dueDate: true });
+
+export const createRecurringTemplateSchema = baseRecurringTemplateSchema
+  .refine(
+    (data) => data.recurrenceType === RecurrenceType.DAILY || !!data.dayOfMonth !== !!data.dayOfWeek,
+    "Either Day of Week or Day of Month must be supplied",
+  )
+  .refine(
+    (data) =>
+      (data.recurrenceType === RecurrenceType.DAILY && !data.dayOfMonth && !data.dayOfWeek) ||
+      (data.recurrenceType === RecurrenceType.MONTHLY && !!data.dayOfMonth) ||
+      (data.recurrenceType === RecurrenceType.WEEKLY && !!data.dayOfWeek),
+    "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth",
+  );
+export const updateRecurringTemplateSchema = z.object({
+  templateId: z.cuid(),
+  data: baseRecurringTemplateSchema.partial(),
+});

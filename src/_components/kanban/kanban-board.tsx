@@ -49,9 +49,11 @@ export const KanbanBoard = ({
       sensors={sensors}
     >
       <div className="flex gap-x-4">
-        {(Object.keys(tasksByStatus) as TaskStatus[]).map((status) => (
-          <KanbanColumn key={status} tasks={tasksByStatus[status]} status={status} isPending={isPending} />
-        ))}
+        {(Object.keys(tasksByStatus) as TaskStatus[])
+          .filter((status) => status !== TaskStatus.SKIPPED)
+          .map((status) => {
+            return <KanbanColumn key={status} tasks={tasksByStatus[status]} status={status} isPending={isPending} />;
+          })}
       </div>
       {activeTask && (
         <DragOverlay>

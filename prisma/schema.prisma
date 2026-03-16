@@ -18,6 +18,7 @@ enum TaskStatus {
     BLOCKED
     COMPLETED
     CANCELLED
+    SKIPPED
 }
 
 model User {
@@ -30,20 +31,21 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    tasks      Task[]
-    categories Category[]
-    tags       Tag[]
+    tasks              Task[]
+    categories         Category[]
+    tags               Tag[]
+    recurringTemplates RecurringTemplate[]
 }
 
 model Task {
     id String @id @default(cuid())
 
-    title       String
-    description String?
-    status      TaskStatus @default(PENDING)
-    dueDate     DateTime?
+    title           String
+    description     String?
+    status          TaskStatus @default(PENDING)
+    dueDate         DateTime?
     externalContact String?
-    link        String?
+    link            String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -55,13 +57,41 @@ model Task {
     blockedById String?
     blocking    Task[]  @relation("TaskBlocker")
 
-    notes      Note[]
-    tags       Tag[]
-    category   Category? @relation(fields: [categoryId], references: [id])
-    categoryId String?
+    notes               Note[]
+    tags                Tag[]
+    category            Category?          @relation(fields: [categoryId], references: [id])
+    categoryId          String?
+    recurringTemplate   RecurringTemplate? @relation(fields: [recurringTemplateId], references: [id], onDelete: SetNull)
+    recurringTemplateId String?
 
     @@index([userId, status])
     @@index([userId, dueDate])
+}
+
+enum RecurrenceType {
+    DAILY
+    WEEKLY
+    MONTHLY
+}
+
+model RecurringTemplate {
+    id String @id @default(cuid())
+
+    title           String
+    description     String?
+    externalContact String?
+    link            String?
+
+    recurrenceType RecurrenceType
+    dayOfWeek      Int?
+    dayOfMonth     Int?
+    nextDueDate    DateTime
+
+    user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    tasks      Task[]
+    category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+    categoryId String?
+    userId     String
 }
 
 model Category {
@@ -73,9 +103,10 @@ model Category {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    tasks  Task[]
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId String
+    tasks              Task[]
+    user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId             String
+    recurringTemplates RecurringTemplate[]
 
     @@unique([userId, name])
     @@index([userId])

@@ -22,7 +22,7 @@ export const taskRouter = createTRPCRouter({
       const tasks = await ctx.db.task.findMany({
         where: {
           userId: ctx.currentUser.id,
-          status: input.status,
+          status: input.status ? { equals: input.status, not: TaskStatus.SKIPPED } : { not: TaskStatus.SKIPPED },
           dueDate: { gte: input.dueDateRange?.start, lte: input.dueDateRange?.end },
           title: { contains: input.search, mode: "insensitive" },
           categoryId: input.categoryId,

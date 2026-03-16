@@ -1,11 +1,11 @@
+import { verifyCronAuth } from "@/lib/cron-utils";
 import { sendDailyDigest } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { groupTasksForDigest } from "@/lib/task-utils";
 import pLimit from "p-limit";
 
 const handler = async (req: Request): Promise<Response> => {
-  const authHeader = req.headers.get("Authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!verifyCronAuth(req)) {
     return new Response("Unauthorized", { status: 401 });
   }
 

@@ -4,6 +4,7 @@ import { EmptyCard } from "@/_components/cards/empty-card";
 import { ErrorCard } from "@/_components/cards/error-card";
 import { LoadingCard } from "@/_components/cards/loading-card";
 import { MaxWidthWrapper } from "@/_components/max-width-wrapper";
+import { UpdateTaskDialog } from "@/_components/task/update-task-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,7 +27,7 @@ import { dateOnlyLocale } from "@/lib/date-utils";
 import { capitaliseFirstCharacter, parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { differenceInDays, format, formatRelative } from "date-fns";
-import { CalendarIcon, FileIcon, LinkIcon, UserIcon, WorkflowIcon } from "lucide-react";
+import { CalendarIcon, FileIcon, LinkIcon, TrashIcon, UserIcon, WorkflowIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
@@ -39,6 +40,8 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const router = useRouter();
 
   const { data: task, isPending: isLoadingTask, isError, error } = trpc.task.getById.useQuery({ taskId });
+  const { data: categories } = trpc.category.getAll.useQuery();
+
   const { mutate: createNote, isPending: isCreatingNote } = trpc.note.create.useMutation({
     onSuccess: () => {
       toast.success("Note created");
@@ -153,6 +156,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
             <Dialog open={isOpen} onOpenChange={handleOpenChange}>
               <DialogTrigger asChild>
                 <Button variant={"destructive"} disabled={isMutationRunning}>
+                  <TrashIcon />
                   Delete
                 </Button>
               </DialogTrigger>
@@ -171,6 +175,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+            <UpdateTaskDialog categories={categories ?? []} task={task} />
             {task.dueDate && (
               <>
                 <Button onClick={() => snoozeTask({ taskId, days: 1 })} disabled={isMutationRunning} className="w-30">

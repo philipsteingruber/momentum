@@ -1,21 +1,12 @@
 import { Spinner } from "@/components/ui/spinner";
-import type { TaskStatus } from "@/generated/prisma/client";
+import type { Task, TaskStatus } from "@/generated/prisma/client";
 import { parseTaskStatus } from "@/lib/task-utils";
-import type { TaskWithTags } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import KanbanCard from "./kanban-card";
 
-const KanbanColumn = ({
-  tasks,
-  status,
-  isPending,
-}: {
-  tasks: TaskWithTags[];
-  status: TaskStatus;
-  isPending: boolean;
-}) => {
+const KanbanColumn = ({ tasks, status, isPending }: { tasks: Task[]; status: TaskStatus; isPending: boolean }) => {
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (

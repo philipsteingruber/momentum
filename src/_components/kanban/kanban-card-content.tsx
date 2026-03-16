@@ -1,14 +1,14 @@
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { dateOnlyLocale } from "@/lib/date-utils";
-import type { TaskWithTags } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { formatRelative, isAfter } from "date-fns";
 import { CalendarIcon, LinkIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-export const KanbanCardContent = ({ task }: { task: TaskWithTags }) => {
+export const KanbanCardContent = ({ task }: { task: Task }) => {
   const router = useRouter();
 
   return (

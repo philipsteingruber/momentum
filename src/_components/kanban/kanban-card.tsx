@@ -1,13 +1,13 @@
 import { Card } from "@/components/ui/card";
+import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
-import type { TaskWithTags } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { isAfter, startOfDay } from "date-fns";
 import { KanbanCardContent } from "./kanban-card-content";
 
-const KanbanCard = ({ task }: { task: TaskWithTags }) => {
+const KanbanCard = ({ task }: { task: Task }) => {
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: task.id });
 
   return (

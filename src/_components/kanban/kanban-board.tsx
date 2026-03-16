@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { TaskStatus } from "@/generated/prisma/enums";
+import { groupTasksByStatus } from "@/lib/task-utils";
 import type { TaskWithTags } from "@/lib/types/task";
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useState } from "react";
@@ -21,13 +22,7 @@ export const KanbanBoard = ({
   const pointerSensor = useSensor(PointerSensor, { activationConstraint: { delay: 10, tolerance: 5 } });
   const sensors = useSensors(keyboardSensor, pointerSensor);
 
-  const tasksByStatus: Record<TaskStatus, TaskWithTags[]> = tasks.reduce(
-    (groups, task) => {
-      groups[task.status].push(task);
-      return groups;
-    },
-    { PENDING: [], IN_PROGRESS: [], BLOCKED: [], COMPLETED: [], CANCELLED: [] } as Record<TaskStatus, TaskWithTags[]>,
-  );
+  const tasksByStatus = groupTasksByStatus(tasks);
 
   return (
     <DndContext

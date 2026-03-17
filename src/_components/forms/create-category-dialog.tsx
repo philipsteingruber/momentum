@@ -42,9 +42,9 @@ export const CreateCategoryDialog = () => {
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="flex items-center justify-between">
+        <Button className="flex items-center justify-between gap-x-2">
           <PlusIcon />
-          Add
+          {t("trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent className="w-full">
@@ -95,11 +95,11 @@ export const CreateCategoryDialog = () => {
           <div className="flex w-full items-center justify-end gap-x-4">
             <DialogClose asChild>
               <Button variant={"outline"} type="button" disabled={isCreatingCategory}>
-                Cancel
+                {t("cancel")}
               </Button>
             </DialogClose>
             <Button type="submit" disabled={isCreatingCategory || !form.formState.isValid}>
-              {isCreatingCategory ? <Spinner /> : "Submit"}
+              {isCreatingCategory ? <Spinner /> : t("submit")}
             </Button>
           </div>
         </form>

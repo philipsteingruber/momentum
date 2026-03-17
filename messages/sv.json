@@ -95,10 +95,13 @@
     "noTasks": "Inga uppgifter hittades"
   },
   "CreateCategoryDialog": {
+    "trigger": "Ny Kategori",
     "title": "Ny Kategori",
     "nameLabel": "Namn",
     "colorLabel": "Färg (ej implementerat)",
-    "createdToast": "Kategori skapad"
+    "createdToast": "Kategori skapad",
+    "cancel": "Avbryt",
+    "submit": "Skapa"
   },
   "UpdateCategoryForm": {
     "reset": "Återställ",

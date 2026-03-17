@@ -11,12 +11,17 @@ export const userSettingsRouter = createTRPCRouter({
   }),
 
   update: authedProcedure
-    .input(z.object({ timezone: z.string().refine((val) => Intl.supportedValuesOf("timeZone").includes(val)) }))
+    .input(
+      z.object({
+        timezone: z.string().refine((val) => Intl.supportedValuesOf("timeZone").includes(val)),
+        locale: z.literal("en").or(z.literal("sv")),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.userSettings.upsert({
         where: { userId: ctx.currentUser.id },
-        update: { timezone: input.timezone },
-        create: { userId: ctx.currentUser.id, timezone: input.timezone },
+        update: { timezone: input.timezone, locale: input.locale },
+        create: { userId: ctx.currentUser.id, timezone: input.timezone, locale: input.locale },
       });
     }),
 });

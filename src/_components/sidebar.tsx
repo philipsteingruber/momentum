@@ -16,19 +16,21 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { trpc } from "@/trpc/client";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export const AppSidebar = () => {
   const { data: categories } = trpc.category.getAll.useQuery({ includeTasks: true });
+  const t = useTranslations("Sidebar");
 
   return (
     <Sidebar>
       <SidebarHeader />
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Categories</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("categories")}</SidebarGroupLabel>
           <SidebarGroupAction>
-            <PlusIcon /> <span className="sr-only">Add Category</span>
+            <PlusIcon /> <span className="sr-only">{t("addCategory")}</span>
           </SidebarGroupAction>
           <SidebarGroupContent>
             <SidebarMenu>

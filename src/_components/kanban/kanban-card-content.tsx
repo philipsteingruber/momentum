@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
-import { dateOnlyLocale } from "@/lib/date-utils";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, LinkIcon, UserIcon } from "lucide-react";
@@ -39,7 +38,7 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
                   "text-red-200",
               )}
             >
-              {fmtRelative(task.dueDate, { locale: dateOnlyLocale, weekStartsOn: 1 })}
+              {fmtRelative(task.dueDate)}
             </span>
           </div>
         )}

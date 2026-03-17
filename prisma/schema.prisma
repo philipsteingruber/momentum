@@ -41,6 +41,7 @@ model User {
 model UserSettings {
     id       String @id @default(cuid())
     timezone String @default("Europe/Stockholm")
+    locale   String @default("en")
 
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String @unique

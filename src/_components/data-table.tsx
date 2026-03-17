@@ -19,6 +19,7 @@ import {
   type ColumnDef,
 } from "@tanstack/react-table";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -42,6 +43,7 @@ export const TaskDataTable = ({
   isUpdatingTaskStatus,
 }: DataTableProps) => {
   const router = useRouter();
+  const t = useTranslations("DataTable");
   const { isOverdue } = useFormatInUserTz();
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "dueDate", desc: false }]);
@@ -109,7 +111,7 @@ export const TaskDataTable = ({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                No results.
+                {t("noResults")}
               </TableCell>
             </TableRow>
           )}
@@ -128,7 +130,7 @@ export const TaskDataTable = ({
             }}
             disabled={isDeletingTask || isUpdatingTaskStatus || Object.keys(rowSelection).length === 0}
           >
-            {isDeletingTask ? <Spinner /> : "Delete"}
+            {isDeletingTask ? <Spinner /> : t("delete")}
           </Button>
           <Button
             variant={"outline"}
@@ -140,7 +142,7 @@ export const TaskDataTable = ({
             }}
             disabled={isDeletingTask || isUpdatingTaskStatus || Object.keys(rowSelection).length === 0}
           >
-            {isUpdatingTaskStatus ? <Spinner /> : "Complete"}
+            {isUpdatingTaskStatus ? <Spinner /> : t("complete")}
           </Button>
         </div>
         <div className="mr-4 flex items-center justify-end gap-x-2 py-4">

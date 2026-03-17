@@ -24,6 +24,7 @@ import { capitaliseFirstCharacter } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -45,6 +46,7 @@ const CreateTemplateDialog = ({
   categories: Category[];
   defaultCategoryId?: string;
 }) => {
+  const t = useTranslations("CreateTemplateDialog");
   const form = useForm<z.infer<typeof createRecurringTemplateSchema>>({
     resolver: zodResolver(createRecurringTemplateSchema),
     defaultValues: getDefaultValues(defaultCategoryId),
@@ -54,7 +56,7 @@ const CreateTemplateDialog = ({
 
   const { mutate: createTemplate, isPending: isCreatingTemplate } = trpc.recurringTemplate.create.useMutation({
     onSuccess: () => {
-      toast.success("Successfully created template");
+      toast.success(t("createdToast"));
       setIsOpen(false);
       form.reset(getDefaultValues(defaultCategoryId));
       trpcUtils.task.getAll.invalidate();
@@ -83,14 +85,14 @@ const CreateTemplateDialog = ({
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button className="flex items-center gap-x-2">
-          <PlusIcon /> Add Template
+          <PlusIcon /> {t("trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create Template</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Fill in the fields below and click Submit to create a new recurring template
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -139,10 +141,10 @@ const CreateTemplateDialog = ({
                 control={form.control}
                 render={({ field, fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Recurrence Type</FieldLabel>
+                    <FieldLabel>{t("recurrenceTypeLabel")}</FieldLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Recurrence Type" />
+                        <SelectValue placeholder={t("recurrenceTypePlaceholder")} />
                       </SelectTrigger>
                       <SelectContent position="popper">
                         {Object.keys(RecurrenceType).map((type) => (
@@ -161,10 +163,10 @@ const CreateTemplateDialog = ({
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>On Every</FieldLabel>
+                      <FieldLabel>{t("onEveryLabel")}</FieldLabel>
                       <Select value={field.value?.toString()} onValueChange={(val) => field.onChange(Number(val))}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Choose day of the month" />
+                          <SelectValue placeholder={t("dayOfMonthPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent position="popper">
                           {DAY_OF_MONTH_OPTIONS.map((day) => (
@@ -184,10 +186,10 @@ const CreateTemplateDialog = ({
                   control={form.control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>On Every</FieldLabel>
+                      <FieldLabel>{t("onEveryLabel")}</FieldLabel>
                       <Select value={field.value?.toString()} onValueChange={(val) => field.onChange(Number(val))}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Choose day of the week" />
+                          <SelectValue placeholder={t("dayOfWeekPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent position="popper">
                           {DAY_OF_WEEK_OPTIONS.map((day) => (

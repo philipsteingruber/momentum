@@ -20,21 +20,23 @@ import { updateCategorySchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PaintBucketIcon, TagIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
 
 export const UpdateCategoryForm = ({ category }: { category: Category }) => {
+  const t = useTranslations("UpdateCategoryForm");
   const trpcUtils = trpc.useUtils();
   const { mutate: updateCategory, isPending: isUpdatingCategory } = trpc.category.update.useMutation({
     onSuccess: () => {
-      toast.success("Successfully updated category");
+      toast.success(t("updatedToast"));
       trpcUtils.category.getAll.invalidate();
     },
   });
   const { mutate: deleteCategory, isPending: isDeletingCategory } = trpc.category.delete.useMutation({
     onSuccess: () => {
-      toast.success("Successfully deleted category");
+      toast.success(t("deletedToast"));
       trpcUtils.category.getAll.invalidate();
       setIsOpen(false);
     },
@@ -92,23 +94,23 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
       />
       <div className="flex w-full items-center justify-end gap-x-4 pr-4">
         <Button disabled={isUpdatingCategory} onClick={() => form.reset()} variant={"outline"} type="button">
-          Reset
+          {t("reset")}
         </Button>
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
-            <Button variant={"destructive"}>Delete</Button>
+            <Button variant={"destructive"}>{t("delete")}</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Really delete category?</DialogTitle>
-              <DialogDescription>This cannot be reversed.</DialogDescription>
+              <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
+              <DialogDescription>{t("deleteDialogDescription")}</DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant={"outline"}>Back</Button>
+                <Button variant={"outline"}>{t("back")}</Button>
               </DialogClose>
               <Button variant={"destructive"} onClick={() => deleteCategory({ categoryId: category.id })}>
-                {isDeletingCategory ? <Spinner /> : "Confirm"}
+                {isDeletingCategory ? <Spinner /> : t("confirm")}
               </Button>
             </DialogFooter>
           </DialogContent>

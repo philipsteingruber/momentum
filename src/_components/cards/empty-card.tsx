@@ -1,6 +1,9 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { SearchIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type React from "react";
 
 interface EmptyCardProps {
@@ -10,6 +13,8 @@ interface EmptyCardProps {
 }
 
 export const EmptyCard = ({ title, message, className }: EmptyCardProps): React.ReactElement => {
+  const t = useTranslations("EmptyCard");
+
   return (
     <Card className={cn("h-120", className)}>
       <CardHeader>
@@ -17,7 +22,7 @@ export const EmptyCard = ({ title, message, className }: EmptyCardProps): React.
       </CardHeader>
       <CardContent className="flex h-full flex-col items-center justify-center gap-y-4">
         <SearchIcon />
-        <span>{message ?? "No items found."}</span>
+        <span>{message ?? t("default")}</span>
       </CardContent>
     </Card>
   );

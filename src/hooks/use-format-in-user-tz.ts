@@ -1,14 +1,15 @@
-import { formatInUserTz, formatRelativeInUserTz, isOverdueInUserTz } from "@/lib/date-utils";
+import { formatInUserTz, formatRelativeInUserTz, getDateLocale, isOverdueInUserTz } from "@/lib/date-utils";
 import { trpc } from "@/trpc/client";
-import type { formatRelative } from "date-fns";
 
 export function useFormatInUserTz() {
   const { data: settings } = trpc.userSettings.get.useQuery();
   const timezone = settings?.timezone ?? "Europe/Stockholm";
+  const dateLocale = getDateLocale(settings?.locale ?? "en");
+
   return {
     fmt: (date: Date, formatStr: string) => formatInUserTz(date, formatStr, timezone),
-    fmtRelative: (date: Date, options?: Parameters<typeof formatRelative>[2]) =>
-      formatRelativeInUserTz(date, timezone, options),
+    fmtRelative: (date: Date) =>
+      formatRelativeInUserTz(date, timezone, { locale: dateLocale, weekStartsOn: 1 }),
     isOverdue: (dueDate: Date) => isOverdueInUserTz(dueDate, timezone),
   };
 }

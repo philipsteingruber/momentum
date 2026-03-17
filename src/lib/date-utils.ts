@@ -1,20 +1,52 @@
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import type { Locale } from "date-fns";
 import { formatRelative, isBefore, startOfDay } from "date-fns";
-import { enUS } from "date-fns/locale";
+import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { enUS, sv } from "date-fns/locale";
 
-const dateOnlyRelativeLocale = {
-  lastWeek: "'last' eeee",
-  yesterday: "'yesterday'",
-  today: "'today'",
-  tomorrow: "'tomorrow'",
-  nextWeek: "eeee",
-  other: "MM/dd/yyyy",
-} as const;
-
-export const dateOnlyLocale = {
-  ...enUS,
-  formatRelative: (token: keyof typeof dateOnlyRelativeLocale) => dateOnlyRelativeLocale[token],
+type RelativeTokenMap = {
+  lastWeek: string;
+  yesterday: string;
+  today: string;
+  tomorrow: string;
+  nextWeek: string;
+  other: string;
 };
+
+const relativeTokens: Record<string, RelativeTokenMap> = {
+  en: {
+    lastWeek: "'last' eeee",
+    yesterday: "'yesterday'",
+    today: "'today'",
+    tomorrow: "'tomorrow'",
+    nextWeek: "eeee",
+    other: "MM/dd/yyyy",
+  },
+  sv: {
+    lastWeek: "'förra' eeee'en'",
+    yesterday: "'igår'",
+    today: "'idag'",
+    tomorrow: "'imorgon'",
+    nextWeek: "eeee",
+    other: "yyyy-MM-dd",
+  },
+};
+
+const dateFnsLocales: Record<string, Locale> = {
+  en: enUS,
+  sv,
+};
+
+export function getDateLocale(locale: string): Locale {
+  const tokens = relativeTokens[locale] ?? relativeTokens["en"]!;
+  const base = dateFnsLocales[locale] ?? enUS;
+  return {
+    ...base,
+    formatRelative: (token: keyof RelativeTokenMap) => tokens[token],
+  };
+}
+
+// Kept for backwards compatibility at call sites that pass a pre-built locale object
+export const dateOnlyLocale = getDateLocale("en");
 
 export function formatInUserTz(date: Date, fmt: string, timezone: string): string {
   return formatInTimeZone(date, timezone, fmt);

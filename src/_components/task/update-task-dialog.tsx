@@ -24,12 +24,14 @@ import { updateTaskSchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, PenIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
 
 export const UpdateTaskDialog = ({ categories, task }: { categories: Category[]; task: Task }) => {
+  const t = useTranslations("UpdateTaskDialog");
   const form = useForm<z.infer<typeof updateTaskSchema>>({
     resolver: zodResolver(updateTaskSchema),
     defaultValues: {
@@ -52,7 +54,7 @@ export const UpdateTaskDialog = ({ categories, task }: { categories: Category[];
 
   const { mutate: updateTask, isPending: isUpdatingTask } = trpc.task.update.useMutation({
     onSuccess: () => {
-      toast.success("Successfully updated task");
+      toast.success(t("successToast"));
       setIsOpen(false);
       form.reset();
       trpcUtils.task.getAll.invalidate();
@@ -90,13 +92,13 @@ export const UpdateTaskDialog = ({ categories, task }: { categories: Category[];
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <PenIcon /> Edit
+          <PenIcon /> {t("trigger")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle> Edit Task</DialogTitle>
-          <DialogDescription>Fill in the fields below and click Submit to update task.</DialogDescription>
+          <DialogTitle> {t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

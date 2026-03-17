@@ -8,10 +8,11 @@ export const handler = async (req: Request): Promise<Response> => {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const now = new Date();
   const users = await prisma.user.findMany({
     include: {
       recurringTemplates: {
-        where: { nextDueDate: { lte: new Date() } },
+        where: { nextDueDate: { lte: now } },
         include: {
           tasks: {
             where: { status: { in: [TaskStatus.BLOCKED, TaskStatus.IN_PROGRESS, TaskStatus.PENDING] } },
@@ -19,8 +20,9 @@ export const handler = async (req: Request): Promise<Response> => {
           },
         },
       },
+      userSettings: { select: { timezone: true } },
     },
-    where: { recurringTemplates: { some: { nextDueDate: { lte: new Date() } } } },
+    where: { recurringTemplates: { some: { nextDueDate: { lte: now } } } },
   });
 
   const errors: Error[] = [];
@@ -31,41 +33,41 @@ export const handler = async (req: Request): Promise<Response> => {
         user.recurringTemplates.map(async (template) => {
           const activeTask = template.tasks[0];
 
-          if (activeTask) {
+          await prisma.$transaction(async (tx) => {
             try {
-              await prisma.$transaction(async (tx) => {
+              if (activeTask) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
-                await tx.task.create({
-                  data: {
-                    title: activeTask.title,
-                    description: activeTask.description,
-                    status: TaskStatus.PENDING,
-                    dueDate: template.nextDueDate,
-                    externalContact: activeTask.externalContact,
-                    categoryId: activeTask.categoryId,
-                    recurringTemplateId: template.id,
-                    link: activeTask.link,
-                    userId: user.id,
-                  },
-                });
-                await tx.recurringTemplate.update({
-                  where: { id: template.id },
-                  data: {
-                    nextDueDate: computeNextDueDate({
-                      recurrenceType: template.recurrenceType,
-                      dayOfMonth: template.dayOfMonth ?? undefined,
-                      dayOfWeek: template.dayOfWeek ?? undefined,
-                      from: template.nextDueDate,
-                    }),
-                  },
-                });
+              }
+              await tx.task.create({
+                data: {
+                  title: template.title,
+                  description: template.description,
+                  status: TaskStatus.PENDING,
+                  dueDate: template.nextDueDate,
+                  externalContact: template.externalContact,
+                  categoryId: template.categoryId,
+                  recurringTemplateId: template.id,
+                  link: template.link,
+                  userId: user.id,
+                },
+              });
+              await tx.recurringTemplate.update({
+                where: { id: template.id },
+                data: {
+                  nextDueDate: computeNextDueDate({
+                    recurrenceType: template.recurrenceType,
+                    dayOfMonth: template.dayOfMonth ?? undefined,
+                    dayOfWeek: template.dayOfWeek ?? undefined,
+                    from: template.nextDueDate,
+                    timezone: user.userSettings?.timezone ?? "Europe/Stockholm",
+                  }),
+                },
               });
             } catch (err) {
               console.error(err);
               errors.push(err as Error);
-              return;
             }
-          }
+          });
         }),
       );
     }),

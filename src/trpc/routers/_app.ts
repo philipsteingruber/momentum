@@ -4,6 +4,7 @@ import { noteRouter } from "./note";
 import { recurringTemplateRouter } from "./recurringTemplate";
 import { tagRouter } from "./tag";
 import { taskRouter } from "./task";
+import { userSettingsRouter } from "./user-settings";
 
 export const appRouter = createTRPCRouter({
   category: categoryRouter,
@@ -11,6 +12,7 @@ export const appRouter = createTRPCRouter({
   recurringTemplate: recurringTemplateRouter,
   tag: tagRouter,
   task: taskRouter,
+  userSettings: userSettingsRouter,
 });
 
 export type AppRouter = typeof appRouter;

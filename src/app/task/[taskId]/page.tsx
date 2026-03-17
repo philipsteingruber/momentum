@@ -23,10 +23,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useDialogState } from "@/hooks/use-dialog-state";
+import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { dateOnlyLocale } from "@/lib/date-utils";
 import { capitaliseFirstCharacter, parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
-import { differenceInDays, format, formatRelative } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { CalendarIcon, FileIcon, LinkIcon, TrashIcon, UserIcon, WorkflowIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -76,6 +77,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const isMutationRunning = isCreatingNote || isDeletingTask || isSnoozingTask;
   const [noteValue, setNoteValue] = useState<string>("");
   const { handleOpenChange, isOpen, setIsOpen } = useDialogState({ preventClose: isDeletingTask });
+  const { fmt, fmtRelative } = useFormatInUserTz();
 
   if (isError) {
     return (
@@ -135,7 +137,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
           {task.dueDate && (
             <div className="flex items-center gap-x-2">
               <CalendarIcon />
-              {`${format(task.dueDate, "yyyy-MM-dd")}${Math.abs(differenceInDays(task.dueDate, new Date())) < 7 ? ` (${capitaliseFirstCharacter(formatRelative(task.dueDate, new Date(), { locale: dateOnlyLocale }))})` : ""}`}
+              {`${fmt(task.dueDate, "yyyy-MM-dd")}${Math.abs(differenceInDays(task.dueDate, new Date())) < 7 ? ` (${capitaliseFirstCharacter(fmtRelative(task.dueDate, { locale: dateOnlyLocale }))})` : ""}`}
             </div>
           )}
           {task.externalContact && (
@@ -212,7 +214,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
                 <div className="flex w-40 items-center gap-x-2">
                   <CalendarIcon />
                   <span className="truncate">
-                    {capitaliseFirstCharacter(formatRelative(note.createdAt, new Date(), { locale: dateOnlyLocale }))}
+                    {capitaliseFirstCharacter(fmtRelative(note.createdAt, { locale: dateOnlyLocale }))}
                   </span>
                 </div>
               </div>

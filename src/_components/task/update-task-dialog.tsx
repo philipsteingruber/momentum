@@ -19,10 +19,10 @@ import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import type { Category, Task } from "@/generated/prisma/client";
 import { useDialogState } from "@/hooks/use-dialog-state";
+import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { updateTaskSchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format } from "date-fns";
 import { CalendarIcon, PenIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -48,6 +48,7 @@ export const UpdateTaskDialog = ({ categories, task }: { categories: Category[];
 
   const [datePickerOpen, setDatePickerOpen] = useState<boolean>(false);
   const trpcUtils = trpc.useUtils();
+  const { fmt } = useFormatInUserTz();
 
   const { mutate: updateTask, isPending: isUpdatingTask } = trpc.task.update.useMutation({
     onSuccess: () => {
@@ -146,7 +147,7 @@ export const UpdateTaskDialog = ({ categories, task }: { categories: Category[];
                     <PopoverTrigger asChild>
                       <Button>
                         <CalendarIcon />
-                        {field.value ? format(field.value, "yyyy-MM-dd") : "Pick a due date"}
+                        {field.value ? fmt(field.value, "yyyy-MM-dd") : "Pick a due date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent>

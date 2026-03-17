@@ -3,14 +3,15 @@ import { CardContent, CardDescription, CardHeader, CardTitle } from "@/component
 import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { dateOnlyLocale } from "@/lib/date-utils";
+import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { cn } from "@/lib/utils";
-import { formatRelative, isAfter } from "date-fns";
 import { CalendarIcon, LinkIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export const KanbanCardContent = ({ task }: { task: Task }) => {
   const router = useRouter();
+  const { fmtRelative, isOverdue } = useFormatInUserTz();
 
   return (
     <>
@@ -32,13 +33,13 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
             <span
               className={cn(
                 "text-sm",
-                isAfter(new Date(), task.dueDate) &&
+                isOverdue(task.dueDate) &&
                   task.status !== TaskStatus.CANCELLED &&
                   task.status !== TaskStatus.COMPLETED &&
                   "text-red-200",
               )}
             >
-              {formatRelative(task.dueDate, new Date(), { locale: dateOnlyLocale, weekStartsOn: 1 })}
+              {fmtRelative(task.dueDate, { locale: dateOnlyLocale, weekStartsOn: 1 })}
             </span>
           </div>
         )}

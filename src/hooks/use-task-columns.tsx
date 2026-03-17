@@ -11,15 +11,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { type Task } from "@/generated/prisma/client";
 import { dateOnlyLocale } from "@/lib/date-utils";
+import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { trpc } from "@/trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
-import { formatRelative } from "date-fns";
 import { ArrowUpDownIcon, MoreHorizontalIcon } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
 export function useTaskColumns() {
   const trpcUtils = trpc.useUtils();
+  const { fmtRelative } = useFormatInUserTz();
   const { mutate: snoozeTask } = trpc.task.snooze.useMutation({
     onSuccess: (_data, variables) => {
       toast.success(`Snoozed task by ${variables.days} day(s)`);
@@ -68,7 +69,7 @@ export function useTaskColumns() {
         ),
         cell: ({ row }) =>
           row.original.dueDate
-            ? formatRelative(row.original.dueDate, new Date(), { locale: dateOnlyLocale, weekStartsOn: 1 })
+            ? fmtRelative(row.original.dueDate, { locale: dateOnlyLocale, weekStartsOn: 1 })
             : "",
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.dueDate;
@@ -82,8 +83,7 @@ export function useTaskColumns() {
       {
         accessorKey: "createdAt",
         header: "Created",
-        cell: ({ row }) =>
-          formatRelative(row.original.createdAt, new Date(), { locale: dateOnlyLocale, weekStartsOn: 1 }),
+        cell: ({ row }) => fmtRelative(row.original.createdAt, { locale: dateOnlyLocale, weekStartsOn: 1 }),
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.createdAt;
           const b = rowB.original.createdAt;
@@ -93,7 +93,7 @@ export function useTaskColumns() {
       {
         accessorKey: "updatedAt",
         header: "Updated",
-        cell: ({ row }) => formatRelative(row.original.updatedAt, new Date(), { weekStartsOn: 1 }),
+        cell: ({ row }) => fmtRelative(row.original.updatedAt, { weekStartsOn: 1 }),
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.createdAt;
           const b = rowB.original.createdAt;
@@ -136,6 +136,6 @@ export function useTaskColumns() {
         },
       },
     ],
-    [snoozeTask],
+    [snoozeTask, fmtRelative],
   );
 }

@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
+import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { cn } from "@/lib/utils";
 import type { SortingState } from "@tanstack/react-table";
 import {
@@ -17,7 +18,6 @@ import {
   useReactTable,
   type ColumnDef,
 } from "@tanstack/react-table";
-import { isBefore, startOfDay } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -42,6 +42,7 @@ export const TaskDataTable = ({
   isUpdatingTaskStatus,
 }: DataTableProps) => {
   const router = useRouter();
+  const { isOverdue } = useFormatInUserTz();
 
   const [sorting, setSorting] = useState<SortingState>([{ id: "dueDate", desc: false }]);
   const [rowSelection, setRowSelection] = useState({});
@@ -92,11 +93,11 @@ export const TaskDataTable = ({
                 className={cn(
                   "cursor-pointer",
                   (() => {
-                    const isOverdue =
+                    const overdue =
                       !!row.original.dueDate &&
-                      isBefore(startOfDay(row.original.dueDate), startOfDay(new Date())) &&
+                      isOverdue(row.original.dueDate) &&
                       row.original.status !== TaskStatus.COMPLETED;
-                    return isOverdue && "bg-red-300/10 text-red-300";
+                    return overdue && "bg-red-300/10 text-red-300";
                   })(),
                 )}
               >

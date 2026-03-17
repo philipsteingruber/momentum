@@ -1,8 +1,8 @@
 import { TaskStatus } from "@/generated/prisma/enums";
-import { createTaskSchema } from "@/lib/schemas";
+import { createTaskSchema, updateTaskSchema } from "@/lib/schemas";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
-import { addDays, isAfter } from "date-fns";
+import { addDays } from "date-fns";
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
 
@@ -59,7 +59,7 @@ export const taskRouter = createTRPCRouter({
         title: input.title,
         description: input.description,
         dueDate: input.dueDate,
-        categoryId: input.categoryId ?? null,
+        categoryId: input.categoryId,
         externalContact: input.externalContact || null,
         link: input.link || null,
         userId: ctx.currentUser.id,
@@ -69,36 +69,22 @@ export const taskRouter = createTRPCRouter({
     return newTask;
   }),
 
-  update: authedProcedure
-    .input(
-      z.object({
-        taskId: z.cuid(),
-        data: z
-          .object({
-            title: z.string().min(1),
-            description: z.string(),
-            dueDate: z.date().refine((date) => isAfter(date, new Date())),
-            categoryId: z.cuid(),
-          })
-          .partial(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      try {
-        const updatedTask = await ctx.db.task.update({
-          where: { id: input.taskId, userId: ctx.currentUser.id },
-          data: input.data,
-        });
+  update: authedProcedure.input(updateTaskSchema).mutation(async ({ ctx, input }) => {
+    try {
+      const updatedTask = await ctx.db.task.update({
+        where: { id: input.taskId, userId: ctx.currentUser.id },
+        data: input.data,
+      });
 
-        return updatedTask;
-      } catch (err) {
-        if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
-          throw new TRPCError({ code: "NOT_FOUND" });
-        } else {
-          throw err;
-        }
+      return updatedTask;
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      } else {
+        throw err;
       }
-    }),
+    }
+  }),
 
   updateStatus: authedProcedure
     .input(z.object({ taskId: z.cuid(), newStatus: z.enum(TaskStatus) }))

@@ -22,12 +22,15 @@ export const Header = () => {
             <DropdownMenuTrigger asChild>
               <Button variant={"outline"}>Go to...</Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent className="w-fit">
               <Link href={"/tasks"}>
                 <DropdownMenuItem>Tasks</DropdownMenuItem>
               </Link>
               <Link href={"/categories"}>
                 <DropdownMenuItem>Categories</DropdownMenuItem>
+              </Link>
+              <Link href={"/templates"}>
+                <DropdownMenuItem>Recurring Task Templates</DropdownMenuItem>
               </Link>
             </DropdownMenuContent>
           </DropdownMenu>

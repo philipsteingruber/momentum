@@ -15,19 +15,21 @@ export const isOverdue = (dueDate: Date | null): boolean => {
   return dueDate ? isAfter(new Date(), dueDate) : false;
 };
 
+export const OVERDUE_STATUS = "OVERDUE" as const;
+
 export const groupTasksByStatus = (tasks: Task[]) => {
   const tasksByGroup = tasks.reduce(
     (groups, task) => {
       groups[task.status].push(task);
       return groups;
     },
-    { PENDING: [], IN_PROGRESS: [], BLOCKED: [], COMPLETED: [], CANCELLED: [], OVERDUE: [] } as Record<
-      TaskStatus | "OVERDUE",
+    { PENDING: [], IN_PROGRESS: [], BLOCKED: [], COMPLETED: [], CANCELLED: [], OVERDUE: [], SKIPPED: [] } as Record<
+      TaskStatus | typeof OVERDUE_STATUS,
       Task[]
     >,
   );
 
-  tasksByGroup.OVERDUE = tasks.filter(
+  tasksByGroup[OVERDUE_STATUS] = tasks.filter(
     (task) =>
       task.dueDate &&
       isBefore(startOfDay(task.dueDate), startOfDay(new Date())) &&

@@ -78,6 +78,7 @@ export const UpdateTemplateForm = ({
     updateTemplate(data);
   };
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedRecurrenceType = form.watch("data.recurrenceType");
   const formId = `updateTemplate-${template.id}`;
 

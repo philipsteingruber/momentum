@@ -92,12 +92,12 @@ export const UpdateTemplateForm = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={`title-${template.id}`}>Title</FieldLabel>
+              <FieldLabel htmlFor={`title-${template.id}`}>{t("titleLabel")}</FieldLabel>
               <Input
                 {...field}
                 id={`title-${template.id}`}
                 aria-invalid={fieldState.invalid}
-                placeholder="Enter a title"
+                placeholder={t("titlePlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -109,12 +109,12 @@ export const UpdateTemplateForm = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={`description-${template.id}`}>Description</FieldLabel>
+              <FieldLabel htmlFor={`description-${template.id}`}>{t("descriptionLabel")}</FieldLabel>
               <Input
                 {...field}
                 id={`description-${template.id}`}
                 aria-invalid={fieldState.invalid}
-                placeholder="Enter a description"
+                placeholder={t("descriptionPlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -130,10 +130,10 @@ export const UpdateTemplateForm = ({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Recurrence Type</FieldLabel>
+                <FieldLabel>{t("recurrenceTypeLabel")}</FieldLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Recurrence Type" />
+                    <SelectValue placeholder={t("recurrenceTypePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent position="popper">
                     {Object.keys(RecurrenceType).map((type) => (
@@ -152,10 +152,10 @@ export const UpdateTemplateForm = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>On Every</FieldLabel>
+                  <FieldLabel>{t("onEveryLabel")}</FieldLabel>
                   <Select value={field.value?.toString()} onValueChange={(val) => field.onChange(Number(val))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose day of the month" />
+                      <SelectValue placeholder={t("dayOfMonthPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent position="popper">
                       {DAY_OF_MONTH_OPTIONS.map((day) => (
@@ -175,10 +175,10 @@ export const UpdateTemplateForm = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>On Every</FieldLabel>
+                  <FieldLabel>{t("onEveryLabel")}</FieldLabel>
                   <Select value={field.value?.toString()} onValueChange={(val) => field.onChange(Number(val))}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose day of the week" />
+                      <SelectValue placeholder={t("dayOfWeekPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent position="popper">
                       {DAY_OF_WEEK_OPTIONS.map((day) => (
@@ -198,10 +198,10 @@ export const UpdateTemplateForm = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Category</FieldLabel>
+              <FieldLabel>{t("categoryLabel")}</FieldLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a Category" />
+                  <SelectValue placeholder={t("categoryPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent position="popper">
                   {categories.map((category) => (
@@ -219,12 +219,12 @@ export const UpdateTemplateForm = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={`externalContact-${template.id}`}>External Contact</FieldLabel>
+              <FieldLabel htmlFor={`externalContact-${template.id}`}>{t("externalContactLabel")}</FieldLabel>
               <Input
                 {...field}
                 id={`externalContact-${template.id}`}
                 aria-invalid={fieldState.invalid}
-                placeholder="Enter any External Contacts"
+                placeholder={t("externalContactPlaceholder")}
                 autoComplete="off"
               />
             </Field>
@@ -235,12 +235,12 @@ export const UpdateTemplateForm = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor={`link-${template.id}`}>External Link</FieldLabel>
+              <FieldLabel htmlFor={`link-${template.id}`}>{t("externalLinkLabel")}</FieldLabel>
               <Input
                 {...field}
                 id={`link-${template.id}`}
                 aria-invalid={fieldState.invalid}
-                placeholder="Enter any External Link"
+                placeholder={t("externalLinkPlaceholder")}
                 autoComplete="off"
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -250,12 +250,12 @@ export const UpdateTemplateForm = ({
       </FieldGroup>
       <div className="flex w-full items-center justify-end gap-x-4 pr-4">
         <Button disabled={isUpdatingTemplate} onClick={() => form.reset()} variant={"outline"} type="button">
-          Reset
+          {t("reset")}
         </Button>
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
           <DialogTrigger asChild>
             <Button variant={"destructive"} type="button">
-              Delete
+              {t("delete")}
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -267,10 +267,10 @@ export const UpdateTemplateForm = ({
             </DialogHeader>
             <DialogFooter>
               <DialogClose asChild>
-                <Button variant={"outline"}>Back</Button>
+                <Button variant={"outline"}>{t("back")}</Button>
               </DialogClose>
               <Button variant={"destructive"} onClick={() => deleteTemplate({ templateId: template.id })}>
-                {isDeletingTemplate ? <Spinner /> : "Confirm"}
+                {isDeletingTemplate ? <Spinner /> : t("confirm")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -280,7 +280,7 @@ export const UpdateTemplateForm = ({
           type="submit"
           form={formId}
         >
-          {isUpdatingTemplate ? <Spinner /> : "Submit"}
+          {isUpdatingTemplate ? <Spinner /> : t("submit")}
         </Button>
       </div>
     </form>

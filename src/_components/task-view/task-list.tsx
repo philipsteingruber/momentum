@@ -49,7 +49,7 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
       return taskCache;
     },
     onError: (_error, _variables, context) => {
-      toast.error("Failed to update task status");
+      toast.error(t("failedStatusUpdate"));
       trpcUtils.task.getAll.setData({ categoryId: activeCategoryId }, () => context);
     },
     onSettled: () => trpcUtils.task.getAll.invalidate({ categoryId: activeCategoryId }),

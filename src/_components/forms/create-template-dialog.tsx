@@ -102,12 +102,12 @@ const CreateTemplateDialog = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="title">Title</FieldLabel>
+                  <FieldLabel htmlFor="title">{t("titleLabel")}</FieldLabel>
                   <Input
                     {...field}
                     id="title"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Enter a title"
+                    placeholder={t("titlePlaceholder")}
                     autoComplete="off"
                     autoFocus
                   />
@@ -120,12 +120,12 @@ const CreateTemplateDialog = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="description">Description</FieldLabel>
+                  <FieldLabel htmlFor="description">{t("descriptionLabel")}</FieldLabel>
                   <Input
                     {...field}
                     id="description"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Enter a description"
+                    placeholder={t("descriptionPlaceholder")}
                     autoComplete="off"
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -209,10 +209,10 @@ const CreateTemplateDialog = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Category</FieldLabel>
+                  <FieldLabel>{t("categoryLabel")}</FieldLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a Category" />
+                      <SelectValue placeholder={t("categoryPlaceholder")} />
                     </SelectTrigger>
                     <SelectContent position="popper">
                       {categories.map((category) => (
@@ -230,12 +230,12 @@ const CreateTemplateDialog = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="externalContact">External Contact</FieldLabel>
+                  <FieldLabel htmlFor="externalContact">{t("externalContactLabel")}</FieldLabel>
                   <Input
                     {...field}
                     id="externalContact"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Enter any External Contacts"
+                    placeholder={t("externalContactPlaceholder")}
                     autoComplete="off"
                   />
                 </Field>
@@ -246,12 +246,12 @@ const CreateTemplateDialog = ({
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="link">External Link</FieldLabel>
+                  <FieldLabel htmlFor="link">{t("externalLinkLabel")}</FieldLabel>
                   <Input
                     {...field}
                     id="link"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Enter any External Link"
+                    placeholder={t("externalLinkPlaceholder")}
                     autoComplete="off"
                   />
                 </Field>
@@ -261,10 +261,10 @@ const CreateTemplateDialog = ({
           <Separator className="my-4" />
           <div className="flex w-full items-center justify-end gap-x-4">
             <DialogClose asChild>
-              <Button variant={"outline"}>Cancel</Button>
+              <Button variant={"outline"}>{t("cancel")}</Button>
             </DialogClose>
             <Button type="submit" disabled={!form.formState.isValid || isCreatingTemplate}>
-              {isCreatingTemplate ? <Spinner /> : "Submit"}
+              {isCreatingTemplate ? <Spinner /> : t("submit")}
             </Button>
           </div>
         </form>

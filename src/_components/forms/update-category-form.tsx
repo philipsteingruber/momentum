@@ -116,7 +116,7 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
           </DialogContent>
         </Dialog>
         <Button disabled={isUpdatingCategory || !form.formState.isValid || !form.formState.isDirty} type="submit">
-          {isUpdatingCategory ? <Spinner /> : "Submit"}
+          {isUpdatingCategory ? <Spinner /> : t("submit")}
         </Button>
       </div>
     </form>

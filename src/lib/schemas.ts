@@ -9,7 +9,7 @@ export const createTaskSchema = z.object({
     .date()
     .refine((date) => !isBefore(startOfDay(date), startOfDay(new Date())), "Due Date cannot be in the past")
     .optional(),
-  categoryId: z.cuid("Incorrectly formatted category ID").optional(),
+  categoryId: z.cuid("Incorrectly formatted category ID"),
   externalContact: z.string().optional(),
   link: z.url("Must be a valid URL").or(z.literal("")).optional(),
 });
@@ -28,7 +28,7 @@ const baseRecurringTemplateSchema = createTaskSchema
   .extend({
     recurrenceType: z.enum(RecurrenceType),
     dayOfWeek: z.int().nonnegative().max(6).optional(),
-    dayOfMonth: z.int().nonnegative().max(30).optional(),
+    dayOfMonth: z.int().min(1).max(31).optional(),
   })
   .omit({ dueDate: true });
 

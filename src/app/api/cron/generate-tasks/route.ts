@@ -55,6 +55,7 @@ export const handler = async (req: Request): Promise<Response> => {
                       recurrenceType: template.recurrenceType,
                       dayOfMonth: template.dayOfMonth ?? undefined,
                       dayOfWeek: template.dayOfWeek ?? undefined,
+                      from: template.nextDueDate,
                     }),
                   },
                 });

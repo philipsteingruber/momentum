@@ -4,7 +4,7 @@ import { EmptyCard } from "@/_components/cards/empty-card";
 import { ErrorCard } from "@/_components/cards/error-card";
 import { LoadingCard } from "@/_components/cards/loading-card";
 import { CreateCategoryDialog } from "@/_components/forms/create-category-dialog";
-import { UpdateCategoryForm } from "@/_components/forms/edit-category-form";
+import { UpdateCategoryForm } from "@/_components/forms/update-category-form";
 import { MaxWidthWrapper } from "@/_components/max-width-wrapper";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

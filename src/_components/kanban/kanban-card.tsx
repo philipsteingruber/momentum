@@ -20,7 +20,7 @@ const KanbanCard = ({ task }: { task: Task }) => {
       <Card
         {...listeners}
         className={cn(
-          "border-primary h-[175px] w-full border",
+          "border-primary h-[200px] w-full border",
           isDragging ? "opacity-40" : "opacity-100",
           task.dueDate &&
             isAfter(startOfDay(new Date()), startOfDay(task.dueDate)) &&

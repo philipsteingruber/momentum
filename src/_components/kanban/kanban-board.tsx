@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { TaskStatus } from "@/generated/prisma/enums";
-import { groupTasksByStatus } from "@/lib/task-utils";
+import { OVERDUE_STATUS, groupTasksByStatus } from "@/lib/task-utils";
 import type { TaskWithTags } from "@/lib/types/task";
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { useState } from "react";
@@ -49,8 +49,8 @@ export const KanbanBoard = ({
       sensors={sensors}
     >
       <div className="flex gap-x-4">
-        {(Object.keys(tasksByStatus) as TaskStatus[])
-          .filter((status) => status !== TaskStatus.SKIPPED)
+        {(Object.keys(tasksByStatus) as (TaskStatus | typeof OVERDUE_STATUS)[])
+          .filter((status) => status !== TaskStatus.SKIPPED && status !== OVERDUE_STATUS)
           .map((status) => {
             return <KanbanColumn key={status} tasks={tasksByStatus[status]} status={status} isPending={isPending} />;
           })}

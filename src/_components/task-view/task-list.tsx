@@ -16,6 +16,7 @@ import { KanbanSquareIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TaskDataTable } from "../data-table";
+import CreateTemplateDialog from "../forms/create-template-dialog";
 import { KanbanBoard } from "../kanban/kanban-board";
 import CreateTaskDialog from "../task/create-task-dialog";
 
@@ -122,6 +123,7 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
                 />
               </div>
               <CreateTaskDialog categories={categories ?? []} defaultCategoryId={selectedCategoryId ?? undefined} />
+              <CreateTemplateDialog categories={categories ?? []} defaultCategoryId={selectedCategoryId ?? undefined} />
             </div>
           </div>
         </TabsList>

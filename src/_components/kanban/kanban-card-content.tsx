@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
@@ -24,6 +25,7 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
         <CardDescription className="line-clamp-2 text-sm">{task.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-y-2">
+        {task.recurringTemplateId && <Badge>Recurring</Badge>}
         {task.dueDate && (
           <div className="flex items-center gap-x-2">
             <CalendarIcon className="size-4" />

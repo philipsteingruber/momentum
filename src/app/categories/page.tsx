@@ -10,28 +10,30 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { trpc } from "@/trpc/client";
 import { ArrowUpDownIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const Page = () => {
+  const t = useTranslations("CategoriesPage");
   const { data: categories, isPending: isLoadingCategories, isError, error } = trpc.category.getAll.useQuery();
 
   if (isLoadingCategories) {
     return (
       <MaxWidthWrapper>
-        <LoadingCard title="Categories" className="w-full" />
+        <LoadingCard title={t("title")} className="w-full" />
       </MaxWidthWrapper>
     );
   }
   if (isError) {
     return (
       <MaxWidthWrapper>
-        <ErrorCard title="Categories" error={error.message} className="w-full" />
+        <ErrorCard title={t("title")} error={error.message} className="w-full" />
       </MaxWidthWrapper>
     );
   }
   if (categories.length === 0) {
     return (
       <MaxWidthWrapper>
-        <EmptyCard title="Categories" message="No categories found." />
+        <EmptyCard title={t("title")} message={t("empty")} />
       </MaxWidthWrapper>
     );
   }
@@ -40,7 +42,7 @@ const Page = () => {
     <MaxWidthWrapper>
       <Card className="w-full">
         <CardHeader className="flex w-full items-center justify-between">
-          <CardTitle>Categories</CardTitle>
+          <CardTitle>{t("title")}</CardTitle>
           <CreateCategoryDialog />
         </CardHeader>
         <CardContent className="flex flex-col gap-y-4 px-4">

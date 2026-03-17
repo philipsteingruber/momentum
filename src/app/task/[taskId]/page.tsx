@@ -24,11 +24,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useDialogState } from "@/hooks/use-dialog-state";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
-import { dateOnlyLocale } from "@/lib/date-utils";
 import { capitaliseFirstCharacter, parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { differenceInDays } from "date-fns";
-import { CalendarIcon, FileIcon, LinkIcon, TrashIcon, UserIcon, WorkflowIcon } from "lucide-react";
+import { CalendarIcon, CheckIcon, FileIcon, LinkIcon, TrashIcon, UserIcon, WorkflowIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
@@ -36,6 +36,7 @@ import { toast } from "sonner";
 
 const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const { taskId } = use(params);
+  const t = useTranslations("TaskDetailPage");
 
   const trpcUtils = trpc.useUtils();
   const router = useRouter();
@@ -45,20 +46,21 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
 
   const { mutate: createNote, isPending: isCreatingNote } = trpc.note.create.useMutation({
     onSuccess: () => {
-      toast.success("Note created");
+      toast.success(t("noteCreatedToast"));
       setNoteValue("");
       trpcUtils.task.getById.invalidate({ taskId });
     },
   });
   const { mutate: updateTaskStatus, isPending: isUpdatingStatus } = trpc.task.updateStatus.useMutation({
     onSuccess: (data) => {
-      toast.success(`Updated task status to ${parseTaskStatus(data.status)}`);
+      toast.success(t("statusUpdatedToast", { status: parseTaskStatus(data.status) }));
       trpcUtils.task.getById.invalidate({ taskId });
+      trpcUtils.category.getAll.invalidate();
     },
   });
   const { mutate: deleteTask, isPending: isDeletingTask } = trpc.task.delete.useMutation({
     onSuccess: () => {
-      toast.success("Task successfully deleted");
+      toast.success(t("deletedToast"));
       trpcUtils.task.getAll.invalidate();
       trpcUtils.category.getAll.invalidate();
       setIsOpen(false);
@@ -67,7 +69,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   });
   const { mutate: snoozeTask, isPending: isSnoozingTask } = trpc.task.snooze.useMutation({
     onSuccess: (_data, variables) => {
-      toast.success(`Task successfully snoozed for ${variables.days} day${variables.days > 1 ? "s" : ""}`);
+      toast.success(t("snoozedToast", { days: variables.days }));
       trpcUtils.task.getAll.invalidate();
       trpcUtils.task.getById.invalidate({ taskId });
       trpcUtils.category.getAll.invalidate();
@@ -82,21 +84,21 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   if (isError) {
     return (
       <MaxWidthWrapper>
-        <ErrorCard className="w-full" title="Task Details" error={error.message} />
+        <ErrorCard className="w-full" title={t("cardTitle")} error={error.message} />
       </MaxWidthWrapper>
     );
   }
   if (isLoadingTask) {
     return (
       <MaxWidthWrapper>
-        <LoadingCard className="w-full" title="Task Details" />
+        <LoadingCard className="w-full" title={t("cardTitle")} />
       </MaxWidthWrapper>
     );
   }
   if (!task) {
     return (
       <MaxWidthWrapper>
-        <EmptyCard className="w-full" title="Task Details" />
+        <EmptyCard className="w-full" title={t("cardTitle")} />
       </MaxWidthWrapper>
     );
   }
@@ -137,7 +139,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
           {task.dueDate && (
             <div className="flex items-center gap-x-2">
               <CalendarIcon />
-              {`${fmt(task.dueDate, "yyyy-MM-dd")}${Math.abs(differenceInDays(task.dueDate, new Date())) < 7 ? ` (${capitaliseFirstCharacter(fmtRelative(task.dueDate, { locale: dateOnlyLocale }))})` : ""}`}
+              {`${fmt(task.dueDate, "yyyy-MM-dd")}${Math.abs(differenceInDays(task.dueDate, new Date())) < 7 ? ` (${capitaliseFirstCharacter(fmtRelative(task.dueDate))})` : ""}`}
             </div>
           )}
           {task.externalContact && (
@@ -159,35 +161,48 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
               <DialogTrigger asChild>
                 <Button variant={"destructive"} disabled={isMutationRunning}>
                   <TrashIcon />
-                  Delete
+                  {t("delete")}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Really delete task?</DialogTitle>
-                  <DialogDescription>{`This will permanently delete the task and its ${task.notes.length} associated note(s).`}</DialogDescription>
+                  <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
+                  <DialogDescription>{t("deleteDialogDescription", { count: task.notes.length })}</DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
                   <DialogClose asChild>
-                    <Button variant={"outline"}>Back</Button>
+                    <Button variant={"outline"}>{t("back")}</Button>
                   </DialogClose>
                   <Button onClick={() => deleteTask({ taskId })} disabled={isMutationRunning} variant={"destructive"}>
-                    {isDeletingTask ? <Spinner /> : "Confirm"}
+                    {isDeletingTask ? <Spinner /> : t("confirm")}
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
             <UpdateTaskDialog categories={categories ?? []} task={task} />
+            <Button
+              onClick={() => updateTaskStatus({ taskId, newStatus: TaskStatus.COMPLETED })}
+              disabled={isUpdatingStatus}
+            >
+              {isUpdatingStatus ? (
+                <Spinner />
+              ) : (
+                <div className="flex items-center gap-x-2">
+                  <CheckIcon />
+                  {t("complete")}
+                </div>
+              )}
+            </Button>
             {task.dueDate && (
               <>
                 <Button onClick={() => snoozeTask({ taskId, days: 1 })} disabled={isMutationRunning} className="w-30">
-                  {isSnoozingTask ? <Spinner /> : "Snooze 1 day"}
+                  {isSnoozingTask ? <Spinner /> : t("snooze1Day")}
                 </Button>
                 <Button onClick={() => snoozeTask({ taskId, days: 3 })} disabled={isMutationRunning} className="w-30">
-                  {isSnoozingTask ? <Spinner /> : "Snooze 3 days"}
+                  {isSnoozingTask ? <Spinner /> : t("snooze3Days")}
                 </Button>
                 <Button onClick={() => snoozeTask({ taskId, days: 7 })} disabled={isMutationRunning} className="w-30">
-                  {isSnoozingTask ? <Spinner /> : "Snooze 7 days"}
+                  {isSnoozingTask ? <Spinner /> : t("snooze7Days")}
                 </Button>
               </>
             )}
@@ -205,7 +220,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
                 onClick={() => createNote({ content: noteValue, taskId })}
                 className="w-40"
               >
-                {isCreatingNote ? <Spinner /> : "Add Note"}
+                {isCreatingNote ? <Spinner /> : t("addNote")}
               </Button>
             </div>
             {task.notes.map((note) => (
@@ -213,9 +228,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
                 <Textarea value={note.content} className="flex-1 resize-none" readOnly />
                 <div className="flex w-40 items-center gap-x-2">
                   <CalendarIcon />
-                  <span className="truncate">
-                    {capitaliseFirstCharacter(fmtRelative(note.createdAt, { locale: dateOnlyLocale }))}
-                  </span>
+                  <span className="truncate">{capitaliseFirstCharacter(fmtRelative(note.createdAt))}</span>
                 </div>
               </div>
             ))}

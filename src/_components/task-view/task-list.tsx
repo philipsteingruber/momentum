@@ -13,6 +13,7 @@ import { useTaskColumns } from "@/hooks/use-task-columns";
 import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { KanbanSquareIcon, XIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TaskDataTable } from "../data-table";
@@ -21,19 +22,20 @@ import { KanbanBoard } from "../kanban/kanban-board";
 import CreateTaskDialog from "../task/create-task-dialog";
 
 export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) => {
+  const t = useTranslations("TaskList");
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
 
   const trpcUtils = trpc.useUtils();
   const { mutate: deleteTask, isPending: isDeletingTask } = trpc.task.delete.useMutation({
     onSuccess: () => {
-      toast.success("Successfully deleted task(s)");
+      toast.success(t("deletedToast"));
       trpcUtils.task.getAll.invalidate();
     },
   });
 
   const { mutate: updateTaskStatus, isPending: isUpdatingTaskStatus } = trpc.task.updateStatus.useMutation({
     onSuccess: (_data, variables) => {
-      toast.success(`Successfully marked task(s) as ${parseTaskStatus(variables.newStatus)}`);
+      toast.success(t("statusUpdatedToast", { status: parseTaskStatus(variables.newStatus) }));
       trpcUtils.task.getAll.invalidate();
       trpcUtils.category.getAll.invalidate();
     },
@@ -99,7 +101,7 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
             </div>
             <div className="flex items-center gap-x-8">
               <div className="flex items-center gap-x-4">
-                <Label>Search</Label>
+                <Label>{t("search")}</Label>
                 <div className="flex items-center gap-x-0">
                   <Input
                     value={searchQuery}
@@ -114,7 +116,7 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
               <div className="flex items-center gap-x-2">
                 <Label htmlFor="switchView">
                   <KanbanSquareIcon />
-                  Kanban View
+                  {t("kanbanView")}
                 </Label>
                 <Switch
                   checked={selectedView === "kanban"}
@@ -153,7 +155,7 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
               {isLoadingCategories ? (
                 <Spinner />
               ) : isEmpty ? (
-                <p className="text-muted-foreground">No categories found. Create one to get started.</p>
+                <p className="text-muted-foreground">{t("noCategoriesEmpty")}</p>
               ) : null}
             </CardContent>
           </Card>

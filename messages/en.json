@@ -1,0 +1,150 @@
+{
+  "Header": {
+    "tasks": "Tasks",
+    "categories": "Categories",
+    "recurringTaskTemplates": "Recurring Task Templates",
+    "settings": "Settings",
+    "signIn": "Sign In",
+    "signUp": "Sign Up"
+  },
+  "Sidebar": {
+    "categories": "Categories",
+    "addCategory": "Add Category"
+  },
+  "Settings": {
+    "title": "User Settings",
+    "timezone": "Timezone",
+    "timezonePlaceholder": "Select a timezone",
+    "timezoneEmpty": "No timezones found",
+    "languageLabel": "Language",
+    "languagePlaceholder": "Pick your preferred language",
+    "save": "Save",
+    "savedToast": "Settings saved."
+  },
+  "CreateTaskDialog": {
+    "trigger": "Add",
+    "title": "Create Task",
+    "description": "Fill in the fields below and click Submit to create a new task",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter a title",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter a description",
+    "dueDateLabel": "Due Date",
+    "dueDatePlaceholder": "Pick a due date",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select a Category",
+    "externalContactLabel": "External Contact",
+    "externalContactPlaceholder": "Enter any External Contacts",
+    "externalLinkLabel": "External Link",
+    "externalLinkPlaceholder": "Enter any External Link",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "successToast": "Successfully created task"
+  },
+  "UpdateTaskDialog": {
+    "trigger": "Edit",
+    "title": "Edit Task",
+    "description": "Fill in the fields below and click Submit to update task.",
+    "successToast": "Successfully updated task"
+  },
+  "TaskDetailPage": {
+    "cardTitle": "Task Details",
+    "deleteDialogTitle": "Really delete task?",
+    "deleteDialogDescription": "This will permanently delete the task and its {count} associated note(s).",
+    "back": "Back",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "snooze1Day": "Snooze 1 day",
+    "snooze3Days": "Snooze 3 days",
+    "snooze7Days": "Snooze 7 days",
+    "addNote": "Add Note",
+    "noteCreatedToast": "Note created",
+    "statusUpdatedToast": "Updated task status to {status}",
+    "deletedToast": "Task successfully deleted",
+    "snoozedToast": "Task successfully snoozed for {days} day(s)",
+    "complete": "Complete"
+  },
+  "TaskList": {
+    "search": "Search",
+    "kanbanView": "Kanban View",
+    "noCategoriesEmpty": "No categories found. Create one to get started.",
+    "deletedToast": "Successfully deleted task(s)",
+    "statusUpdatedToast": "Successfully marked task(s) as {status}"
+  },
+  "DataTable": {
+    "noResults": "No results.",
+    "delete": "Delete",
+    "complete": "Complete"
+  },
+  "TaskColumns": {
+    "titleHeader": "Title",
+    "dueDateHeader": "Due Date",
+    "createdHeader": "Created",
+    "updatedHeader": "Updated",
+    "statusHeader": "Status",
+    "snoozeLabel": "Snooze",
+    "snooze1Day": "1 day",
+    "snooze3Days": "3 days",
+    "snooze7Days": "7 days",
+    "snoozedToast": "Snoozed task by {days} day(s)",
+    "selectAll": "Select all",
+    "selectRow": "Select row",
+    "openMenu": "Open menu"
+  },
+  "KanbanBoard": {
+    "noTasks": "No tasks found"
+  },
+  "CreateCategoryDialog": {
+    "title": "New Category",
+    "nameLabel": "Name",
+    "colorLabel": "Color (not implemented)",
+    "createdToast": "Category Created"
+  },
+  "UpdateCategoryForm": {
+    "reset": "Reset",
+    "delete": "Delete",
+    "deleteDialogTitle": "Really delete category?",
+    "deleteDialogDescription": "This cannot be reversed.",
+    "back": "Back",
+    "confirm": "Confirm",
+    "updatedToast": "Successfully updated category",
+    "deletedToast": "Successfully deleted category"
+  },
+  "CategoriesPage": {
+    "title": "Categories",
+    "empty": "No categories found."
+  },
+  "CreateTemplateDialog": {
+    "trigger": "Add Template",
+    "title": "Create Template",
+    "description": "Fill in the fields below and click Submit to create a new recurring template",
+    "recurrenceTypeLabel": "Recurrence Type",
+    "recurrenceTypePlaceholder": "Select Recurrence Type",
+    "onEveryLabel": "On Every",
+    "dayOfMonthPlaceholder": "Choose day of the month",
+    "dayOfWeekPlaceholder": "Choose day of the week",
+    "createdToast": "Successfully created template"
+  },
+  "UpdateTemplateForm": {
+    "deleteDialogTitle": "Really delete template?",
+    "deleteDialogDescription": "This will permanently delete the template and all associated pending tasks. Completed tasks will be unlinked but preserved.",
+    "updatedToast": "Successfully updated template",
+    "deletedToast": "Successfully deleted template"
+  },
+  "TemplatesPage": {
+    "title": "Templates",
+    "empty": "No templates found."
+  },
+  "EmptyCard": {
+    "default": "No items found."
+  },
+  "TaskStatus": {
+    "PENDING": "Pending",
+    "IN_PROGRESS": "In Progress",
+    "BLOCKED": "Blocked",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled",
+    "SKIPPED": "Skipped",
+    "OVERDUE": "Overdue"
+  }
+}

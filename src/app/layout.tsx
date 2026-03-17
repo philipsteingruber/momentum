@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 import { TRPCProvider } from "@/trpc/client";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { ThemeProvider } from "next-themes";
 import { Geist, Lora, Roboto_Mono } from "next/font/google";
 import { Toaster } from "sonner";
@@ -28,25 +30,30 @@ export const metadata: Metadata = {
   description: "Healthcare Scheduling",
 };
 
-const RootLayout = ({
+const RootLayout = async ({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>): React.ReactElement => {
+}>): Promise<React.ReactElement> => {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <ClerkProvider>
       <TRPCProvider>
-        <html lang="en" className={cn("h-full w-full", "font-sans", geist.variable)} suppressHydrationWarning>
+        <html lang={locale} className={cn("h-full w-full", "font-sans", geist.variable)} suppressHydrationWarning>
           <body className={`${geist.variable} ${lora.variable} ${robotoMono.variable} h-full w-full antialiased`}>
             <TooltipProvider>
               <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                 <SidebarProvider>
-                  <AppSidebar />
-                  <div className="flex min-h-screen w-full flex-col items-center justify-center">
-                    <Header />
-                    {children}
-                  </div>
-                  <Toaster />
+                  <NextIntlClientProvider locale={locale} messages={messages}>
+                    <AppSidebar />
+                    <div className="flex min-h-screen w-full flex-col items-center justify-center">
+                      <Header />
+                      {children}
+                    </div>
+                    <Toaster />
+                  </NextIntlClientProvider>
                 </SidebarProvider>
               </ThemeProvider>
             </TooltipProvider>

@@ -1,0 +1,150 @@
+{
+  "Header": {
+    "tasks": "Uppgifter",
+    "categories": "Kategorier",
+    "recurringTaskTemplates": "Återkommande uppgifter",
+    "settings": "Inställningar",
+    "signIn": "Logga In",
+    "signUp": "Registrera"
+  },
+  "Sidebar": {
+    "categories": "Kategorier",
+    "addCategory": "Lägg till Kategori"
+  },
+  "Settings": {
+    "title": "Användarinställningar",
+    "timezone": "Tidszon",
+    "timezonePlaceholder": "Välj en Tidszon",
+    "timezoneEmpty": "Inga tidszoner hittades",
+    "languageLabel": "Språk",
+    "languagePlaceholder": "Välj ditt föredragna språk",
+    "save": "Spara",
+    "savedToast": "Inställningar sparade."
+  },
+  "CreateTaskDialog": {
+    "trigger": "Skapa",
+    "title": "Ny Uppgift",
+    "description": "Fyll i fälten nedan och klicka på Skapa för att skapa en ny uppgift",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Ange en Titel",
+    "descriptionLabel": "Beskrivning",
+    "descriptionPlaceholder": "Ange en Beskrivning",
+    "dueDateLabel": "Förfallodatum",
+    "dueDatePlaceholder": "Välj ett Förfallodatum",
+    "categoryLabel": "Kategori",
+    "categoryPlaceholder": "Välj en Kategori",
+    "externalContactLabel": "Extern Part",
+    "externalContactPlaceholder": "Ange ev. Extern Part",
+    "externalLinkLabel": "Länk",
+    "externalLinkPlaceholder": "Ange ev Länk",
+    "cancel": "Avbryt",
+    "submit": "Skapa",
+    "successToast": "Uppgift skapad"
+  },
+  "UpdateTaskDialog": {
+    "trigger": "Uppdatera",
+    "title": "Uppdatera Uppgift",
+    "description": "Fyll i fälten nedan och klicka på Uppdatera för att uppdatera denna uppgift",
+    "successToast": "Uppgift uppdaterad"
+  },
+  "TaskDetailPage": {
+    "cardTitle": "Uppgift",
+    "deleteDialogTitle": "Vill du verkligen ta bort denna uppgift?",
+    "deleteDialogDescription": "Detta tar permanent bort uppgiften och dess {count} anteckningar",
+    "back": "Tillbaka",
+    "delete": "Ta Bort",
+    "confirm": "Bekräfta",
+    "snooze1Day": "Skjut upp 1 dag",
+    "snooze3Days": "Skjut upp 3 dagar",
+    "snooze7Days": "Skjut upp 7 dagar",
+    "addNote": "Lägg till Anteckning",
+    "noteCreatedToast": "Anteckning skapad",
+    "statusUpdatedToast": "Status uppdaterad till {status}",
+    "deletedToast": "Uppgift borttagen",
+    "snoozedToast": "Uppgift uppskjuten {days} dag(ar)",
+    "complete": "Slutför"
+  },
+  "TaskList": {
+    "search": "Sök",
+    "kanbanView": "Kanban-vy",
+    "noCategoriesEmpty": "Inga kategorier hittades. Skapa en för att komma igång.",
+    "deletedToast": "Uppgifter borttagna",
+    "statusUpdatedToast": "Status uppdaterad till {status}"
+  },
+  "DataTable": {
+    "noResults": "Inga träffar.",
+    "delete": "Ta Bort",
+    "complete": "Slutför"
+  },
+  "TaskColumns": {
+    "titleHeader": "Titel",
+    "dueDateHeader": "Förfallodatum",
+    "createdHeader": "Skapad",
+    "updatedHeader": "Uppdaterad",
+    "statusHeader": "Status",
+    "snoozeLabel": "Skjut Upp",
+    "snooze1Day": "1 dag",
+    "snooze3Days": "3 dagar",
+    "snooze7Days": "7 dagar",
+    "snoozedToast": "Uppgift uppskjuten {days} dag(ar)",
+    "selectAll": "Markera alla",
+    "selectRow": "Markera rad",
+    "openMenu": "Öppna meny"
+  },
+  "KanbanBoard": {
+    "noTasks": "Inga uppgifter hittades"
+  },
+  "CreateCategoryDialog": {
+    "title": "Ny Kategori",
+    "nameLabel": "Namn",
+    "colorLabel": "Färg (ej implementerat)",
+    "createdToast": "Kategori skapad"
+  },
+  "UpdateCategoryForm": {
+    "reset": "Återställ",
+    "delete": "Ta Bort",
+    "deleteDialogTitle": "Vill du verkligen ta bort denna kategori?",
+    "deleteDialogDescription": "Detta kan inte ångras",
+    "back": "Tillbaka",
+    "confirm": "Bekräfta",
+    "updatedToast": "Kategori uppdaterad",
+    "deletedToast": "Kategori borttagen"
+  },
+  "CategoriesPage": {
+    "title": "Kategorier",
+    "empty": "Inga kategorier hittades."
+  },
+  "CreateTemplateDialog": {
+    "trigger": "Skapa återkommande uppgift",
+    "title": "Skapa återkommande uppgift",
+    "description": "Fyll i fälten nedan och klicka på Skapa för att skapa en ny återkommande uppgift",
+    "recurrenceTypeLabel": "Upprepningstyp",
+    "recurrenceTypePlaceholder": "Välj en Upprepningstyp",
+    "onEveryLabel": "Varje",
+    "dayOfMonthPlaceholder": "Välj dag i månaden",
+    "dayOfWeekPlaceholder": "Välj veckodag",
+    "createdToast": "Återkommande uppgift skapad"
+  },
+  "UpdateTemplateForm": {
+    "deleteDialogTitle": "Vill du verkligen ta bort denna återkommande uppgift?",
+    "deleteDialogDescription": "Detta kan inte ångras och tar även bort alla pågående uppgifter. Slutförda uppgifter tas inte bort.",
+    "updatedToast": "Återkommande uppgift uppdaterad",
+    "deletedToast": "Återkommande uppgift borttagen"
+  },
+  "TemplatesPage": {
+    "title": "Återkommande Uppgifter",
+    "empty": "Inga återkommande uppgifter hittades."
+  },
+  "EmptyCard": {
+    "default": "Inga resultat hittades."
+  },
+  "TaskStatus": {
+    "PENDING": "Väntande",
+    "IN_PROGRESS": "Pågående",
+    "BLOCKED": "Blockerad",
+    "COMPLETED": "Slutförd",
+    "CANCELLED": "Avbruten",
+    "SKIPPED": "Överhoppad",
+    "OVERDUE": "Försenad"
+  }
+}

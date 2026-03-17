@@ -1,17 +1,19 @@
 import { Spinner } from "@/components/ui/spinner";
 import type { Task, TaskStatus } from "@/generated/prisma/client";
-import { parseTaskStatus } from "@/lib/task-utils";
 import { cn } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useTranslations } from "next-intl";
 import KanbanCard from "./kanban-card";
 
 const KanbanColumn = ({ tasks, status, isPending }: { tasks: Task[]; status: TaskStatus; isPending: boolean }) => {
+  const t = useTranslations("KanbanBoard");
+  const tStatus = useTranslations("TaskStatus");
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
     <div className="flex h-[1000px] w-[400px] flex-col items-center">
-      <span className="w-full text-center">{parseTaskStatus(status)}</span>
+      <span className="w-full text-center">{tStatus(status)}</span>
       <div
         className={cn(
           "flex h-full w-full flex-col gap-y-4 rounded border-2 p-4",
@@ -25,7 +27,7 @@ const KanbanColumn = ({ tasks, status, isPending }: { tasks: Task[]; status: Tas
           ) : tasks.length > 0 ? (
             tasks.map((task) => <KanbanCard key={task.id} task={task} />)
           ) : (
-            "No tasks"
+            t("noTasks")
           )}
         </SortableContext>
       </div>

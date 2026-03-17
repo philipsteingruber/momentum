@@ -8,15 +8,17 @@ import { createCategorySchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
 
 export const CreateCategoryDialog = () => {
+  const t = useTranslations("CreateCategoryDialog");
   const trpcUtils = trpc.useUtils();
   const { mutate: createCategory, isPending: isCreatingCategory } = trpc.category.create.useMutation({
     onSuccess: () => {
-      toast.success("Category Created");
+      toast.success(t("createdToast"));
       trpcUtils.category.getAll.invalidate();
       setIsOpen(false);
     },
@@ -47,7 +49,7 @@ export const CreateCategoryDialog = () => {
       </DialogTrigger>
       <DialogContent className="w-full">
         <DialogHeader>
-          <DialogTitle>New Category</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
           <Controller
@@ -56,7 +58,7 @@ export const CreateCategoryDialog = () => {
             render={({ field, fieldState }) => (
               <Field aria-invalid={fieldState.invalid} orientation={"horizontal"} className="flex w-full">
                 <FieldLabel htmlFor="name" className="mt-1.5 w-10 flex-none!">
-                  Name
+                  {t("nameLabel")}
                 </FieldLabel>
                 <FieldContent>
                   <Input id="name" value={field.value} onChange={field.onChange} />
@@ -73,7 +75,7 @@ export const CreateCategoryDialog = () => {
             render={({ field, fieldState }) => (
               <Field aria-invalid={fieldState.invalid} orientation={"horizontal"} className="flex w-full items-center">
                 <FieldLabel htmlFor="color" className="mt-1.5 w-10 flex-none!">
-                  Color
+                  {t("colorLabel")}
                 </FieldLabel>
                 <FieldContent>
                   <Input

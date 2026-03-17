@@ -9,22 +9,24 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { trpc } from "@/trpc/client";
 import { ArrowUpDownIcon, SearchIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const Page = () => {
+  const t = useTranslations("TemplatesPage");
   const { data: templates, isPending: isLoadingTemplates, isError, error } = trpc.recurringTemplate.getAll.useQuery();
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
 
   if (isLoadingTemplates || isLoadingCategories) {
     return (
       <MaxWidthWrapper>
-        <LoadingCard title="Templates" className="w-full" />
+        <LoadingCard title={t("title")} className="w-full" />
       </MaxWidthWrapper>
     );
   }
   if (isError) {
     return (
       <MaxWidthWrapper>
-        <ErrorCard title="Templates" error={error.message} className="w-full" />
+        <ErrorCard title={t("title")} error={error.message} className="w-full" />
       </MaxWidthWrapper>
     );
   }
@@ -33,7 +35,7 @@ const Page = () => {
       <Card className="w-full">
         <CardHeader>
           <div className="flex w-full items-center justify-between">
-            <CardTitle>Templates</CardTitle>
+            <CardTitle>{t("title")}</CardTitle>
             <CreateTemplateDialog categories={categories ?? []} />
           </div>
         </CardHeader>
@@ -42,7 +44,7 @@ const Page = () => {
             <Card className="h-[200px] w-full border-0 shadow-none">
               <CardContent className="flex h-full flex-col items-center justify-center gap-y-4">
                 <SearchIcon />
-                <span>No templates found.</span>
+                <span>{t("empty")}</span>
               </CardContent>
             </Card>
           ) : (

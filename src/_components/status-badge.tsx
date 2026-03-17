@@ -1,9 +1,14 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
 import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
-import { isOverdue, parseTaskStatus } from "@/lib/task-utils";
+import { isOverdue } from "@/lib/task-utils";
+import { useTranslations } from "next-intl";
 
 export const StatusBadge = ({ task }: { task: Task }) => {
+  const tStatus = useTranslations("TaskStatus");
+
   return (
     <Badge
       variant={
@@ -16,7 +21,9 @@ export const StatusBadge = ({ task }: { task: Task }) => {
               : "in_progress"
       }
     >
-      {isOverdue(task.dueDate) && task.status !== TaskStatus.COMPLETED ? "Overdue" : parseTaskStatus(task.status)}
+      {isOverdue(task.dueDate) && task.status !== TaskStatus.COMPLETED
+        ? tStatus("OVERDUE")
+        : tStatus(task.status)}
     </Badge>
   );
 };

@@ -10,20 +10,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { type Task } from "@/generated/prisma/client";
-import { dateOnlyLocale } from "@/lib/date-utils";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { trpc } from "@/trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDownIcon, MoreHorizontalIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { toast } from "sonner";
 
 export function useTaskColumns() {
+  const t = useTranslations("TaskColumns");
   const trpcUtils = trpc.useUtils();
   const { fmtRelative } = useFormatInUserTz();
   const { mutate: snoozeTask } = trpc.task.snooze.useMutation({
     onSuccess: (_data, variables) => {
-      toast.success(`Snoozed task by ${variables.days} day(s)`);
+      toast.success(t("snoozedToast", { days: variables.days }));
       trpcUtils.task.getAll.invalidate();
     },
   });
@@ -36,7 +37,7 @@ export function useTaskColumns() {
           <Checkbox
             checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
             onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Select all"
+            aria-label={t("selectAll")}
           />
         ),
         cell: ({ row }) => (
@@ -44,7 +45,7 @@ export function useTaskColumns() {
             <Checkbox
               checked={row.getIsSelected()}
               onCheckedChange={(value) => row.toggleSelected(!!value)}
-              aria-label="Select row"
+              aria-label={t("selectRow")}
             />
           </div>
         ),
@@ -54,7 +55,7 @@ export function useTaskColumns() {
         accessorKey: "title",
         header: ({ column }) => (
           <Button variant={"ghost"} onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Title
+            {t("titleHeader")}
             <ArrowUpDownIcon className="ml-2 size-4" />
           </Button>
         ),
@@ -63,13 +64,13 @@ export function useTaskColumns() {
         accessorKey: "dueDate",
         header: ({ column }) => (
           <Button variant={"ghost"} onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Due Date
+            {t("dueDateHeader")}
             <ArrowUpDownIcon className="ml-2 size-4" />
           </Button>
         ),
         cell: ({ row }) =>
           row.original.dueDate
-            ? fmtRelative(row.original.dueDate, { locale: dateOnlyLocale, weekStartsOn: 1 })
+            ? fmtRelative(row.original.dueDate)
             : "",
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.dueDate;
@@ -82,8 +83,8 @@ export function useTaskColumns() {
       },
       {
         accessorKey: "createdAt",
-        header: "Created",
-        cell: ({ row }) => fmtRelative(row.original.createdAt, { locale: dateOnlyLocale, weekStartsOn: 1 }),
+        header: t("createdHeader"),
+        cell: ({ row }) => fmtRelative(row.original.createdAt),
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.createdAt;
           const b = rowB.original.createdAt;
@@ -92,8 +93,8 @@ export function useTaskColumns() {
       },
       {
         accessorKey: "updatedAt",
-        header: "Updated",
-        cell: ({ row }) => fmtRelative(row.original.updatedAt, { weekStartsOn: 1 }),
+        header: t("updatedHeader"),
+        cell: ({ row }) => fmtRelative(row.original.updatedAt),
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.createdAt;
           const b = rowB.original.createdAt;
@@ -104,7 +105,7 @@ export function useTaskColumns() {
         accessorKey: "status",
         header: ({ column }) => (
           <Button variant={"ghost"} onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-            Status
+            {t("statusHeader")}
             <ArrowUpDownIcon className="ml-2 size-4" />
           </Button>
         ),
@@ -119,16 +120,16 @@ export function useTaskColumns() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant={"ghost"} className="size-8 p-0">
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">{t("openMenu")}</span>
                   <MoreHorizontalIcon className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Snooze</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("snoozeLabel")}</DropdownMenuLabel>
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 1 })}>1 day</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 3 })}>3 days</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 7 })}>7 days</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 1 })}>{t("snooze1Day")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 3 })}>{t("snooze3Days")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 7 })}>{t("snooze7Days")}</DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -24,6 +24,7 @@ import { updateRecurringTemplateSchema } from "@/lib/schemas";
 import { capitaliseFirstCharacter } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
@@ -35,18 +36,19 @@ export const UpdateTemplateForm = ({
   template: RecurringTemplate;
   categories: Category[];
 }) => {
+  const t = useTranslations("UpdateTemplateForm");
   const trpcUtils = trpc.useUtils();
 
   const { mutate: updateTemplate, isPending: isUpdatingTemplate } = trpc.recurringTemplate.update.useMutation({
     onSuccess: () => {
-      toast.success("Successfully updated template");
+      toast.success(t("updatedToast"));
       trpcUtils.recurringTemplate.getAll.invalidate();
     },
   });
 
   const { mutate: deleteTemplate, isPending: isDeletingTemplate } = trpc.recurringTemplate.delete.useMutation({
     onSuccess: () => {
-      toast.success("Successfully deleted template");
+      toast.success(t("deletedToast"));
       trpcUtils.recurringTemplate.getAll.invalidate();
       trpcUtils.category.getAll.invalidate();
       trpcUtils.task.getAll.invalidate();
@@ -258,10 +260,9 @@ export const UpdateTemplateForm = ({
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Really delete template?</DialogTitle>
+              <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
               <DialogDescription>
-                This will permanently delete the template and all associated pending tasks. Completed tasks will be
-                unlinked but preserved.
+                {t("deleteDialogDescription")}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>

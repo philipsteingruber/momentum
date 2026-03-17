@@ -10,9 +10,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import { MenuIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export const Header = () => {
+  const t = useTranslations("Header");
+
   return (
     <header className="flex w-full items-center justify-between border-b-2 py-4 pr-4 pl-8 text-lg">
       <Link className="font-semibold" href={"/"}>
@@ -28,17 +31,17 @@ export const Header = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-fit">
               <Link href={"/tasks"}>
-                <DropdownMenuItem>Tasks</DropdownMenuItem>
+                <DropdownMenuItem>{t("tasks")}</DropdownMenuItem>
               </Link>
               <Link href={"/categories"}>
-                <DropdownMenuItem>Categories</DropdownMenuItem>
+                <DropdownMenuItem>{t("categories")}</DropdownMenuItem>
               </Link>
               <Link href={"/templates"}>
-                <DropdownMenuItem>Recurring Task Templates</DropdownMenuItem>
+                <DropdownMenuItem>{t("recurringTaskTemplates")}</DropdownMenuItem>
               </Link>
               <Separator />
               <Link href={"/settings"}>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>{t("settings")}</DropdownMenuItem>
               </Link>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -48,10 +51,10 @@ export const Header = () => {
       <Show when={"signed-out"}>
         <div className="flex items-center gap-x-4">
           <SignInButton>
-            <Button variant={"outline"}>Sign In</Button>
+            <Button variant={"outline"}>{t("signIn")}</Button>
           </SignInButton>
           <SignUpButton>
-            <Button>Sign Up</Button>
+            <Button>{t("signUp")}</Button>
           </SignUpButton>
         </div>
       </Show>

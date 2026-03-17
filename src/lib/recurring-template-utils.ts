@@ -1,5 +1,6 @@
 import type { Day } from "date-fns";
 import { addDays, addMonths, nextDay, setDate, startOfDay } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { RecurrenceType } from "./../generated/prisma/enums";
 
 // date-fns setDate expects 1–31; values here match that directly
@@ -24,23 +25,31 @@ export const computeNextDueDate = ({
   dayOfWeek,
   dayOfMonth,
   from = new Date(),
+  timezone,
 }: {
   recurrenceType: RecurrenceType;
   dayOfWeek?: number;
   dayOfMonth?: number;
   from?: Date;
+  timezone: string;
 }): Date => {
   if (recurrenceType === RecurrenceType.DAILY) {
-    return addDays(startOfDay(from), 1);
+    const zonedTime = toZonedTime(from, timezone);
+    const updatedTime = addDays(startOfDay(zonedTime), 1);
+    return fromZonedTime(updatedTime, timezone);
   } else if (recurrenceType === RecurrenceType.WEEKLY) {
     if (dayOfWeek === undefined) {
       throw new Error("BAD_REQUEST");
     }
-    return nextDay(from, dayOfWeek as Day);
+    const zonedTime = toZonedTime(from, timezone);
+    const updatedTime = nextDay(zonedTime, dayOfWeek as Day);
+    return fromZonedTime(updatedTime, timezone);
   } else {
     if (dayOfMonth === undefined) {
       throw new Error("BAD_REQUEST");
     }
-    return addMonths(setDate(from, dayOfMonth), 1);
+    const zonedTime = toZonedTime(from, timezone);
+    const updatedTime = addMonths(setDate(zonedTime, dayOfMonth), 1);
+    return fromZonedTime(updatedTime, timezone);
   }
 };

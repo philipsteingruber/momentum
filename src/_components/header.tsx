@@ -7,7 +7,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 
 export const Header = () => {
@@ -20,7 +22,9 @@ export const Header = () => {
         <div className="flex items-center gap-x-4">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant={"outline"}>Go to...</Button>
+              <Button variant={"ghost"}>
+                <MenuIcon />
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-fit">
               <Link href={"/tasks"}>
@@ -31,6 +35,10 @@ export const Header = () => {
               </Link>
               <Link href={"/templates"}>
                 <DropdownMenuItem>Recurring Task Templates</DropdownMenuItem>
+              </Link>
+              <Separator />
+              <Link href={"/settings"}>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
               </Link>
             </DropdownMenuContent>
           </DropdownMenu>

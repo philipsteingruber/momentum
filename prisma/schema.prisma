@@ -35,6 +35,15 @@ model User {
     categories         Category[]
     tags               Tag[]
     recurringTemplates RecurringTemplate[]
+    userSettings       UserSettings?
+}
+
+model UserSettings {
+    id       String @id @default(cuid())
+    timezone String @default("Europe/Stockholm")
+
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId String @unique
 }
 
 model Task {

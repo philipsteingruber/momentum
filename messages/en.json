@@ -18,6 +18,8 @@
     "timezoneEmpty": "No timezones found",
     "languageLabel": "Language",
     "languagePlaceholder": "Pick your preferred language",
+    "english": "English",
+    "swedish": "Swedish",
     "save": "Save",
     "savedToast": "Settings saved."
   },
@@ -45,7 +47,21 @@
     "trigger": "Edit",
     "title": "Edit Task",
     "description": "Fill in the fields below and click Submit to update task.",
-    "successToast": "Successfully updated task"
+    "successToast": "Successfully updated task",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter a title",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter a description",
+    "dueDateLabel": "Due Date",
+    "dueDatePlaceholder": "Pick a due date",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select a Category",
+    "externalContactLabel": "External Contact",
+    "externalContactPlaceholder": "Enter any External Contacts",
+    "externalLinkLabel": "External Link",
+    "externalLinkPlaceholder": "Enter any External Link",
+    "cancel": "Cancel",
+    "submit": "Submit"
   },
   "TaskDetailPage": {
     "cardTitle": "Task Details",
@@ -69,7 +85,8 @@
     "kanbanView": "Kanban View",
     "noCategoriesEmpty": "No categories found. Create one to get started.",
     "deletedToast": "Successfully deleted task(s)",
-    "statusUpdatedToast": "Successfully marked task(s) as {status}"
+    "statusUpdatedToast": "Successfully marked task(s) as {status}",
+    "failedStatusUpdate": "Failed to update task status"
   },
   "DataTable": {
     "noResults": "No results.",
@@ -92,7 +109,8 @@
     "openMenu": "Open menu"
   },
   "KanbanBoard": {
-    "noTasks": "No tasks found"
+    "noTasks": "No tasks found",
+    "recurring": "Recurring"
   },
   "CreateCategoryDialog": {
     "trigger": "New Category",
@@ -110,6 +128,7 @@
     "deleteDialogDescription": "This cannot be reversed.",
     "back": "Back",
     "confirm": "Confirm",
+    "submit": "Submit",
     "updatedToast": "Successfully updated category",
     "deletedToast": "Successfully deleted category"
   },
@@ -121,16 +140,48 @@
     "trigger": "Add Template",
     "title": "Create Template",
     "description": "Fill in the fields below and click Submit to create a new recurring template",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter a title",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter a description",
     "recurrenceTypeLabel": "Recurrence Type",
     "recurrenceTypePlaceholder": "Select Recurrence Type",
     "onEveryLabel": "On Every",
     "dayOfMonthPlaceholder": "Choose day of the month",
     "dayOfWeekPlaceholder": "Choose day of the week",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select a Category",
+    "externalContactLabel": "External Contact",
+    "externalContactPlaceholder": "Enter any External Contacts",
+    "externalLinkLabel": "External Link",
+    "externalLinkPlaceholder": "Enter any External Link",
+    "cancel": "Cancel",
+    "submit": "Submit",
     "createdToast": "Successfully created template"
   },
   "UpdateTemplateForm": {
+    "titleLabel": "Title",
+    "titlePlaceholder": "Enter a title",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Enter a description",
+    "recurrenceTypeLabel": "Recurrence Type",
+    "recurrenceTypePlaceholder": "Select Recurrence Type",
+    "onEveryLabel": "On Every",
+    "dayOfMonthPlaceholder": "Choose day of the month",
+    "dayOfWeekPlaceholder": "Choose day of the week",
+    "categoryLabel": "Category",
+    "categoryPlaceholder": "Select a Category",
+    "externalContactLabel": "External Contact",
+    "externalContactPlaceholder": "Enter any External Contacts",
+    "externalLinkLabel": "External Link",
+    "externalLinkPlaceholder": "Enter any External Link",
+    "reset": "Reset",
+    "delete": "Delete",
     "deleteDialogTitle": "Really delete template?",
     "deleteDialogDescription": "This will permanently delete the template and all associated pending tasks. Completed tasks will be unlinked but preserved.",
+    "back": "Back",
+    "confirm": "Confirm",
+    "submit": "Submit",
     "updatedToast": "Successfully updated template",
     "deletedToast": "Successfully deleted template"
   },

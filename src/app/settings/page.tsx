@@ -87,8 +87,8 @@ const Page = () => {
               </SelectTrigger>
               <SelectContent>
                 {[
-                  { value: "en", text: "English" },
-                  { value: "sv", text: "Svenska" },
+                  { value: "en", text: t("english") },
+                  { value: "sv", text: t("swedish") },
                 ].map((choice) => (
                   <SelectItem value={choice.value} key={choice.value}>
                     {choice.text}

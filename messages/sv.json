@@ -18,6 +18,8 @@
     "timezoneEmpty": "Inga tidszoner hittades",
     "languageLabel": "Språk",
     "languagePlaceholder": "Välj ditt föredragna språk",
+    "english": "Engelska",
+    "swedish": "Svenska",
     "save": "Spara",
     "savedToast": "Inställningar sparade."
   },
@@ -45,7 +47,21 @@
     "trigger": "Uppdatera",
     "title": "Uppdatera Uppgift",
     "description": "Fyll i fälten nedan och klicka på Uppdatera för att uppdatera denna uppgift",
-    "successToast": "Uppgift uppdaterad"
+    "successToast": "Uppgift uppdaterad",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Ange en Titel",
+    "descriptionLabel": "Beskrivning",
+    "descriptionPlaceholder": "Ange en Beskrivning",
+    "dueDateLabel": "Förfallodatum",
+    "dueDatePlaceholder": "Välj ett Förfallodatum",
+    "categoryLabel": "Kategori",
+    "categoryPlaceholder": "Välj en Kategori",
+    "externalContactLabel": "Extern Part",
+    "externalContactPlaceholder": "Ange ev. Extern Part",
+    "externalLinkLabel": "Länk",
+    "externalLinkPlaceholder": "Ange ev. Länk",
+    "cancel": "Avbryt",
+    "submit": "Uppdatera"
   },
   "TaskDetailPage": {
     "cardTitle": "Uppgift",
@@ -69,7 +85,8 @@
     "kanbanView": "Kanban-vy",
     "noCategoriesEmpty": "Inga kategorier hittades. Skapa en för att komma igång.",
     "deletedToast": "Uppgifter borttagna",
-    "statusUpdatedToast": "Status uppdaterad till {status}"
+    "statusUpdatedToast": "Status uppdaterad till {status}",
+    "failedStatusUpdate": "Kunde inte uppdatera uppgiftsstatus"
   },
   "DataTable": {
     "noResults": "Inga träffar.",
@@ -92,7 +109,8 @@
     "openMenu": "Öppna meny"
   },
   "KanbanBoard": {
-    "noTasks": "Inga uppgifter hittades"
+    "noTasks": "Inga uppgifter hittades",
+    "recurring": "Återkommande"
   },
   "CreateCategoryDialog": {
     "trigger": "Ny Kategori",
@@ -110,6 +128,7 @@
     "deleteDialogDescription": "Detta kan inte ångras",
     "back": "Tillbaka",
     "confirm": "Bekräfta",
+    "submit": "Uppdatera",
     "updatedToast": "Kategori uppdaterad",
     "deletedToast": "Kategori borttagen"
   },
@@ -121,16 +140,48 @@
     "trigger": "Skapa återkommande uppgift",
     "title": "Skapa återkommande uppgift",
     "description": "Fyll i fälten nedan och klicka på Skapa för att skapa en ny återkommande uppgift",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Ange en Titel",
+    "descriptionLabel": "Beskrivning",
+    "descriptionPlaceholder": "Ange en Beskrivning",
     "recurrenceTypeLabel": "Upprepningstyp",
     "recurrenceTypePlaceholder": "Välj en Upprepningstyp",
     "onEveryLabel": "Varje",
     "dayOfMonthPlaceholder": "Välj dag i månaden",
     "dayOfWeekPlaceholder": "Välj veckodag",
+    "categoryLabel": "Kategori",
+    "categoryPlaceholder": "Välj en Kategori",
+    "externalContactLabel": "Extern Part",
+    "externalContactPlaceholder": "Ange ev. Extern Part",
+    "externalLinkLabel": "Länk",
+    "externalLinkPlaceholder": "Ange ev. Länk",
+    "cancel": "Avbryt",
+    "submit": "Skapa",
     "createdToast": "Återkommande uppgift skapad"
   },
   "UpdateTemplateForm": {
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Ange en Titel",
+    "descriptionLabel": "Beskrivning",
+    "descriptionPlaceholder": "Ange en Beskrivning",
+    "recurrenceTypeLabel": "Upprepningstyp",
+    "recurrenceTypePlaceholder": "Välj en Upprepningstyp",
+    "onEveryLabel": "Varje",
+    "dayOfMonthPlaceholder": "Välj dag i månaden",
+    "dayOfWeekPlaceholder": "Välj veckodag",
+    "categoryLabel": "Kategori",
+    "categoryPlaceholder": "Välj en Kategori",
+    "externalContactLabel": "Extern Part",
+    "externalContactPlaceholder": "Ange ev. Extern Part",
+    "externalLinkLabel": "Länk",
+    "externalLinkPlaceholder": "Ange ev. Länk",
+    "reset": "Återställ",
+    "delete": "Ta Bort",
     "deleteDialogTitle": "Vill du verkligen ta bort denna återkommande uppgift?",
     "deleteDialogDescription": "Detta kan inte ångras och tar även bort alla pågående uppgifter. Slutförda uppgifter tas inte bort.",
+    "back": "Tillbaka",
+    "confirm": "Bekräfta",
+    "submit": "Uppdatera",
     "updatedToast": "Återkommande uppgift uppdaterad",
     "deletedToast": "Återkommande uppgift borttagen"
   },

@@ -6,11 +6,13 @@ import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, LinkIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 export const KanbanCardContent = ({ task }: { task: Task }) => {
   const router = useRouter();
   const { fmtRelative, isOverdue } = useFormatInUserTz();
+  const t = useTranslations("KanbanBoard");
 
   return (
     <>
@@ -25,7 +27,7 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
         <CardDescription className="line-clamp-2 text-sm">{task.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-y-2">
-        {task.recurringTemplateId && <Badge>Recurring</Badge>}
+        {task.recurringTemplateId && <Badge>{t("recurring")}</Badge>}
         {task.dueDate && (
           <div className="flex items-center gap-x-2">
             <CalendarIcon className="size-4" />

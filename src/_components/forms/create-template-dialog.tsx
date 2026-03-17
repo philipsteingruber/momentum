@@ -76,6 +76,7 @@ const CreateTemplateDialog = ({
     createTemplate(data);
   };
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const selectedRecurrenceType = form.watch("recurrenceType");
 
   return (
@@ -88,7 +89,9 @@ const CreateTemplateDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Template</DialogTitle>
-          <DialogDescription>Fill in the fields below and click Submit to create a new recurring template</DialogDescription>
+          <DialogDescription>
+            Fill in the fields below and click Submit to create a new recurring template
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <FieldGroup>

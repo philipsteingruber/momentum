@@ -95,10 +95,13 @@
     "noTasks": "No tasks found"
   },
   "CreateCategoryDialog": {
+    "trigger": "New Category",
     "title": "New Category",
     "nameLabel": "Name",
     "colorLabel": "Color (not implemented)",
-    "createdToast": "Category Created"
+    "createdToast": "Category Created",
+    "cancel": "Cancel",
+    "submit": "Submit"
   },
   "UpdateCategoryForm": {
     "reset": "Reset",

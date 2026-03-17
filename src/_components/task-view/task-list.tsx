@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { TaskDataTable } from "../data-table";
+import { CreateCategoryDialog } from "../forms/create-category-dialog";
 import CreateTemplateDialog from "../forms/create-template-dialog";
 import { KanbanBoard } from "../kanban/kanban-board";
 import CreateTaskDialog from "../task/create-task-dialog";
@@ -124,6 +125,7 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
                   id="switchView"
                 />
               </div>
+              <CreateCategoryDialog />
               <CreateTaskDialog categories={categories ?? []} defaultCategoryId={selectedCategoryId ?? undefined} />
               <CreateTemplateDialog categories={categories ?? []} defaultCategoryId={selectedCategoryId ?? undefined} />
             </div>

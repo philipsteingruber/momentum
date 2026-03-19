@@ -8,7 +8,14 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const createTRPCContext = cache(async () => {
-  return { db: prisma, auth: await auth() };
+  const authResult = await auth();
+  const currentUser = authResult.userId
+    ? await prisma.user.findUnique({
+        where: { clerkId: authResult.userId },
+        include: { userSettings: true },
+      })
+    : null;
+  return { db: prisma, auth: authResult, currentUser };
 });
 
 type Context = Awaited<ReturnType<typeof createTRPCContext>>;
@@ -21,26 +28,17 @@ const t = initTRPC.context<Context>().create({
 });
 
 const isAuthed = t.middleware(async ({ next, ctx }) => {
-  if (!ctx.auth.userId) {
+  if (!ctx.auth.userId || !ctx.currentUser) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
-
-  const currentUser = await ctx.db.user.findUnique({
-    where: { clerkId: ctx.auth.userId },
-    include: { userSettings: true },
-  });
-
-  if (!currentUser) {
-    throw new TRPCError({ code: "UNAUTHORIZED" });
-  }
-  if (!currentUser.userSettings) {
+  if (!ctx.currentUser.userSettings) {
     throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
   }
 
   return next({
     ctx: {
       ...ctx,
-      currentUser: currentUser as AuthedUser,
+      currentUser: ctx.currentUser as AuthedUser,
     },
   });
 });

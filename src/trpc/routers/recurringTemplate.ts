@@ -1,5 +1,5 @@
 import { TaskStatus } from "@/generated/prisma/enums";
-import { computeNextDueDate } from "@/lib/recurring-template-utils";
+import { computeNextDueDate, RecurrenceValidationError } from "@/lib/recurring-template-utils";
 import { createRecurringTemplateSchema, updateRecurringTemplateSchema } from "@/lib/schemas";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
@@ -82,7 +82,7 @@ export const recurringTemplateRouter = createTRPCRouter({
         data: { ...input.data, nextDueDate: nextDueDate },
       });
     } catch (err) {
-      if (err instanceof Error && err.message === "BAD_REQUEST") {
+      if (err instanceof RecurrenceValidationError) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid recurrence type and day combination" });
       }
       throw err;

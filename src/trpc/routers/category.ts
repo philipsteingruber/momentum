@@ -10,18 +10,18 @@ export const categoryRouter = createTRPCRouter({
   getAll: authedProcedure
     .input(z.object({ includeTasks: z.boolean().optional() }).optional())
     .query(async ({ ctx, input }) => {
+      const activeStatusFilter = { status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] } };
       const categories = await ctx.db.category.findMany({
         where: { userId: ctx.currentUser.id },
         include: {
-          _count: {
-            select: {
-              tasks: {
-                where: { status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] } },
-              },
-            },
-          },
+          _count: { select: { tasks: { where: activeStatusFilter } } },
           ...(input?.includeTasks
-            ? { tasks: { where: { status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] } } } }
+            ? {
+                tasks: {
+                  where: activeStatusFilter,
+                  select: { dueDate: true },
+                },
+              }
             : {}),
         },
         orderBy: { name: "asc" },
@@ -30,8 +30,7 @@ export const categoryRouter = createTRPCRouter({
       return categories.map((category) => ({
         ...category,
         taskCount: category._count.tasks,
-        overdueTaskCount:
-          category.tasks?.filter((task) => isOverdue(task.dueDate)).length ?? 0,
+        overdueTaskCount: category.tasks?.filter((task) => isOverdue(task.dueDate)).length ?? 0,
       }));
     }),
 
@@ -77,7 +76,7 @@ export const categoryRouter = createTRPCRouter({
   delete: authedProcedure.input(z.object({ categoryId: z.cuid() })).mutation(async ({ ctx, input }) => {
     return await ctx.db.$transaction(async (tx) => {
       try {
-        await tx.task.updateMany({ where: { categoryId: input.categoryId }, data: { categoryId: null } });
+        await tx.task.updateMany({ where: { categoryId: input.categoryId, userId: ctx.currentUser.id }, data: { categoryId: null } });
 
         const deletedCategory = await tx.category.delete({
           where: { id: input.categoryId, userId: ctx.currentUser.id },

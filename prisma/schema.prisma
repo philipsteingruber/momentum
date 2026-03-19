@@ -102,6 +102,8 @@ model RecurringTemplate {
     category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
     categoryId String?
     userId     String
+
+    @@index([userId])
 }
 
 model Category {

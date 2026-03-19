@@ -3,6 +3,13 @@ import { addDays, addMonths, nextDay, setDate, startOfDay } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { RecurrenceType } from "./../generated/prisma/enums";
 
+export class RecurrenceValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RecurrenceValidationError";
+  }
+}
+
 // date-fns setDate expects 1–31; values here match that directly
 export const DAY_OF_MONTH_OPTIONS = Array.from({ length: 31 }, (_, i) => ({
   label: (i + 1).toString(),
@@ -39,14 +46,14 @@ export const computeNextDueDate = ({
     return fromZonedTime(updatedTime, timezone);
   } else if (recurrenceType === RecurrenceType.WEEKLY) {
     if (dayOfWeek === undefined) {
-      throw new Error("BAD_REQUEST");
+      throw new RecurrenceValidationError("BAD_REQUEST");
     }
     const zonedTime = toZonedTime(from, timezone);
     const updatedTime = nextDay(zonedTime, dayOfWeek as Day);
     return fromZonedTime(updatedTime, timezone);
   } else {
     if (dayOfMonth === undefined) {
-      throw new Error("BAD_REQUEST");
+      throw new RecurrenceValidationError("BAD_REQUEST");
     }
     const zonedTime = toZonedTime(from, timezone);
     const updatedTime = addMonths(setDate(zonedTime, dayOfMonth), 1);

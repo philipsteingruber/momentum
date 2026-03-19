@@ -23,12 +23,14 @@ export const recurringTemplateRouter = createTRPCRouter({
   }),
 
   create: authedProcedure.input(createRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
-    const firstDueDate = computeNextDueDate(input);
+    const { timezone } = ctx.currentUser.userSettings;
+    const firstDueDate = computeNextDueDate({ ...input, timezone });
     const templateNextDueDate = computeNextDueDate({
       recurrenceType: input.recurrenceType,
       dayOfWeek: input.dayOfWeek,
       dayOfMonth: input.dayOfMonth,
       from: firstDueDate,
+      timezone,
     });
 
     return await ctx.db.$transaction(async (tx) => {
@@ -71,6 +73,7 @@ export const recurringTemplateRouter = createTRPCRouter({
               recurrenceType: input.data.recurrenceType ?? existing.recurrenceType,
               dayOfWeek: input.data.dayOfWeek ?? existing.dayOfWeek ?? undefined,
               dayOfMonth: input.data.dayOfMonth ?? existing.dayOfMonth ?? undefined,
+              timezone: ctx.currentUser.userSettings.timezone,
             })
           : existing.nextDueDate;
 

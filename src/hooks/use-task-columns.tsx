@@ -68,10 +68,7 @@ export function useTaskColumns() {
             <ArrowUpDownIcon className="ml-2 size-4" />
           </Button>
         ),
-        cell: ({ row }) =>
-          row.original.dueDate
-            ? fmtRelative(row.original.dueDate)
-            : "",
+        cell: ({ row }) => (row.original.dueDate ? fmtRelative(row.original.dueDate) : ""),
         sortingFn: (rowA, rowB) => {
           const a = rowA.original.dueDate;
           const b = rowB.original.dueDate;
@@ -127,9 +124,15 @@ export function useTaskColumns() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{t("snoozeLabel")}</DropdownMenuLabel>
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 1 })}>{t("snooze1Day")}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 3 })}>{t("snooze3Days")}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 7 })}>{t("snooze7Days")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 1 })}>
+                    {t("snooze1Day")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 3 })}>
+                    {t("snooze3Days")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 7 })}>
+                    {t("snooze7Days")}
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -137,6 +140,6 @@ export function useTaskColumns() {
         },
       },
     ],
-    [snoozeTask, fmtRelative],
+    [snoozeTask, fmtRelative, t],
   );
 }

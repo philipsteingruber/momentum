@@ -12,7 +12,14 @@ async function main() {
       clerkId: "user_dev_placeholder",
       email: "dev@example.com",
       name: "Dev User",
+      userSettings: { create: {} },
     },
+  });
+
+  await prisma.userSettings.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: { userId: user.id },
   });
 
   // Categories

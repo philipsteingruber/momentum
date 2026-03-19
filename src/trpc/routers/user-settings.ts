@@ -3,10 +3,8 @@ import { authedProcedure, createTRPCRouter } from "../init";
 
 export const userSettingsRouter = createTRPCRouter({
   get: authedProcedure.query(async ({ ctx }) => {
-    return await ctx.db.userSettings.upsert({
+    return await ctx.db.userSettings.findUniqueOrThrow({
       where: { userId: ctx.currentUser.id },
-      update: {},
-      create: { userId: ctx.currentUser.id },
     });
   }),
 

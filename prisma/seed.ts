@@ -12,7 +12,14 @@ async function main() {
       clerkId: "user_3Aoj02OZAvvPOGgouCNxqTCNKCQ",
       email: "philip.steingruber@gmail.com",
       name: "Philip Steingrüber",
+      userSettings: { create: {} },
     },
+  });
+
+  await prisma.userSettings.upsert({
+    where: { userId: user.id },
+    update: {},
+    create: { userId: user.id },
   });
 
   // Categories

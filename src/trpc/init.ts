@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 
-import type { User } from "@/generated/prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const createTRPCContext = cache(async () => {
@@ -27,21 +27,31 @@ const isAuthed = t.middleware(async ({ next, ctx }) => {
 
   const currentUser = await ctx.db.user.findUnique({
     where: { clerkId: ctx.auth.userId },
+    include: { userSettings: true },
   });
 
   if (!currentUser) {
     throw new TRPCError({ code: "UNAUTHORIZED" });
   }
+  if (!currentUser.userSettings) {
+    throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+  }
 
   return next({
     ctx: {
       ...ctx,
-      currentUser,
+      currentUser: currentUser as AuthedUser,
     },
   });
 });
 
-export type AuthedContext = Context & { currentUser: User };
+type AuthedUser = Omit<UserWithSettings, "userSettings"> & {
+  userSettings: NonNullable<UserWithSettings["userSettings"]>;
+};
+type UserWithSettings = Prisma.UserGetPayload<{ include: { userSettings: true } }>;
+export type AuthedContext = Context & {
+  currentUser: AuthedUser;
+};
 
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;

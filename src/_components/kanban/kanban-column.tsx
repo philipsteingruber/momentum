@@ -15,21 +15,20 @@ const KanbanColumn = ({ tasks, status, isPending }: { tasks: Task[]; status: Tas
     <div className="flex h-[1000px] w-[400px] flex-col items-center">
       <span className="w-full text-center">{tStatus(status)}</span>
       <div
-        className={cn(
-          "flex h-full w-full flex-col gap-y-4 rounded border-2 p-4",
-          isOver && "border-primary bg-gray-800",
-        )}
+        className={cn("flex h-full w-full overflow-hidden rounded border-2", isOver && "border-primary bg-gray-800")}
         ref={setNodeRef}
       >
-        <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
-          {isPending ? (
-            <Spinner />
-          ) : tasks.length > 0 ? (
-            tasks.map((task) => <KanbanCard key={task.id} task={task} />)
-          ) : (
-            t("noTasks")
-          )}
-        </SortableContext>
+        <div className="flex w-full flex-col gap-y-4 overflow-y-auto p-4 [scrollbar-gutter:stable]">
+          <SortableContext items={tasks.map((task) => task.id)} strategy={verticalListSortingStrategy}>
+            {isPending ? (
+              <Spinner />
+            ) : tasks.length > 0 ? (
+              tasks.map((task) => <KanbanCard key={task.id} task={task} />)
+            ) : (
+              t("noTasks")
+            )}
+          </SortableContext>
+        </div>
       </div>
     </div>
   );

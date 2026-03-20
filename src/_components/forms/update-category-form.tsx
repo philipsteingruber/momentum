@@ -1,21 +1,11 @@
 "use client";
 
+import { ConfirmDeleteDialog } from "@/_components/confirm-delete-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import type { Category } from "@/generated/prisma/client";
-import { useDialogState } from "@/hooks/use-dialog-state";
 import { updateCategorySchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,11 +28,8 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
     onSuccess: () => {
       toast.success(t("deletedToast"));
       trpcUtils.category.getAll.invalidate();
-      setIsOpen(false);
     },
   });
-
-  const { handleOpenChange, isOpen, setIsOpen } = useDialogState({ preventClose: isDeletingCategory });
 
   const form = useForm<z.infer<typeof updateCategorySchema>>({
     resolver: zodResolver(updateCategorySchema),
@@ -96,25 +83,15 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
         <Button disabled={isUpdatingCategory} onClick={() => form.reset()} variant={"outline"} type="button">
           {t("reset")}
         </Button>
-        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-          <DialogTrigger asChild>
-            <Button variant={"destructive"}>{t("delete")}</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t("deleteDialogTitle")}</DialogTitle>
-              <DialogDescription>{t("deleteDialogDescription")}</DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant={"outline"}>{t("back")}</Button>
-              </DialogClose>
-              <Button variant={"destructive"} onClick={() => deleteCategory({ categoryId: category.id })}>
-                {isDeletingCategory ? <Spinner /> : t("confirm")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <ConfirmDeleteDialog
+          trigger={<Button variant={"destructive"}>{t("delete")}</Button>}
+          title={t("deleteDialogTitle")}
+          description={t("deleteDialogDescription")}
+          cancelLabel={t("back")}
+          confirmLabel={t("confirm")}
+          onConfirm={() => deleteCategory({ categoryId: category.id })}
+          isPending={isDeletingCategory}
+        />
         <Button disabled={isUpdatingCategory || !form.formState.isValid || !form.formState.isDirty} type="submit">
           {isUpdatingCategory ? <Spinner /> : t("submit")}
         </Button>

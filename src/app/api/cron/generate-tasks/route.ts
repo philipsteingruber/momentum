@@ -1,7 +1,9 @@
 import { TaskStatus } from "@/generated/prisma/enums";
 import { verifyCronAuth } from "@/lib/cron-utils";
+import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
 import { computeNextDueDate } from "@/lib/recurring-template-utils";
+import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 
 export const handler = async (req: Request): Promise<Response> => {
   if (!verifyCronAuth(req)) {
@@ -15,7 +17,7 @@ export const handler = async (req: Request): Promise<Response> => {
         where: { nextDueDate: { lte: now } },
         include: {
           tasks: {
-            where: { status: { in: [TaskStatus.BLOCKED, TaskStatus.IN_PROGRESS, TaskStatus.PENDING] } },
+            where: { status: { in: [...ACTIVE_TASK_STATUSES] } },
             take: 1,
           },
         },
@@ -59,7 +61,7 @@ export const handler = async (req: Request): Promise<Response> => {
                     dayOfMonth: template.dayOfMonth ?? undefined,
                     dayOfWeek: template.dayOfWeek ?? undefined,
                     from: template.nextDueDate,
-                    timezone: user.userSettings?.timezone ?? "Europe/Stockholm",
+                    timezone: user.userSettings?.timezone ?? DEFAULT_TIMEZONE,
                   }),
                 },
               });

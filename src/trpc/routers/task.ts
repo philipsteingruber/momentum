@@ -1,8 +1,9 @@
 import { TaskStatus } from "@/generated/prisma/enums";
 import { createTaskSchema, updateTaskSchema } from "@/lib/schemas";
+import { TERMINAL_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
-import { addDays } from "date-fns";
+import { addDays, subDays } from "date-fns";
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
 
@@ -19,6 +20,8 @@ export const taskRouter = createTRPCRouter({
         .partial(),
     )
     .query(async ({ ctx, input }) => {
+      const cutoff = subDays(new Date(), 14);
+
       const tasks = await ctx.db.task.findMany({
         where: {
           userId: ctx.currentUser.id,
@@ -26,6 +29,12 @@ export const taskRouter = createTRPCRouter({
           dueDate: { gte: input.dueDateRange?.start, lte: input.dueDateRange?.end },
           title: { contains: input.search, mode: "insensitive" },
           categoryId: input.categoryId,
+          NOT: {
+            AND: [
+              { status: { in: [...TERMINAL_TASK_STATUSES] } },
+              { OR: [{ completedAt: { lt: cutoff } }, { completedAt: null }] },
+            ],
+          },
         },
         include: {
           notes: true,
@@ -89,10 +98,15 @@ export const taskRouter = createTRPCRouter({
   updateStatus: authedProcedure
     .input(z.object({ taskId: z.cuid(), newStatus: z.enum(TaskStatus) }))
     .mutation(async ({ ctx, input }) => {
+      const isTerminal = (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(input.newStatus);
+
       try {
         const updatedTask = await ctx.db.task.update({
           where: { id: input.taskId, userId: ctx.currentUser.id },
-          data: { status: input.newStatus },
+          data: {
+            status: input.newStatus,
+            completedAt: isTerminal ? new Date() : null,
+          },
         });
 
         return updatedTask;

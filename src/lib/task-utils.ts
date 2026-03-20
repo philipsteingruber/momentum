@@ -1,6 +1,12 @@
 import type { Task } from "@/generated/prisma/client";
-import type { TaskStatus } from "@/generated/prisma/enums";
+import { TaskStatus } from "@/generated/prisma/enums";
 import { endOfWeek, isAfter, isBefore, startOfDay } from "date-fns";
+
+export const ACTIVE_TASK_STATUSES = [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] as const;
+
+export const TERMINAL_TASK_STATUSES = [TaskStatus.COMPLETED, TaskStatus.CANCELLED] as const;
+
+export const SNOOZE_OPTIONS = [1, 3, 7] as const;
 
 export const parseTaskStatus = (taskStatus: TaskStatus) => {
   const words = taskStatus.split("_");
@@ -11,6 +17,7 @@ export const capitaliseFirstCharacter = (str: string) => {
   return str.length > 0 ? str[0].toUpperCase() + str.slice(1).toLowerCase() : "";
 };
 
+/** @deprecated Use isOverdueInUserTz from date-utils for timezone-aware comparisons */
 export const isOverdue = (dueDate: Date | null): boolean => {
   return dueDate ? isAfter(new Date(), dueDate) : false;
 };

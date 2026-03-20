@@ -1,9 +1,7 @@
 "use client";
 
-import { EmptyCard } from "@/_components/cards/empty-card";
-import { ErrorCard } from "@/_components/cards/error-card";
-import { LoadingCard } from "@/_components/cards/loading-card";
 import { MaxWidthWrapper } from "@/_components/max-width-wrapper";
+import { QueryState } from "@/_components/query-state";
 import { UpdateTaskDialog } from "@/_components/task/update-task-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useDialogState } from "@/hooks/use-dialog-state";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
-import { capitaliseFirstCharacter, parseTaskStatus } from "@/lib/task-utils";
+import { capitaliseFirstCharacter, parseTaskStatus, SNOOZE_OPTIONS } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { differenceInDays } from "date-fns";
 import { CalendarIcon, CheckIcon, FileIcon, LinkIcon, TrashIcon, UserIcon, WorkflowIcon } from "lucide-react";
@@ -80,31 +78,21 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const [noteValue, setNoteValue] = useState<string>("");
   const { handleOpenChange, isOpen, setIsOpen } = useDialogState({ preventClose: isDeletingTask });
   const { fmt, fmtRelative } = useFormatInUserTz();
-
-  if (isError) {
-    return (
-      <MaxWidthWrapper>
-        <ErrorCard className="w-full" title={t("cardTitle")} error={error.message} />
-      </MaxWidthWrapper>
-    );
-  }
-  if (isLoadingTask) {
-    return (
-      <MaxWidthWrapper>
-        <LoadingCard className="w-full" title={t("cardTitle")} />
-      </MaxWidthWrapper>
-    );
-  }
-  if (!task) {
-    return (
-      <MaxWidthWrapper>
-        <EmptyCard className="w-full" title={t("cardTitle")} />
-      </MaxWidthWrapper>
-    );
-  }
+  const snoozeLabels: Record<typeof SNOOZE_OPTIONS[number], string> = {
+    1: t("snooze1Day"),
+    3: t("snooze3Days"),
+    7: t("snooze7Days"),
+  };
 
   return (
-    <MaxWidthWrapper>
+    <QueryState
+      isPending={isLoadingTask}
+      isError={isError}
+      error={error}
+      isEmpty={!task}
+      title={t("cardTitle")}
+    >
+      {task && <MaxWidthWrapper>
       <Card className="w-full">
         <CardHeader>
           <CardTitle>{task.title}</CardTitle>
@@ -195,15 +183,11 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
             </Button>
             {task.dueDate && (
               <>
-                <Button onClick={() => snoozeTask({ taskId, days: 1 })} disabled={isMutationRunning} className="w-30">
-                  {isSnoozingTask ? <Spinner /> : t("snooze1Day")}
-                </Button>
-                <Button onClick={() => snoozeTask({ taskId, days: 3 })} disabled={isMutationRunning} className="w-30">
-                  {isSnoozingTask ? <Spinner /> : t("snooze3Days")}
-                </Button>
-                <Button onClick={() => snoozeTask({ taskId, days: 7 })} disabled={isMutationRunning} className="w-30">
-                  {isSnoozingTask ? <Spinner /> : t("snooze7Days")}
-                </Button>
+                {SNOOZE_OPTIONS.map((days) => (
+                  <Button key={days} onClick={() => snoozeTask({ taskId, days })} disabled={isMutationRunning} className="w-30">
+                    {isSnoozingTask ? <Spinner /> : snoozeLabels[days]}
+                  </Button>
+                ))}
               </>
             )}
           </div>
@@ -235,7 +219,8 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
           </div>
         </CardContent>
       </Card>
-    </MaxWidthWrapper>
+    </MaxWidthWrapper>}
+    </QueryState>
   );
 };
 

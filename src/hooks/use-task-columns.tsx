@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { type Task } from "@/generated/prisma/client";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
+import { SNOOZE_OPTIONS } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDownIcon, MoreHorizontalIcon } from "lucide-react";
@@ -93,8 +94,8 @@ export function useTaskColumns() {
         header: t("updatedHeader"),
         cell: ({ row }) => fmtRelative(row.original.updatedAt),
         sortingFn: (rowA, rowB) => {
-          const a = rowA.original.createdAt;
-          const b = rowB.original.createdAt;
+          const a = rowA.original.updatedAt;
+          const b = rowB.original.updatedAt;
           return a.getTime() - b.getTime();
         },
       },
@@ -112,6 +113,11 @@ export function useTaskColumns() {
         id: "actions",
         cell: ({ row }) => {
           const task = row.original;
+          const snoozeLabels: Record<typeof SNOOZE_OPTIONS[number], string> = {
+            1: t("snooze1Day"),
+            3: t("snooze3Days"),
+            7: t("snooze7Days"),
+          };
 
           return (
             <DropdownMenu>
@@ -124,15 +130,11 @@ export function useTaskColumns() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{t("snoozeLabel")}</DropdownMenuLabel>
                 <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 1 })}>
-                    {t("snooze1Day")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 3 })}>
-                    {t("snooze3Days")}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => snoozeTask({ taskId: task.id, days: 7 })}>
-                    {t("snooze7Days")}
-                  </DropdownMenuItem>
+                  {SNOOZE_OPTIONS.map((days) => (
+                    <DropdownMenuItem key={days} onClick={() => snoozeTask({ taskId: task.id, days })}>
+                      {snoozeLabels[days]}
+                    </DropdownMenuItem>
+                  ))}
                 </DropdownMenuGroup>
               </DropdownMenuContent>
             </DropdownMenu>

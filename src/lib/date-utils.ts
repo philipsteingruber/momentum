@@ -3,6 +3,8 @@ import { formatRelative, isBefore, startOfDay } from "date-fns";
 import { formatInTimeZone, toZonedTime } from "date-fns-tz";
 import { enUS, sv } from "date-fns/locale";
 
+export const DEFAULT_TIMEZONE = "Europe/Stockholm";
+
 type RelativeTokenMap = {
   lastWeek: string;
   yesterday: string;

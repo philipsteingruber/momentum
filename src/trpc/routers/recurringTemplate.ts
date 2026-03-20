@@ -1,5 +1,7 @@
 import { TaskStatus } from "@/generated/prisma/enums";
 import { computeNextDueDate, RecurrenceValidationError } from "@/lib/recurring-template-utils";
+import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { createRecurringTemplateSchema, updateRecurringTemplateSchema } from "@/lib/schemas";
 import { TRPCError } from "@trpc/server";
 import z from "zod";
@@ -79,9 +81,12 @@ export const recurringTemplateRouter = createTRPCRouter({
 
       return await ctx.db.recurringTemplate.update({
         where: { id: input.templateId, userId: ctx.currentUser.id },
-        data: { ...input.data, nextDueDate: nextDueDate },
+        data: { ...input.data, nextDueDate },
       });
     } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
       if (err instanceof RecurrenceValidationError) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid recurrence type and day combination" });
       }
@@ -95,7 +100,7 @@ export const recurringTemplateRouter = createTRPCRouter({
         where: {
           recurringTemplateId: input.templateId,
           userId: ctx.currentUser.id,
-          status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] },
+          status: { in: [...ACTIVE_TASK_STATUSES] },
         },
       });
       await tx.task.updateMany({

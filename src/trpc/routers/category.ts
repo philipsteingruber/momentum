@@ -1,6 +1,6 @@
-import { TaskStatus } from "@/generated/prisma/enums";
+import { isOverdueInUserTz } from "@/lib/date-utils";
 import { createCategorySchema, updateCategorySchema } from "@/lib/schemas";
-import { isOverdue } from "@/lib/task-utils";
+import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -10,7 +10,7 @@ export const categoryRouter = createTRPCRouter({
   getAll: authedProcedure
     .input(z.object({ includeTasks: z.boolean().optional() }).optional())
     .query(async ({ ctx, input }) => {
-      const activeStatusFilter = { status: { in: [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] } };
+      const activeStatusFilter = { status: { in: [...ACTIVE_TASK_STATUSES] } };
       const categories = await ctx.db.category.findMany({
         where: { userId: ctx.currentUser.id },
         include: {
@@ -30,7 +30,7 @@ export const categoryRouter = createTRPCRouter({
       return categories.map((category) => ({
         ...category,
         taskCount: category._count.tasks,
-        overdueTaskCount: category.tasks?.filter((task) => isOverdue(task.dueDate)).length ?? 0,
+        overdueTaskCount: category.tasks?.filter((task) => task.dueDate && isOverdueInUserTz(task.dueDate, ctx.currentUser.userSettings.timezone)).length ?? 0,
       }));
     }),
 

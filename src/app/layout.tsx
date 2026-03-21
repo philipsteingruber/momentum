@@ -26,8 +26,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Healthcare Scheduling",
-  description: "Healthcare Scheduling",
+  title: "Momentum",
+  description: "Task management with categories, recurring templates, and kanban-style scheduling.",
 };
 
 const RootLayout = async ({

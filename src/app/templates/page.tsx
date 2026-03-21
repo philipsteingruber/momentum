@@ -16,33 +16,38 @@ const Page = () => {
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
 
   return (
-    <QueryState isPending={isLoadingTemplates || isLoadingCategories} isError={isError} error={error} title={t("title")}>
-    <MaxWidthWrapper>
-      <Card className="w-full">
-        <CardHeader>
-          <div className="flex w-full items-center justify-between">
-            <CardTitle>{t("title")}</CardTitle>
-            <CreateTemplateDialog categories={categories ?? []} />
-          </div>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-y-4 px-4">
-          {templates!.length === 0 ? (
-            <Card className="h-[200px] w-full border-0 shadow-none">
-              <CardContent className="flex h-full flex-col items-center justify-center gap-y-4">
-                <SearchIcon />
-                <span>{t("empty")}</span>
-              </CardContent>
-            </Card>
-          ) : (
-            templates!.map((template) => (
-              <CollapsibleListItem key={template.id} label={template.title}>
-                <UpdateTemplateForm template={template} categories={categories ?? []} />
-              </CollapsibleListItem>
-            ))
-          )}
-        </CardContent>
-      </Card>
-    </MaxWidthWrapper>
+    <QueryState
+      isPending={isLoadingTemplates || isLoadingCategories}
+      isError={isError}
+      error={error}
+      title={t("title")}
+    >
+      <MaxWidthWrapper>
+        <Card className="w-full">
+          <CardHeader>
+            <div className="flex w-full items-center justify-between">
+              <CardTitle>{t("title")}</CardTitle>
+              <CreateTemplateDialog categories={categories ?? []} />
+            </div>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-y-4 px-4">
+            {(templates ?? []).length === 0 ? (
+              <Card className="h-[200px] w-full border-0 shadow-none">
+                <CardContent className="flex h-full flex-col items-center justify-center gap-y-4">
+                  <SearchIcon />
+                  <span>{t("empty")}</span>
+                </CardContent>
+              </Card>
+            ) : (
+              (templates ?? []).map((template) => (
+                <CollapsibleListItem key={template.id} label={template.title}>
+                  <UpdateTemplateForm template={template} categories={categories ?? []} />
+                </CollapsibleListItem>
+              ))
+            )}
+          </CardContent>
+        </Card>
+      </MaxWidthWrapper>
     </QueryState>
   );
 };

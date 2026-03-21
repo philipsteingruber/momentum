@@ -43,6 +43,9 @@ model UserSettings {
     timezone String @default("Europe/Stockholm")
     locale   String @default("en")
 
+    discordId          String? @unique
+    discordDmChannelId String?
+
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String @unique
 }

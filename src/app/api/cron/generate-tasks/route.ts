@@ -1,12 +1,19 @@
 import { TaskStatus } from "@/generated/prisma/enums";
+import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
 import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
 import { computeNextDueDate } from "@/lib/recurring-template-utils";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 
+const JOB = "generate-tasks";
+
 export const handler = async (req: Request): Promise<Response> => {
+  const runId = crypto.randomUUID();
+  await cronLog({ runId, job: JOB, event: "start", level: "info", data: { timestamp: new Date().toISOString() } });
+
   if (!verifyCronAuth(req)) {
+    await cronLog({ runId, job: JOB, event: "auth.failed", level: "error" });
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -28,6 +35,7 @@ export const handler = async (req: Request): Promise<Response> => {
   });
 
   const errors: Error[] = [];
+  const successes: string[] = [];
 
   await Promise.all(
     users.map(async (user) => {
@@ -40,7 +48,7 @@ export const handler = async (req: Request): Promise<Response> => {
               if (activeTask) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
               }
-              await tx.task.create({
+              const newTask = await tx.task.create({
                 data: {
                   title: template.title,
                   description: template.description,
@@ -65,8 +73,22 @@ export const handler = async (req: Request): Promise<Response> => {
                   }),
                 },
               });
+              await cronLog({
+                runId,
+                job: JOB,
+                event: "task.created",
+                level: "info",
+                data: { userId: user.id, email: user.email, taskId: newTask.id, timestamp: new Date().toISOString() },
+              });
+              successes.push(newTask.id);
             } catch (err) {
-              console.error(err);
+              await cronLog({
+                runId,
+                job: JOB,
+                event: "task.failed",
+                level: "error",
+                data: { userId: user.id, email: user.email, error: String(err), timestamp: new Date().toISOString() },
+              });
               errors.push(err as Error);
             }
           });
@@ -74,6 +96,14 @@ export const handler = async (req: Request): Promise<Response> => {
       );
     }),
   );
+
+  await cronLog({
+    runId,
+    job: JOB,
+    event: "complete",
+    level: "info",
+    data: { successes: successes.length, errors: errors.length, timestamp: new Date().toISOString() },
+  });
 
   if (errors.length > 0) {
     return new Response("Some task creations/updates failed", { status: 207 });

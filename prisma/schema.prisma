@@ -154,3 +154,16 @@ model Tag {
 
     @@unique([userId, name])
 }
+
+model CronLog {
+    id        String   @id @default(cuid())
+    runId     String
+    job       String
+    event     String
+    level     String
+    data      Json?
+    timestamp DateTime @default(now())
+
+    @@index([runId])
+    @@index([job, timestamp])
+}

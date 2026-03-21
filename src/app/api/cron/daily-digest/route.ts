@@ -1,11 +1,18 @@
+import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
 import { sendDailyDigest } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { groupTasksForDigest } from "@/lib/task-utils";
 import pLimit from "p-limit";
 
+const JOB = "daily-digest";
+
 const handler = async (req: Request): Promise<Response> => {
+  const runId = crypto.randomUUID();
+  await cronLog({ runId, job: JOB, event: "start", level: "info", data: { timestamp: new Date().toISOString() } });
+
   if (!verifyCronAuth(req)) {
+    await cronLog({ runId, job: JOB, event: "auth.failed", level: "error" });
     return new Response("Unauthorized", { status: 401 });
   }
 
@@ -34,16 +41,37 @@ const handler = async (req: Request): Promise<Response> => {
         });
 
         if (!success) {
-          console.error(error);
+          await cronLog({
+            runId,
+            job: JOB,
+            event: "send.failed",
+            level: "error",
+            data: { userId: user.id, email: user.email, error: String(error) },
+          });
           return null;
         }
 
+        await cronLog({
+          runId,
+          job: JOB,
+          event: "send.success",
+          level: "info",
+          data: { userId: user.id, email: user.email, emailId: id },
+        });
         return id!;
       }),
     ),
   );
 
   const sentEmails = results.filter((id): id is string => id !== null);
+
+  await cronLog({
+    runId,
+    job: JOB,
+    event: "complete",
+    level: "info",
+    data: { sent: sentEmails.length, totalUsers: users.length, timestamp: new Date().toISOString() },
+  });
 
   return new Response(`Sent ${sentEmails.length} emails`, { status: 200 });
 };

@@ -51,8 +51,16 @@ export type AuthedContext = Context & {
   currentUser: AuthedUser;
 };
 
+const isAdmin = t.middleware(async ({ next, ctx }) => {
+  if (!ctx.auth.userId || ctx.auth.userId !== process.env.ADMIN_CLERK_USER_ID) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  return next({ ctx });
+});
+
 // Base router and procedure helpers
 export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const publicProcedure = t.procedure;
 export const authedProcedure = publicProcedure.use(isAuthed);
+export const adminProcedure = publicProcedure.use(isAdmin);

@@ -1,36 +1,164 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Momentum
+
+A full-stack task management application built with Next.js, featuring recurring task templates, multi-channel daily digests, and a Discord bot integration.
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Database:** PostgreSQL + Prisma ORM
+- **API:** tRPC with TanStack React Query
+- **Auth:** Clerk
+- **UI:** shadcn/ui + Radix UI + Tailwind CSS 4
+- **Email:** Resend + React Email
+- **Discord:** HTTP Interactions (webhook-based, no gateway)
+- **Forms:** React Hook Form + Zod
+
+## Features
+
+- **Task management** — Create, organize, and track tasks with statuses: `PENDING`, `IN_PROGRESS`, `BLOCKED`, `COMPLETED`, `CANCELLED`, `SKIPPED`
+- **Task dependencies** — Block tasks on other tasks to model dependency graphs
+- **Categories & tags** — Organize tasks with user-scoped categories and tags
+- **Recurring templates** — Auto-generate tasks on daily/weekly/monthly schedules
+- **Daily digest** — Email + Discord DM digests grouped by overdue / due today / due this week
+- **Discord bot** — Slash commands: `/list [status]` and `/complete task_id:<id>`
+- **Admin panel** — Cron job log viewer at `/admin` with filtering and search
+- **Internationalization** — English and Swedish supported
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- pnpm
+- A PostgreSQL database
+- Accounts for: Clerk, Resend, Discord (optional)
+
+### 1. Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a `.env` file in the project root:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+# Database
+DATABASE_URL=postgresql://...
 
-## Learn More
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+CLERK_WEBHOOK_SIGNING_SECRET=
+ADMIN_CLERK_USER_ID=
 
-To learn more about Next.js, take a look at the following resources:
+# Resend (email)
+RESEND_API_KEY=
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Cron security
+CRON_SECRET=
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Discord Bot (optional)
+DISCORD_BOT_TOKEN=
+DISCORD_CLIENT_ID=
+DISCORD_CLIENT_SECRET=
+DISCORD_PUBLIC_KEY=
+DISCORD_REDIRECT_URI=http://localhost:3000/api/discord/callback
 
-## Deploy on Vercel
+# App
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3. Push the database schema
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+pnpm prisma db push
+```
+
+### 4. (Optional) Register Discord slash commands
+
+This is a one-time operation that registers `/list` and `/complete` globally with Discord.
+
+```bash
+pnpm discord:register
+```
+
+### 5. Start the development server
+
+```bash
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+## Available Scripts
+
+| Command | Description |
+|---|---|
+| `pnpm dev` | Start the development server |
+| `pnpm dev:fresh` | Reset DB, seed, generate Prisma types, then start dev |
+| `pnpm build` | Production build |
+| `pnpm start` | Start the production server |
+| `pnpm lint` | Run ESLint |
+| `pnpm email` | Start the React Email preview server |
+| `pnpm discord:register` | Register Discord slash commands (one-time) |
+
+## Project Structure
+
+```
+/src
+  /app                        # Next.js App Router pages & API routes
+    /admin                    # Cron log viewer (admin only)
+    /api
+      /cron
+        /daily-digest         # Sends email + Discord DM digests
+        /generate-tasks       # Creates tasks from recurring templates
+      /discord
+        /auth                 # Discord OAuth2 initiation
+        /callback             # Discord OAuth2 callback
+        /interactions         # Discord slash command webhook
+      /trpc/[trpc]            # tRPC endpoint
+      /webhooks               # Clerk lifecycle webhooks
+    /categories               # Category list page
+    /category/[categoryId]    # Category detail page
+    /settings/discord         # Discord account linking
+    /task/[taskId]            # Task detail page
+    /templates                # Recurring templates page
+    /page.tsx                 # Home (task list)
+  /_components                # Shared UI components
+  /trpc                       # tRPC routers and client setup
+  /lib                        # Utilities (discord, email, prisma, cron)
+
+/prisma
+  schema.prisma               # Database schema
+  seed.ts                     # Database seed
+
+/scripts
+  register-discord-commands.ts
+
+/messages
+  en.json                     # English translations
+  sv.json                     # Swedish translations
+```
+
+## Cron Jobs
+
+Cron jobs are secured with a shared `CRON_SECRET` header and must be triggered externally (e.g., Vercel Cron, GitHub Actions).
+
+| Route | Purpose |
+|---|---|
+| `POST /api/cron/daily-digest` | Sends daily task digest via email and Discord DM |
+| `POST /api/cron/generate-tasks` | Generates tasks from due recurring templates |
+
+All cron activity is logged to the `CronLog` database table and viewable at `/admin`.
+
+## Discord Integration
+
+The Discord bot uses **HTTP Interactions** (no persistent WebSocket gateway), making it compatible with serverless deployments like Vercel.
+
+**Account linking:** Users link their Discord account via OAuth2 at `/settings/discord`. A DM channel is opened at link time for digest delivery.
+
+**Slash commands:**
+- `/list [status]` — Lists tasks, optionally filtered by status
+- `/complete task_id:<id>` — Marks a task as completed

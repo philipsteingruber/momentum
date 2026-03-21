@@ -26,6 +26,35 @@ const commands: RESTPostAPIApplicationCommandsJSONBody[] = [
     ],
   },
   {
+    name: "today",
+    description: "List tasks due today or overdue",
+  },
+  {
+    name: "add",
+    description: "Create a new task",
+    options: [
+      {
+        name: "title",
+        description: "Task title",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+      },
+      {
+        name: "due",
+        description: "Due date (YYYY-MM-DD)",
+        type: ApplicationCommandOptionType.String,
+        required: false,
+      },
+      {
+        name: "category",
+        description: "Category",
+        type: ApplicationCommandOptionType.String,
+        required: false,
+        autocomplete: true,
+      },
+    ],
+  },
+  {
     name: "complete",
     description: "Mark a task as completed",
     options: [
@@ -35,6 +64,46 @@ const commands: RESTPostAPIApplicationCommandsJSONBody[] = [
         type: ApplicationCommandOptionType.String,
         required: true,
         autocomplete: true,
+      },
+    ],
+  },
+  {
+    name: "snooze",
+    description: "Extend a task's due date",
+    options: [
+      {
+        name: "task",
+        description: "The task to snooze",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: "days",
+        description: "Number of days to extend (1–7)",
+        type: ApplicationCommandOptionType.Integer,
+        required: true,
+        min_value: 1,
+        max_value: 7,
+      },
+    ],
+  },
+  {
+    name: "note",
+    description: "Add a note to a task",
+    options: [
+      {
+        name: "task",
+        description: "The task to add a note to",
+        type: ApplicationCommandOptionType.String,
+        required: true,
+        autocomplete: true,
+      },
+      {
+        name: "content",
+        description: "Note content",
+        type: ApplicationCommandOptionType.String,
+        required: true,
       },
     ],
   },

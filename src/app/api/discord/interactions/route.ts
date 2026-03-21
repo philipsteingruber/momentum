@@ -5,6 +5,7 @@ import {
   InteractionResponseType,
   InteractionType,
   type APIApplicationCommandAutocompleteInteraction,
+  type APIApplicationCommandInteractionDataIntegerOption,
   type APIApplicationCommandInteractionDataStringOption,
   type APIChatInputApplicationCommandInteraction,
   type APIInteraction,
@@ -122,39 +123,55 @@ const handleComplete = async (
   });
 };
 
+const autocompleteEmpty = (): Response =>
+  Response.json({
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+    data: { choices: [] },
+  });
+
 const handleAutocomplete = async (
   interaction: APIApplicationCommandAutocompleteInteraction,
 ): Promise<Response> => {
   const discordUserId = interaction.member?.user.id ?? interaction.user?.id;
-
-  if (!discordUserId) {
-    return Response.json({
-      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
-      data: { choices: [] },
-    });
-  }
+  if (!discordUserId) return autocompleteEmpty();
 
   const settings = await prisma.userSettings.findUnique({
     where: { discordId: discordUserId },
     include: { user: true },
   });
-
-  if (!settings) {
-    return Response.json({
-      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
-      data: { choices: [] },
-    });
-  }
+  if (!settings) return autocompleteEmpty();
 
   const focusedOption = interaction.data.options?.find(
     (o): o is APIApplicationCommandInteractionDataStringOption =>
       "focused" in o && o.focused === true,
   );
-  const query = focusedOption?.value ?? "";
+  if (!focusedOption) return autocompleteEmpty();
 
+  const query = focusedOption.value ?? "";
+  const userId = settings.user.id;
+
+  if (focusedOption.name === "category") {
+    const categories = await prisma.category.findMany({
+      where: {
+        userId,
+        ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
+      },
+      take: 25,
+      orderBy: { name: "asc" },
+    });
+
+    return Response.json({
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: {
+        choices: categories.map((c) => ({ name: c.name, value: c.id })),
+      },
+    });
+  }
+
+  // task_id (for /complete) and task (for /note, /snooze)
   const tasks = await prisma.task.findMany({
     where: {
-      userId: settings.user.id,
+      userId,
       status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.SKIPPED] },
       ...(query ? { title: { contains: query, mode: "insensitive" } } : {}),
     },
@@ -170,6 +187,184 @@ const handleAutocomplete = async (
         value: task.id,
       })),
     },
+  });
+};
+
+const handleToday = async (
+  interaction: APIChatInputApplicationCommandInteraction,
+  token: string,
+  userId: string,
+): Promise<void> => {
+  const now = new Date();
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
+  const tasks = await prisma.task.findMany({
+    where: {
+      userId,
+      dueDate: { lte: endOfToday },
+      status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.SKIPPED] },
+    },
+    orderBy: { dueDate: "asc" },
+    take: 50,
+  });
+
+  if (tasks.length === 0) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "No tasks due today or overdue.",
+    });
+    return;
+  }
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const description = tasks
+    .map((task) => {
+      const due = task.dueDate!;
+      const isOverdue = due < today;
+      const label = isOverdue ? `overdue ${due.toLocaleDateString()}` : "today";
+      return `**[${task.title}](${BASE_URL}/task/${task.id})** \`${label}\``;
+    })
+    .join("\n");
+
+  await followUpInteraction(APPLICATION_ID, token, {
+    embeds: [
+      {
+        title: `Due today or overdue (${tasks.length})`,
+        description,
+        color: 0xef4444,
+      },
+    ],
+  });
+};
+
+const handleAdd = async (
+  interaction: APIChatInputApplicationCommandInteraction,
+  token: string,
+  userId: string,
+): Promise<void> => {
+  const options = getOptions(interaction);
+  const title = options?.find((o) => o.name === "title")?.value;
+  const dueRaw = options?.find((o) => o.name === "due")?.value;
+  const categoryId = options?.find((o) => o.name === "category")?.value;
+
+  if (!title) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "Missing `title`.",
+    });
+    return;
+  }
+
+  let dueDate: Date | undefined;
+  if (dueRaw) {
+    const parts = dueRaw.split("-").map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) {
+      await followUpInteraction(APPLICATION_ID, token, {
+        content: "Invalid date format. Use `YYYY-MM-DD`, e.g. `2026-03-28`.",
+      });
+      return;
+    }
+    dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+
+  const task = await prisma.task.create({
+    data: {
+      title,
+      userId,
+      ...(dueDate ? { dueDate } : {}),
+      ...(categoryId ? { categoryId } : {}),
+    },
+  });
+
+  const dueLine = dueDate ? ` — due ${dueDate.toLocaleDateString()}` : "";
+
+  await followUpInteraction(APPLICATION_ID, token, {
+    embeds: [
+      {
+        description: `✅ Created: **[${task.title}](${BASE_URL}/task/${task.id})**${dueLine}`,
+        color: 0x6366f1,
+      },
+    ],
+  });
+};
+
+const handleSnooze = async (
+  interaction: APIChatInputApplicationCommandInteraction,
+  token: string,
+  userId: string,
+): Promise<void> => {
+  const stringOptions = getOptions(interaction);
+  const taskId = stringOptions?.find((o) => o.name === "task")?.value;
+  const daysOption = interaction.data.options?.find(
+    (o): o is APIApplicationCommandInteractionDataIntegerOption => o.name === "days",
+  );
+  const days = daysOption?.value;
+
+  if (!taskId || days === undefined) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "Missing required options.",
+    });
+    return;
+  }
+
+  const task = await prisma.task.findFirst({ where: { id: taskId, userId } });
+  if (!task) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: `Task not found or you don't have permission.`,
+    });
+    return;
+  }
+
+  const base = task.dueDate ?? new Date();
+  const newDue = new Date(base);
+  newDue.setDate(newDue.getDate() + Number(days));
+
+  await prisma.task.update({
+    where: { id: taskId },
+    data: { dueDate: newDue },
+  });
+
+  await followUpInteraction(APPLICATION_ID, token, {
+    embeds: [
+      {
+        description: `⏰ Snoozed: **${task.title}** — now due ${newDue.toLocaleDateString()}`,
+        color: 0xf59e0b,
+      },
+    ],
+  });
+};
+
+const handleNote = async (
+  interaction: APIChatInputApplicationCommandInteraction,
+  token: string,
+  userId: string,
+): Promise<void> => {
+  const options = getOptions(interaction);
+  const taskId = options?.find((o) => o.name === "task")?.value;
+  const content = options?.find((o) => o.name === "content")?.value;
+
+  if (!taskId || !content) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "Missing required options.",
+    });
+    return;
+  }
+
+  const task = await prisma.task.findFirst({ where: { id: taskId, userId } });
+  if (!task) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: `Task not found or you don't have permission.`,
+    });
+    return;
+  }
+
+  await prisma.note.create({ data: { taskId, content } });
+
+  await followUpInteraction(APPLICATION_ID, token, {
+    embeds: [
+      {
+        description: `📝 Note added to **[${task.title}](${BASE_URL}/task/${task.id})**\n> ${content}`,
+        color: 0x6366f1,
+      },
+    ],
   });
 };
 
@@ -200,8 +395,16 @@ const handleCommand = async (interaction: APIChatInputApplicationCommandInteract
 
   if (commandName === "list") {
     await handleList(interaction, token, settings.user.id);
+  } else if (commandName === "today") {
+    await handleToday(interaction, token, settings.user.id);
+  } else if (commandName === "add") {
+    await handleAdd(interaction, token, settings.user.id);
   } else if (commandName === "complete") {
     await handleComplete(interaction, token, settings.user.id);
+  } else if (commandName === "snooze") {
+    await handleSnooze(interaction, token, settings.user.id);
+  } else if (commandName === "note") {
+    await handleNote(interaction, token, settings.user.id);
   } else {
     await followUpInteraction(APPLICATION_ID, token, {
       content: `Unknown command: \`${commandName}\``,

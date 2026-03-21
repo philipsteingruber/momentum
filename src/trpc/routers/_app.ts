@@ -1,5 +1,6 @@
 import { createTRPCRouter } from "../init";
 import { categoryRouter } from "./category";
+import { cronLogRouter } from "./cron-log";
 import { noteRouter } from "./note";
 import { recurringTemplateRouter } from "./recurringTemplate";
 import { tagRouter } from "./tag";
@@ -8,6 +9,7 @@ import { userSettingsRouter } from "./user-settings";
 
 export const appRouter = createTRPCRouter({
   category: categoryRouter,
+  cronLog: cronLogRouter,
   note: noteRouter,
   recurringTemplate: recurringTemplateRouter,
   tag: tagRouter,

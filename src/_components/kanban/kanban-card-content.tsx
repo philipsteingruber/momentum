@@ -5,7 +5,6 @@ import { TaskStatus } from "@/generated/prisma/enums";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, LinkIcon, UserIcon } from "lucide-react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
@@ -53,9 +52,13 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
         {task.link && (
           <div className="flex items-center gap-x-2">
             <LinkIcon className="size-4" />
-            <Link href={task.link} onClick={(e) => e.stopPropagation()} className="line-clamp-1 text-sm underline">
+            <div
+              onClick={() => window.open(task.link!, "_blank", "noopener,noreferrer")}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="line-clamp-1 text-sm underline"
+            >
               {task.link}
-            </Link>
+            </div>
           </div>
         )}
       </CardContent>

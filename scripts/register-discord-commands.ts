@@ -31,9 +31,10 @@ const commands: RESTPostAPIApplicationCommandsJSONBody[] = [
     options: [
       {
         name: "task_id",
-        description: "The ID of the task to complete (find it in the task URL)",
+        description: "The task to complete",
         type: ApplicationCommandOptionType.String,
         required: true,
+        autocomplete: true,
       },
     ],
   },

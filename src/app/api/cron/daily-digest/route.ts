@@ -1,5 +1,6 @@
 import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
+import { formatDigestEmbeds, sendDmToChannel } from "@/lib/discord";
 import { sendDailyDigest } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { groupTasksForDigest } from "@/lib/task-utils";
@@ -24,6 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
         },
         orderBy: { dueDate: "asc" },
       },
+      userSettings: { select: { discordDmChannelId: true } },
     },
   });
 
@@ -58,6 +60,29 @@ const handler = async (req: Request): Promise<Response> => {
           level: "info",
           data: { userId: user.id, email: user.email, emailId: id },
         });
+
+        if (user.userSettings?.discordDmChannelId) {
+          try {
+            const embeds = formatDigestEmbeds({ overdue, dueToday, dueThisWeek });
+            await sendDmToChannel(user.userSettings.discordDmChannelId, { embeds });
+            await cronLog({
+              runId,
+              job: JOB,
+              event: "discord.sent",
+              level: "info",
+              data: { userId: user.id },
+            });
+          } catch (discordError) {
+            await cronLog({
+              runId,
+              job: JOB,
+              event: "discord.failed",
+              level: "error",
+              data: { userId: user.id, error: String(discordError) },
+            });
+          }
+        }
+
         return id!;
       }),
     ),

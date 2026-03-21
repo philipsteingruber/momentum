@@ -123,7 +123,7 @@ export const DailyDigestEmail = ({
                 {overdue.map((task) => (
                   <Section key={task.id} className="border-destructive bg-card mb-2 rounded-lg border px-5 py-4">
                     <Link
-                      href={`${process.env.BASE_URL}/task/${task.id}`}
+                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/task/${task.id}`}
                       className="text-foreground text-sm font-semibold no-underline"
                     >
                       {task.title}
@@ -146,7 +146,7 @@ export const DailyDigestEmail = ({
                 {dueToday.map((task) => (
                   <Section key={task.id} className="border-primary bg-card mb-2 rounded-lg border px-5 py-4">
                     <Link
-                      href={`${process.env.BASE_URL}/task/${task.id}`}
+                      href={`${process.env.NEXT_PUBLIC_BASE_URL}/task/${task.id}`}
                       className="text-foreground text-sm font-semibold no-underline"
                     >
                       {task.title}
@@ -169,7 +169,7 @@ export const DailyDigestEmail = ({
                     {tasks.map((task) => (
                       <Section key={task.id} className="border-border bg-card mb-2 rounded-lg border px-5 py-4">
                         <Link
-                          href={`${process.env.BASE_URL}/task/${task.id}`}
+                          href={`${process.env.NEXT_PUBLIC_BASE_URL}/task/${task.id}`}
                           className="text-foreground text-sm font-semibold no-underline"
                         >
                           {task.title}
@@ -193,7 +193,10 @@ export const DailyDigestEmail = ({
 
             {/* Footer */}
             <Section className="text-center">
-              <Link href={`${process.env.BASE_URL}`} className="text-primary text-sm font-medium no-underline">
+              <Link
+                href={`${process.env.NEXT_PUBLIC_BASE_URL}`}
+                className="text-primary text-sm font-medium no-underline"
+              >
                 Momentum
               </Link>
               <Text className="text-muted mt-3 mb-0 text-xs leading-5">

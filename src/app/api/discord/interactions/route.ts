@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   InteractionResponseType,
   InteractionType,
+  type APIApplicationCommandAutocompleteInteraction,
   type APIApplicationCommandInteractionDataStringOption,
   type APIChatInputApplicationCommandInteraction,
   type APIInteraction,
@@ -121,6 +122,57 @@ const handleComplete = async (
   });
 };
 
+const handleAutocomplete = async (
+  interaction: APIApplicationCommandAutocompleteInteraction,
+): Promise<Response> => {
+  const discordUserId = interaction.member?.user.id ?? interaction.user?.id;
+
+  if (!discordUserId) {
+    return Response.json({
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: { choices: [] },
+    });
+  }
+
+  const settings = await prisma.userSettings.findUnique({
+    where: { discordId: discordUserId },
+    include: { user: true },
+  });
+
+  if (!settings) {
+    return Response.json({
+      type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+      data: { choices: [] },
+    });
+  }
+
+  const focusedOption = interaction.data.options?.find(
+    (o): o is APIApplicationCommandInteractionDataStringOption =>
+      "focused" in o && o.focused === true,
+  );
+  const query = focusedOption?.value ?? "";
+
+  const tasks = await prisma.task.findMany({
+    where: {
+      userId: settings.user.id,
+      status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.SKIPPED] },
+      ...(query ? { title: { contains: query, mode: "insensitive" } } : {}),
+    },
+    take: 25,
+    orderBy: { createdAt: "desc" },
+  });
+
+  return Response.json({
+    type: InteractionResponseType.ApplicationCommandAutocompleteResult,
+    data: {
+      choices: tasks.map((task) => ({
+        name: task.title.length > 100 ? task.title.slice(0, 97) + "..." : task.title,
+        value: task.id,
+      })),
+    },
+  });
+};
+
 const handleCommand = async (interaction: APIChatInputApplicationCommandInteraction): Promise<void> => {
   const token = interaction.token;
 
@@ -170,6 +222,10 @@ export const POST = async (req: Request): Promise<Response> => {
 
   if (interaction.type === InteractionType.Ping) {
     return Response.json({ type: InteractionResponseType.Pong });
+  }
+
+  if (interaction.type === InteractionType.ApplicationCommandAutocomplete) {
+    return handleAutocomplete(interaction as APIApplicationCommandAutocompleteInteraction);
   }
 
   if (interaction.type === InteractionType.ApplicationCommand) {

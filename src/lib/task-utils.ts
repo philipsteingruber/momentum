@@ -37,6 +37,18 @@ export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
     >,
   );
 
+  const activeRecurringTemplateIds = new Set(
+    tasks
+      .filter((t) => t.recurringTemplateId && (ACTIVE_TASK_STATUSES as readonly TaskStatus[]).includes(t.status))
+      .map((t) => t.recurringTemplateId),
+  );
+
+  for (const status of TERMINAL_TASK_STATUSES) {
+    tasksByGroup[status] = tasksByGroup[status].filter(
+      (t) => !t.recurringTemplateId || !activeRecurringTemplateIds.has(t.recurringTemplateId),
+    );
+  }
+
   const todayStart = startOfDay(toZonedTime(new Date(), timezone));
   tasksByGroup[OVERDUE_STATUS] = tasks.filter(
     (task) =>

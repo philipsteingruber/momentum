@@ -3,6 +3,10 @@
     "Neon": {
       "type": "http",
       "url": "https://mcp.neon.tech/mcp"
+    },
+    "Prisma": {
+      "type": "http",
+      "url": "https://mcp.prisma.io/mcp"
     }
   }
 }

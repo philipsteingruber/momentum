@@ -1,6 +1,7 @@
 import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { endOfWeek, isAfter, isBefore, startOfDay } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 
 export const ACTIVE_TASK_STATUSES = [TaskStatus.PENDING, TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED] as const;
 
@@ -24,7 +25,7 @@ export const isOverdue = (dueDate: Date | null): boolean => {
 
 export const OVERDUE_STATUS = "OVERDUE" as const;
 
-export const groupTasksByStatus = (tasks: Task[]) => {
+export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
   const tasksByGroup = tasks.reduce(
     (groups, task) => {
       groups[task.status].push(task);
@@ -36,10 +37,11 @@ export const groupTasksByStatus = (tasks: Task[]) => {
     >,
   );
 
+  const todayStart = startOfDay(toZonedTime(new Date(), timezone));
   tasksByGroup[OVERDUE_STATUS] = tasks.filter(
     (task) =>
       task.dueDate &&
-      isBefore(startOfDay(task.dueDate), startOfDay(new Date())) &&
+      isBefore(startOfDay(toZonedTime(task.dueDate, timezone)), todayStart) &&
       task.status !== "CANCELLED" &&
       task.status !== "COMPLETED",
   );
@@ -53,8 +55,8 @@ export type DigestTaskGroups = {
   dueThisWeek: { date: Date; tasks: Task[] }[];
 };
 
-export const groupTasksForDigest = (tasks: Task[]): DigestTaskGroups => {
-  const today = startOfDay(new Date());
+export const groupTasksForDigest = (tasks: Task[], timezone: string): DigestTaskGroups => {
+  const today = startOfDay(toZonedTime(new Date(), timezone));
   const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
   const todayKey = today.getTime();
   const weekEndKey = weekEnd.getTime();
@@ -68,7 +70,7 @@ export const groupTasksForDigest = (tasks: Task[]): DigestTaskGroups => {
       continue;
     }
 
-    const dayStart = startOfDay(task.dueDate);
+    const dayStart = startOfDay(toZonedTime(task.dueDate, timezone));
     const dayKey = dayStart.getTime();
 
     if (dayKey < todayKey) {

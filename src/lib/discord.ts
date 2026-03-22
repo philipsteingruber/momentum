@@ -17,10 +17,7 @@ export const openDmChannel = async (discordUserId: string): Promise<string> => {
   return channel.id;
 };
 
-export const sendDmToChannel = async (
-  channelId: string,
-  payload: RESTPostAPIChannelMessageJSONBody,
-): Promise<void> => {
+export const sendDmToChannel = async (channelId: string, payload: RESTPostAPIChannelMessageJSONBody): Promise<void> => {
   await discordRest.post(Routes.channelMessages(channelId), { body: payload });
 };
 
@@ -36,7 +33,8 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups): APIEmbed[] => {
   const { overdue, dueToday, dueThisWeek } = groups;
   const embeds: APIEmbed[] = [];
   const today = new Date();
-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+  if (!BASE_URL) throw new Error("NEXT_PUBLIC_BASE_URL is not set");
 
   if (overdue.length > 0) {
     embeds.push({

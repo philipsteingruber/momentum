@@ -59,17 +59,17 @@ export const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("settings")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href={"/settings"}>User Settings</Link>
+                  <Link href={"/settings"}>{t("userSettings")}</Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href={"/settings/discord"}>Discord Integration</Link>
+                  <Link href={"/settings/discord"}>{t("discordIntegration")}</Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

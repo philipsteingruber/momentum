@@ -5,7 +5,7 @@ import { TemplateFormFields } from "@/_components/forms/template-form-fields";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { Category, RecurringTemplate } from "@/generated/prisma/client";
-import { updateRecurringTemplateSchema } from "@/lib/schemas";
+import { makeUpdateRecurringTemplateSchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
@@ -21,6 +21,13 @@ export const UpdateTemplateForm = ({
   categories: Category[];
 }) => {
   const t = useTranslations("UpdateTemplateForm");
+  const tSchemas = useTranslations("Schemas");
+  const schema = makeUpdateRecurringTemplateSchema({
+    titleRequired: tSchemas("titleRequired"),
+    titleMaxLength: tSchemas("titleMaxLength"),
+    descriptionMaxLength: tSchemas("descriptionMaxLength"),
+    linkInvalid: tSchemas("linkInvalid"),
+  });
   const trpcUtils = trpc.useUtils();
 
   const { mutate: updateTemplate, isPending: isUpdatingTemplate } = trpc.recurringTemplate.update.useMutation({
@@ -39,8 +46,8 @@ export const UpdateTemplateForm = ({
     },
   });
 
-  const form = useForm<z.infer<typeof updateRecurringTemplateSchema>>({
-    resolver: zodResolver(updateRecurringTemplateSchema),
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: {
       templateId: template.id,
       data: {
@@ -57,7 +64,7 @@ export const UpdateTemplateForm = ({
     mode: "all",
   });
 
-  const onSubmit = (data: z.infer<typeof updateRecurringTemplateSchema>) => {
+  const onSubmit = (data: z.infer<typeof schema>) => {
     updateTemplate(data);
   };
 

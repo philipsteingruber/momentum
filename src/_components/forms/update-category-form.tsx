@@ -6,7 +6,7 @@ import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import type { Category } from "@/generated/prisma/client";
-import { updateCategorySchema } from "@/lib/schemas";
+import { makeUpdateCategorySchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PaintBucketIcon, TagIcon } from "lucide-react";
@@ -17,6 +17,11 @@ import type z from "zod";
 
 export const UpdateCategoryForm = ({ category }: { category: Category }) => {
   const t = useTranslations("UpdateCategoryForm");
+  const tSchemas = useTranslations("Schemas");
+  const schema = makeUpdateCategorySchema({
+    nameRequired: tSchemas("nameRequired"),
+    nameMaxLength: tSchemas("nameMaxLength"),
+  });
   const trpcUtils = trpc.useUtils();
   const { mutate: updateCategory, isPending: isUpdatingCategory } = trpc.category.update.useMutation({
     onSuccess: () => {
@@ -31,8 +36,8 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
     },
   });
 
-  const form = useForm<z.infer<typeof updateCategorySchema>>({
-    resolver: zodResolver(updateCategorySchema),
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: {
       categoryId: category.id,
       data: {
@@ -43,7 +48,7 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
     mode: "all",
   });
 
-  const onSubmit = (data: z.infer<typeof updateCategorySchema>) => {
+  const onSubmit = (data: z.infer<typeof schema>) => {
     updateCategory(data);
   };
 

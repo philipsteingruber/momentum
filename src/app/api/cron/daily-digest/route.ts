@@ -1,5 +1,6 @@
 import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
+import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { formatDigestEmbeds, sendDmToChannel } from "@/lib/discord";
 import { sendDailyDigest } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
@@ -25,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
         },
         orderBy: { dueDate: "asc" },
       },
-      userSettings: { select: { discordDmChannelId: true } },
+      userSettings: { select: { discordDmChannelId: true, timezone: true } },
     },
   });
 
@@ -36,7 +37,8 @@ const handler = async (req: Request): Promise<Response> => {
       limit(async () => {
         if (!user.email) return null;
 
-        const { overdue, dueToday, dueThisWeek } = groupTasksForDigest(user.tasks);
+        const timezone = user.userSettings?.timezone ?? DEFAULT_TIMEZONE;
+        const { overdue, dueToday, dueThisWeek } = groupTasksForDigest(user.tasks, timezone);
         const { success, error, id } = await sendDailyDigest({
           to: user.email,
           payload: { overdue, dueToday, dueThisWeek },

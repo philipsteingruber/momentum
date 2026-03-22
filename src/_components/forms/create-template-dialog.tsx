@@ -16,7 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { type Category } from "@/generated/prisma/client";
 import { RecurrenceType } from "@/generated/prisma/enums";
 import { useDialogState } from "@/hooks/use-dialog-state";
-import { createRecurringTemplateSchema } from "@/lib/schemas";
+import { makeCreateRecurringTemplateSchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
@@ -43,8 +43,17 @@ const CreateTemplateDialog = ({
   defaultCategoryId?: string;
 }) => {
   const t = useTranslations("CreateTemplateDialog");
-  const form = useForm<z.infer<typeof createRecurringTemplateSchema>>({
-    resolver: zodResolver(createRecurringTemplateSchema),
+  const tSchemas = useTranslations("Schemas");
+  const schema = makeCreateRecurringTemplateSchema({
+    titleRequired: tSchemas("titleRequired"),
+    titleMaxLength: tSchemas("titleMaxLength"),
+    descriptionMaxLength: tSchemas("descriptionMaxLength"),
+    linkInvalid: tSchemas("linkInvalid"),
+    recurrenceDayRequired: tSchemas("recurrenceDayRequired"),
+    recurrenceInvalidCombination: tSchemas("recurrenceInvalidCombination"),
+  });
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: getDefaultValues(defaultCategoryId),
     mode: "all",
   });
@@ -70,7 +79,7 @@ const CreateTemplateDialog = ({
     }
   }, [isOpen, defaultCategoryId, form]);
 
-  const onSubmit = (data: z.infer<typeof createRecurringTemplateSchema>) => {
+  const onSubmit = (data: z.infer<typeof schema>) => {
     createTemplate(data);
   };
 

@@ -7,6 +7,7 @@ export function useFormatInUserTz() {
   const dateLocale = getDateLocale(settings?.locale ?? "en");
 
   return {
+    timezone,
     fmt: (date: Date, formatStr: string) => formatInUserTz(date, formatStr, timezone),
     fmtRelative: (date: Date) =>
       formatRelativeInUserTz(date, timezone, { locale: dateLocale, weekStartsOn: 1 }),

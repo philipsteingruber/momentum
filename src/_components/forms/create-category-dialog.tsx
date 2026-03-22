@@ -4,7 +4,7 @@ import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useDialogState } from "@/hooks/use-dialog-state";
-import { createCategorySchema } from "@/lib/schemas";
+import { makeCategorySchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
@@ -15,6 +15,11 @@ import type z from "zod";
 
 export const CreateCategoryDialog = () => {
   const t = useTranslations("CreateCategoryDialog");
+  const tSchemas = useTranslations("Schemas");
+  const schema = makeCategorySchema({
+    nameRequired: tSchemas("nameRequired"),
+    nameMaxLength: tSchemas("nameMaxLength"),
+  });
   const trpcUtils = trpc.useUtils();
   const { mutate: createCategory, isPending: isCreatingCategory } = trpc.category.create.useMutation({
     onSuccess: () => {
@@ -29,13 +34,13 @@ export const CreateCategoryDialog = () => {
     onClose: () => form.reset(),
   });
 
-  const form = useForm<z.infer<typeof createCategorySchema>>({
-    resolver: zodResolver(createCategorySchema),
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: { name: "" },
     mode: "all",
   });
 
-  const onSubmit = (data: z.infer<typeof createCategorySchema>) => {
+  const onSubmit = (data: z.infer<typeof schema>) => {
     createCategory(data);
   };
 

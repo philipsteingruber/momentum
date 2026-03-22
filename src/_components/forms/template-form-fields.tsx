@@ -9,6 +9,7 @@ import type { Category } from "@/generated/prisma/client";
 import { RecurrenceType } from "@/generated/prisma/enums";
 import { DAY_OF_MONTH_OPTIONS, DAY_OF_WEEK_OPTIONS } from "@/lib/recurring-template-utils";
 import { capitaliseFirstCharacter } from "@/lib/task-utils";
+import { useTranslations } from "next-intl";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
 interface TemplateFieldLabels {
@@ -51,6 +52,16 @@ export function TemplateFormFields<T extends FieldValues>({
 }: TemplateFormFieldsProps<T>) {
   const field = <K extends string>(name: K) => (`${prefix}${name}` as Path<T>);
   const id = (name: string) => (idSuffix ? `${name}-${idSuffix}` : name);
+  const tDays = useTranslations("DaysOfWeek");
+  const dayLabels: Record<number, string> = {
+    1: tDays("monday"),
+    2: tDays("tuesday"),
+    3: tDays("wednesday"),
+    4: tDays("thursday"),
+    5: tDays("friday"),
+    6: tDays("saturday"),
+    0: tDays("sunday"),
+  };
 
   return (
     <>
@@ -158,7 +169,7 @@ export function TemplateFormFields<T extends FieldValues>({
                     <SelectContent position="popper">
                       {DAY_OF_WEEK_OPTIONS.map((day) => (
                         <SelectItem value={day.value.toString()} key={day.value}>
-                          {day.label}
+                          {dayLabels[day.value]}
                         </SelectItem>
                       ))}
                     </SelectContent>

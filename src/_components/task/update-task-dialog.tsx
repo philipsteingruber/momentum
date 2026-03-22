@@ -16,7 +16,7 @@ import { Spinner } from "@/components/ui/spinner";
 import type { Category, Task } from "@/generated/prisma/client";
 import { useDialogState } from "@/hooks/use-dialog-state";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
-import { updateTaskSchema } from "@/lib/schemas";
+import { makeUpdateTaskSchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PenIcon } from "lucide-react";
@@ -40,8 +40,16 @@ const getDefaultValues = (task: Task) => ({
 
 export const UpdateTaskDialog = ({ categories, task }: { categories: Category[]; task: Task }) => {
   const t = useTranslations("UpdateTaskDialog");
-  const form = useForm<z.infer<typeof updateTaskSchema>>({
-    resolver: zodResolver(updateTaskSchema),
+  const tSchemas = useTranslations("Schemas");
+  const schema = makeUpdateTaskSchema({
+    titleRequired: tSchemas("titleRequired"),
+    titleMaxLength: tSchemas("titleMaxLength"),
+    descriptionMaxLength: tSchemas("descriptionMaxLength"),
+    dueDateInPast: tSchemas("dueDateInPast"),
+    linkInvalid: tSchemas("linkInvalid"),
+  });
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
     defaultValues: getDefaultValues(task),
     mode: "all",
   });
@@ -71,7 +79,7 @@ export const UpdateTaskDialog = ({ categories, task }: { categories: Category[];
     }
   }, [isOpen, form, task]);
 
-  const onSubmit = (data: z.infer<typeof updateTaskSchema>) => {
+  const onSubmit = (data: z.infer<typeof schema>) => {
     updateTask(data);
   };
 

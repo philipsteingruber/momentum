@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { TaskStatus } from "@/generated/prisma/enums";
+import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { OVERDUE_STATUS, groupTasksByStatus } from "@/lib/task-utils";
 import type { TaskWithTags } from "@/lib/types/task";
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -17,12 +18,13 @@ export const KanbanBoard = ({
   updateTaskStatus: ({ taskId, newStatus }: { taskId: string; newStatus: TaskStatus }) => void;
 }) => {
   const [activeTask, setActiveTask] = useState<TaskWithTags | null>(null);
+  const { timezone } = useFormatInUserTz();
 
   const keyboardSensor = useSensor(KeyboardSensor);
   const pointerSensor = useSensor(PointerSensor, { activationConstraint: { delay: 10, tolerance: 5 } });
   const sensors = useSensors(keyboardSensor, pointerSensor);
 
-  const tasksByStatus = groupTasksByStatus(tasks);
+  const tasksByStatus = groupTasksByStatus(tasks, timezone);
 
   return (
     <DndContext

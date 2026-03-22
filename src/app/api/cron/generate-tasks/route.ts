@@ -48,12 +48,19 @@ export const handler = async (req: Request): Promise<Response> => {
               if (activeTask) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
               }
+              const newDueDate = computeNextDueDate({
+                recurrenceType: template.recurrenceType,
+                dayOfMonth: template.dayOfMonth ?? undefined,
+                dayOfWeek: template.dayOfWeek ?? undefined,
+                from: template.nextDueDate,
+                timezone: user.userSettings?.timezone ?? DEFAULT_TIMEZONE,
+              });
               const newTask = await tx.task.create({
                 data: {
                   title: template.title,
                   description: template.description,
                   status: TaskStatus.PENDING,
-                  dueDate: template.nextDueDate,
+                  dueDate: newDueDate,
                   externalContact: template.externalContact,
                   categoryId: template.categoryId,
                   recurringTemplateId: template.id,
@@ -63,15 +70,7 @@ export const handler = async (req: Request): Promise<Response> => {
               });
               await tx.recurringTemplate.update({
                 where: { id: template.id },
-                data: {
-                  nextDueDate: computeNextDueDate({
-                    recurrenceType: template.recurrenceType,
-                    dayOfMonth: template.dayOfMonth ?? undefined,
-                    dayOfWeek: template.dayOfWeek ?? undefined,
-                    from: template.nextDueDate,
-                    timezone: user.userSettings?.timezone ?? DEFAULT_TIMEZONE,
-                  }),
-                },
+                data: { nextDueDate: newDueDate },
               });
               await cronLog({
                 runId,

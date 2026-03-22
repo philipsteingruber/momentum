@@ -2,49 +2,101 @@ import { RecurrenceType } from "@/generated/prisma/enums";
 import { isBefore, startOfDay } from "date-fns";
 import z from "zod";
 
-export const createTaskSchema = z.object({
-  title: z.string().min(1, "Title is required").max(32, "Title cannot be more than 32 characters long"),
-  description: z.string().max(100, "Description cannot be more than 100 characters long").optional(),
-  dueDate: z
-    .date()
-    .refine((date) => !isBefore(startOfDay(date), startOfDay(new Date())), "Due Date cannot be in the past")
-    .optional(),
-  categoryId: z.cuid("Incorrectly formatted category ID"),
-  externalContact: z.string().optional(),
-  link: z.url("Must be a valid URL").or(z.literal("")).optional(),
-});
-export const updateTaskSchema = z.object({ taskId: z.cuid(), data: createTaskSchema.partial() });
+export type TaskSchemaMessages = {
+  titleRequired: string;
+  titleMaxLength: string;
+  descriptionMaxLength: string;
+  dueDateInPast: string;
+  linkInvalid: string;
+};
 
-export const createCategorySchema = z.object({
-  name: z.string().min(1, "Name is required").max(30, "Name cannot be more than 30 characters long"),
-  color: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color (e.g. #f59e0b)")
-    .optional(),
-});
-export const updateCategorySchema = z.object({ categoryId: z.cuid(), data: createCategorySchema.partial() });
+export type CategorySchemaMessages = {
+  nameRequired: string;
+  nameMaxLength: string;
+};
 
-const baseRecurringTemplateSchema = createTaskSchema
-  .extend({
-    recurrenceType: z.enum(RecurrenceType),
-    dayOfWeek: z.int().nonnegative().max(6).optional(),
-    dayOfMonth: z.int().min(1).max(31).optional(),
-  })
-  .omit({ dueDate: true });
+export type RecurrenceSchemaMessages = {
+  recurrenceDayRequired: string;
+  recurrenceInvalidCombination: string;
+};
 
-export const createRecurringTemplateSchema = baseRecurringTemplateSchema
-  .refine(
-    (data) => data.recurrenceType === RecurrenceType.DAILY || !!data.dayOfMonth !== !!data.dayOfWeek,
-    "Either Day of Week or Day of Month must be supplied",
-  )
-  .refine(
-    (data) =>
-      (data.recurrenceType === RecurrenceType.DAILY && !data.dayOfMonth && !data.dayOfWeek) ||
-      (data.recurrenceType === RecurrenceType.MONTHLY && !!data.dayOfMonth) ||
-      (data.recurrenceType === RecurrenceType.WEEKLY && !!data.dayOfWeek),
-    "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth",
-  );
-export const updateRecurringTemplateSchema = z.object({
-  templateId: z.cuid(),
-  data: baseRecurringTemplateSchema.partial(),
-});
+export function makeCreateTaskSchema(msgs?: Partial<TaskSchemaMessages>) {
+  return z.object({
+    title: z
+      .string()
+      .min(1, msgs?.titleRequired ?? "Title is required")
+      .max(32, msgs?.titleMaxLength ?? "Title cannot be more than 32 characters long"),
+    description: z
+      .string()
+      .max(100, msgs?.descriptionMaxLength ?? "Description cannot be more than 100 characters long")
+      .optional(),
+    dueDate: z
+      .date()
+      .refine(
+        (date) => !isBefore(startOfDay(date), startOfDay(new Date())),
+        msgs?.dueDateInPast ?? "Due Date cannot be in the past",
+      )
+      .optional(),
+    categoryId: z.cuid("Incorrectly formatted category ID"),
+    externalContact: z.string().optional(),
+    link: z.url(msgs?.linkInvalid ?? "Must be a valid URL").or(z.literal("")).optional(),
+  });
+}
+
+export function makeUpdateTaskSchema(msgs?: Partial<TaskSchemaMessages>) {
+  return z.object({ taskId: z.cuid(), data: makeCreateTaskSchema(msgs).partial() });
+}
+
+export function makeCategorySchema(msgs?: Partial<CategorySchemaMessages>) {
+  return z.object({
+    name: z
+      .string()
+      .min(1, msgs?.nameRequired ?? "Name is required")
+      .max(30, msgs?.nameMaxLength ?? "Name cannot be more than 30 characters long"),
+    color: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color (e.g. #f59e0b)")
+      .optional(),
+  });
+}
+
+export function makeUpdateCategorySchema(msgs?: Partial<CategorySchemaMessages>) {
+  return z.object({ categoryId: z.cuid(), data: makeCategorySchema(msgs).partial() });
+}
+
+function makeBaseRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages>) {
+  return makeCreateTaskSchema(msgs)
+    .extend({
+      recurrenceType: z.enum(RecurrenceType),
+      dayOfWeek: z.int().nonnegative().max(6).optional(),
+      dayOfMonth: z.int().min(1).max(31).optional(),
+    })
+    .omit({ dueDate: true });
+}
+
+export function makeCreateRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages & RecurrenceSchemaMessages>) {
+  return makeBaseRecurringTemplateSchema(msgs)
+    .refine(
+      (data) => data.recurrenceType === RecurrenceType.DAILY || !!data.dayOfMonth !== !!data.dayOfWeek,
+      msgs?.recurrenceDayRequired ?? "Either Day of Week or Day of Month must be supplied",
+    )
+    .refine(
+      (data) =>
+        (data.recurrenceType === RecurrenceType.DAILY && !data.dayOfMonth && !data.dayOfWeek) ||
+        (data.recurrenceType === RecurrenceType.MONTHLY && !!data.dayOfMonth) ||
+        (data.recurrenceType === RecurrenceType.WEEKLY && !!data.dayOfWeek),
+      msgs?.recurrenceInvalidCombination ?? "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth",
+    );
+}
+
+export function makeUpdateRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages & RecurrenceSchemaMessages>) {
+  return z.object({ templateId: z.cuid(), data: makeBaseRecurringTemplateSchema(msgs).partial() });
+}
+
+// Static defaults — used by TRPC routers and for type inference at call sites
+export const createTaskSchema = makeCreateTaskSchema();
+export const updateTaskSchema = makeUpdateTaskSchema();
+export const createCategorySchema = makeCategorySchema();
+export const updateCategorySchema = makeUpdateCategorySchema();
+export const createRecurringTemplateSchema = makeCreateRecurringTemplateSchema();
+export const updateRecurringTemplateSchema = makeUpdateRecurringTemplateSchema();

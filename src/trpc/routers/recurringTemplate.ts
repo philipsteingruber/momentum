@@ -24,6 +24,19 @@ export const recurringTemplateRouter = createTRPCRouter({
     return template;
   }),
 
+  getHistory: authedProcedure.input(z.object({ templateId: z.cuid() })).query(async ({ ctx, input }) => {
+    return await ctx.db.task.findMany({
+      where: {
+        recurringTemplateId: input.templateId,
+        userId: ctx.currentUser.id,
+        status: { in: [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.SKIPPED] },
+      },
+      orderBy: { dueDate: "desc" },
+      take: 10,
+      select: { id: true, status: true, dueDate: true },
+    });
+  }),
+
   create: authedProcedure.input(createRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
     const { timezone } = ctx.currentUser.userSettings;
     const firstDueDate = computeNextDueDate({ ...input, timezone });

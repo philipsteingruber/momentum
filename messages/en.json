@@ -192,6 +192,11 @@
     "title": "Templates",
     "empty": "No templates found."
   },
+  "TemplateHistory": {
+    "heading": "History",
+    "empty": "No history yet.",
+    "error": "Failed to load history."
+  },
   "EmptyCard": {
     "default": "No items found."
   },

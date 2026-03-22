@@ -36,6 +36,8 @@ model User {
     tags               Tag[]
     recurringTemplates RecurringTemplate[]
     userSettings       UserSettings?
+    grantsGiven        UserAccessGrant[]   @relation("GrantsGiven")
+    grantsReceived     UserAccessGrant[]   @relation("GrantsReceived")
 }
 
 model UserSettings {
@@ -86,6 +88,12 @@ enum RecurrenceType {
     DAILY
     WEEKLY
     MONTHLY
+}
+
+enum GrantStatus {
+    PENDING
+    ACCEPTED
+    DECLINED
 }
 
 model RecurringTemplate {
@@ -169,4 +177,22 @@ model CronLog {
 
     @@index([runId])
     @@index([job, timestamp])
+}
+
+model UserAccessGrant {
+    id     String      @id @default(cuid())
+    status GrantStatus @default(PENDING)
+
+    grantor   User   @relation("GrantsGiven", fields: [grantorId], references: [id], onDelete: Cascade)
+    grantorId String
+
+    grantee   User   @relation("GrantsReceived", fields: [granteeId], references: [id], onDelete: Cascade)
+    granteeId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@unique([grantorId, granteeId])
+    @@index([granteeId, status])
+    @@index([grantorId, status])
 }

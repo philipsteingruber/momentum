@@ -14,6 +14,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Spinner } from "@/components/ui/spinner";
+import { GrantStatus } from "@/generated/prisma/enums";
 import { trpc } from "@/trpc/client";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -21,6 +22,9 @@ import Link from "next/link";
 
 export const AppSidebar = () => {
   const { data: categories } = trpc.category.getAll.useQuery({ includeTasks: true });
+  const { data: grantsReceived } = trpc.sharedAccess.getGrantsReceived.useQuery();
+  const acceptedGrants = grantsReceived?.filter((g) => g.status === GrantStatus.ACCEPTED) ?? [];
+  const pendingCount = grantsReceived?.filter((g) => g.status === GrantStatus.PENDING).length ?? 0;
   const t = useTranslations("Sidebar");
 
   return (
@@ -70,6 +74,30 @@ export const AppSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href={"/settings/discord"}>{t("discordIntegration")}</Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel className="flex items-center justify-between">
+            {t("sharedWithMe")}
+            {!!pendingCount && <Badge variant="destructive">{pendingCount}</Badge>}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {acceptedGrants.map((grant) => (
+                <SidebarMenuItem key={grant.id}>
+                  <SidebarMenuButton asChild>
+                    <Link href={`/shared/${grant.grantor.id}`}>
+                      {grant.grantor.name ?? grant.grantor.email}
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/settings/shared-access">{t("manageSharedAccess")}</Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

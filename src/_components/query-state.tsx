@@ -4,6 +4,7 @@ import { EmptyCard } from "@/_components/cards/empty-card";
 import { ErrorCard } from "@/_components/cards/error-card";
 import { LoadingCard } from "@/_components/cards/loading-card";
 import { MaxWidthWrapper } from "@/_components/max-width-wrapper";
+import { useTranslations } from "next-intl";
 
 interface QueryStateProps {
   isPending: boolean;
@@ -16,6 +17,8 @@ interface QueryStateProps {
 }
 
 export const QueryState = ({ isPending, isError, error, isEmpty, title, emptyMessage, children }: QueryStateProps) => {
+  const t = useTranslations("QueryState");
+
   if (isPending) {
     return (
       <MaxWidthWrapper>
@@ -26,7 +29,7 @@ export const QueryState = ({ isPending, isError, error, isEmpty, title, emptyMes
   if (isError) {
     return (
       <MaxWidthWrapper>
-        <ErrorCard title={title} error={error?.message ?? "An error occurred"} className="w-full" />
+        <ErrorCard title={title} error={error?.message ?? t("errorFallback")} className="w-full" />
       </MaxWidthWrapper>
     );
   }

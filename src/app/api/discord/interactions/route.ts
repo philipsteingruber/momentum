@@ -10,6 +10,8 @@ import {
   type APIChatInputApplicationCommandInteraction,
   type APIInteraction,
 } from "discord-api-types/v10";
+import { endOfDay, startOfDay } from "date-fns";
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { after } from "next/server";
 import nacl from "tweetnacl";
 
@@ -37,6 +39,7 @@ const handleList = async (
   interaction: APIChatInputApplicationCommandInteraction,
   token: string,
   userId: string,
+  timezone: string,
 ): Promise<void> => {
   const options = getOptions(interaction);
   const statusOption = options?.find((o) => o.name === "status")?.value;
@@ -60,7 +63,7 @@ const handleList = async (
 
   const description = tasks
     .map((task) => {
-      const due = task.dueDate ? ` - due ${task.dueDate.toLocaleDateString()}` : "";
+      const due = task.dueDate ? ` - due ${formatInTimeZone(task.dueDate, timezone, "yyyy-MM-dd")}` : "";
       const status = `\`${task.status.toLowerCase()}\``;
       return `**[${task.title}](${BASE_URL}/task/${task.id})** ${status}${due}`;
     })
@@ -69,7 +72,7 @@ const handleList = async (
   await followUpInteraction(APPLICATION_ID, token, {
     embeds: [
       {
-        title: `Tasks (${tasks.length}${tasks.length >= 20 ? "+" : ""})`,
+        title: `Tasks (${tasks.length >= 20 ? `${tasks.length}+` : tasks.length})`,
         description,
         color: 0x6366f1,
       },
@@ -194,9 +197,12 @@ const handleToday = async (
   interaction: APIChatInputApplicationCommandInteraction,
   token: string,
   userId: string,
+  timezone: string,
 ): Promise<void> => {
   const now = new Date();
-  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+  const zonedNow = toZonedTime(now, timezone);
+  const endOfToday = fromZonedTime(endOfDay(zonedNow), timezone);
+  const startOfToday = fromZonedTime(startOfDay(zonedNow), timezone);
 
   const tasks = await prisma.task.findMany({
     where: {
@@ -215,12 +221,13 @@ const handleToday = async (
     return;
   }
 
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const description = tasks
     .map((task) => {
       const due = task.dueDate!;
-      const isOverdue = due < today;
-      const label = isOverdue ? `overdue ${due.toLocaleDateString()}` : "today";
+      const isOverdue = due < startOfToday;
+      const label = isOverdue
+        ? `overdue ${formatInTimeZone(due, timezone, "yyyy-MM-dd")}`
+        : "today";
       return `**[${task.title}](${BASE_URL}/task/${task.id})** \`${label}\``;
     })
     .join("\n");
@@ -240,6 +247,7 @@ const handleAdd = async (
   interaction: APIChatInputApplicationCommandInteraction,
   token: string,
   userId: string,
+  timezone: string,
 ): Promise<void> => {
   const options = getOptions(interaction);
   const title = options?.find((o) => o.name === "title")?.value;
@@ -262,7 +270,8 @@ const handleAdd = async (
       });
       return;
     }
-    dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
+    // Interpret the date as midnight in the user's configured timezone
+    dueDate = fromZonedTime(`${dueRaw}T00:00:00`, timezone);
   }
 
   const task = await prisma.task.create({
@@ -274,12 +283,12 @@ const handleAdd = async (
     },
   });
 
-  const dueLine = dueDate ? ` — due ${dueDate.toLocaleDateString()}` : "";
+  const dueLine = dueDate ? ` — due ${formatInTimeZone(dueDate, timezone, "yyyy-MM-dd")}` : "";
 
   await followUpInteraction(APPLICATION_ID, token, {
     embeds: [
       {
-        description: `✅ Created: **[${task.title}](${BASE_URL}/task/${task.id})**${dueLine}`,
+        description: `✅ Created: **[${task.title}](${BASE_URL}/task/${task.id})**` + dueLine,
         color: 0x6366f1,
       },
     ],
@@ -290,6 +299,7 @@ const handleSnooze = async (
   interaction: APIChatInputApplicationCommandInteraction,
   token: string,
   userId: string,
+  timezone: string,
 ): Promise<void> => {
   const stringOptions = getOptions(interaction);
   const taskId = stringOptions?.find((o) => o.name === "task")?.value;
@@ -308,7 +318,7 @@ const handleSnooze = async (
   const task = await prisma.task.findFirst({ where: { id: taskId, userId } });
   if (!task) {
     await followUpInteraction(APPLICATION_ID, token, {
-      content: `Task not found or you don't have permission.`,
+      content: "Task not found or you don't have permission.",
     });
     return;
   }
@@ -325,7 +335,7 @@ const handleSnooze = async (
   await followUpInteraction(APPLICATION_ID, token, {
     embeds: [
       {
-        description: `⏰ Snoozed: **${task.title}** — now due ${newDue.toLocaleDateString()}`,
+        description: `⏰ Snoozed: **${task.title}** — now due ${formatInTimeZone(newDue, timezone, "yyyy-MM-dd")}`,
         color: 0xf59e0b,
       },
     ],
@@ -351,7 +361,7 @@ const handleNote = async (
   const task = await prisma.task.findFirst({ where: { id: taskId, userId } });
   if (!task) {
     await followUpInteraction(APPLICATION_ID, token, {
-      content: `Task not found or you don't have permission.`,
+      content: "Task not found or you don't have permission.",
     });
     return;
   }
@@ -391,18 +401,19 @@ const handleCommand = async (interaction: APIChatInputApplicationCommandInteract
     return;
   }
 
+  const timezone = settings.timezone;
   const commandName = interaction.data.name;
 
   if (commandName === "list") {
-    await handleList(interaction, token, settings.user.id);
+    await handleList(interaction, token, settings.user.id, timezone);
   } else if (commandName === "today") {
-    await handleToday(interaction, token, settings.user.id);
+    await handleToday(interaction, token, settings.user.id, timezone);
   } else if (commandName === "add") {
-    await handleAdd(interaction, token, settings.user.id);
+    await handleAdd(interaction, token, settings.user.id, timezone);
   } else if (commandName === "complete") {
     await handleComplete(interaction, token, settings.user.id);
   } else if (commandName === "snooze") {
-    await handleSnooze(interaction, token, settings.user.id);
+    await handleSnooze(interaction, token, settings.user.id, timezone);
   } else if (commandName === "note") {
     await handleNote(interaction, token, settings.user.id);
   } else {

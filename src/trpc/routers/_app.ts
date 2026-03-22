@@ -4,6 +4,7 @@ import { cronLogRouter } from "./cron-log";
 import { discordRouter } from "./discord";
 import { noteRouter } from "./note";
 import { recurringTemplateRouter } from "./recurringTemplate";
+import { sharedAccessRouter } from "./shared-access";
 import { tagRouter } from "./tag";
 import { taskRouter } from "./task";
 import { userSettingsRouter } from "./user-settings";
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   discord: discordRouter,
   note: noteRouter,
   recurringTemplate: recurringTemplateRouter,
+  sharedAccess: sharedAccessRouter,
   tag: tagRouter,
   task: taskRouter,
   userSettings: userSettingsRouter,

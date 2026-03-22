@@ -12,7 +12,9 @@
     "addCategory": "Add Category",
     "settings": "Settings",
     "userSettings": "User Settings",
-    "discordIntegration": "Discord Integration"
+    "discordIntegration": "Discord Integration",
+    "sharedWithMe": "Shared with me",
+    "manageSharedAccess": "Manage access"
   },
   "Settings": {
     "title": "User Settings",
@@ -200,6 +202,14 @@
   "EmptyCard": {
     "default": "No items found."
   },
+  "QueryState": {
+    "errorFallback": "An error occurred"
+  },
+  "SharedView": {
+    "cardTitle": "Task Details",
+    "back": "Back",
+    "noAccess": "This shared view is no longer available."
+  },
   "DaysOfWeek": {
     "monday": "Monday",
     "tuesday": "Tuesday",
@@ -219,6 +229,30 @@
     "nameMaxLength": "Name cannot be more than 30 characters long",
     "recurrenceDayRequired": "Either Day of Week or Day of Month must be supplied",
     "recurrenceInvalidCombination": "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth"
+  },
+  "SharedAccessSettings": {
+    "title": "Shared Access",
+    "description": "Manage who can view your tasks and whose tasks you can view.",
+    "accessGivenTitle": "Access I've given",
+    "accessReceivedTitle": "Access I've been given",
+    "invitePlaceholder": "Enter email address",
+    "inviteButton": "Invite",
+    "statusPending": "Pending",
+    "statusAccepted": "Accepted",
+    "revokeButton": "Revoke",
+    "acceptButton": "Accept",
+    "declineButton": "Decline",
+    "removeButton": "Remove",
+    "noGrantsGiven": "You haven't shared your tasks with anyone.",
+    "noGrantsReceived": "No one has shared their tasks with you.",
+    "inviteSuccess": "Invitation sent.",
+    "alreadyInvited": "You've already invited this user.",
+    "userNotFound": "No user found with that email address.",
+    "inviteError": "Failed to send invitation.",
+    "revokeSuccess": "Access revoked.",
+    "removeSuccess": "Removed shared access.",
+    "acceptSuccess": "Access accepted.",
+    "declineSuccess": "Invite declined."
   },
   "TaskStatus": {
     "PENDING": "Pending",

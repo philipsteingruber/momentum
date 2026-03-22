@@ -9,7 +9,10 @@
   },
   "Sidebar": {
     "categories": "Kategorier",
-    "addCategory": "Lägg till Kategori"
+    "addCategory": "Lägg till Kategori",
+    "settings": "Inställningar",
+    "userSettings": "Användarinställningar",
+    "discordIntegration": "Discord-integration"
   },
   "Settings": {
     "title": "Användarinställningar",
@@ -191,6 +194,26 @@
   },
   "EmptyCard": {
     "default": "Inga resultat hittades."
+  },
+  "DaysOfWeek": {
+    "monday": "Måndag",
+    "tuesday": "Tisdag",
+    "wednesday": "Onsdag",
+    "thursday": "Torsdag",
+    "friday": "Fredag",
+    "saturday": "Lördag",
+    "sunday": "Söndag"
+  },
+  "Schemas": {
+    "titleRequired": "Titel krävs",
+    "titleMaxLength": "Titeln får inte vara mer än 32 tecken lång",
+    "descriptionMaxLength": "Beskrivningen får inte vara mer än 100 tecken lång",
+    "dueDateInPast": "Förfallodatum kan inte vara i det förflutna",
+    "linkInvalid": "Måste vara en giltig URL",
+    "nameRequired": "Namn krävs",
+    "nameMaxLength": "Namnet får inte vara mer än 30 tecken långt",
+    "recurrenceDayRequired": "Antingen veckodag eller månadsdag måste anges",
+    "recurrenceInvalidCombination": "Ogiltig kombination av upprepningstyp och veckodag/månadsdag"
   },
   "TaskStatus": {
     "PENDING": "Väntande",

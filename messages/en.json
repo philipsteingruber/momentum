@@ -9,7 +9,10 @@
   },
   "Sidebar": {
     "categories": "Categories",
-    "addCategory": "Add Category"
+    "addCategory": "Add Category",
+    "settings": "Settings",
+    "userSettings": "User Settings",
+    "discordIntegration": "Discord Integration"
   },
   "Settings": {
     "title": "User Settings",
@@ -191,6 +194,26 @@
   },
   "EmptyCard": {
     "default": "No items found."
+  },
+  "DaysOfWeek": {
+    "monday": "Monday",
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday",
+    "sunday": "Sunday"
+  },
+  "Schemas": {
+    "titleRequired": "Title is required",
+    "titleMaxLength": "Title cannot be more than 32 characters long",
+    "descriptionMaxLength": "Description cannot be more than 100 characters long",
+    "dueDateInPast": "Due Date cannot be in the past",
+    "linkInvalid": "Must be a valid URL",
+    "nameRequired": "Name is required",
+    "nameMaxLength": "Name cannot be more than 30 characters long",
+    "recurrenceDayRequired": "Either Day of Week or Day of Month must be supplied",
+    "recurrenceInvalidCombination": "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth"
   },
   "TaskStatus": {
     "PENDING": "Pending",

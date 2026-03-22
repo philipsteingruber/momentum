@@ -48,6 +48,7 @@ NUL
 .vscode/settings.json
 .vscode/tasks.json
 /.claude
+/.agents
 .husky/logs/
 /src/generated/
 /checklists/
@@ -59,3 +60,6 @@ DOCKER_GUIDE.md
 /src/generated/prisma
 ROADMAP.md
 DISCORD_INTEGRATION.md
+
+*.sql
+skills-lock.json

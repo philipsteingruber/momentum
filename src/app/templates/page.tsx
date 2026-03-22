@@ -3,6 +3,7 @@
 import { CollapsibleListItem } from "@/_components/collapsible-list-item";
 import CreateTemplateDialog from "@/_components/forms/create-template-dialog";
 import { UpdateTemplateForm } from "@/_components/forms/update-template-form";
+import { TemplateHistory } from "@/_components/template-history";
 import { MaxWidthWrapper } from "@/_components/max-width-wrapper";
 import { QueryState } from "@/_components/query-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +42,10 @@ const Page = () => {
             ) : (
               (templates ?? []).map((template) => (
                 <CollapsibleListItem key={template.id} label={template.title}>
-                  <UpdateTemplateForm template={template} categories={categories ?? []} />
+                  <>
+                    <UpdateTemplateForm template={template} categories={categories ?? []} />
+                    <TemplateHistory templateId={template.id} />
+                  </>
                 </CollapsibleListItem>
               ))
             )}

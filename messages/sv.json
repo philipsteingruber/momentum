@@ -192,6 +192,11 @@
     "title": "Återkommande Uppgifter",
     "empty": "Inga återkommande uppgifter hittades."
   },
+  "TemplateHistory": {
+    "heading": "Historik",
+    "empty": "Ingen historik ännu.",
+    "error": "Kunde inte ladda historik."
+  },
   "EmptyCard": {
     "default": "Inga resultat hittades."
   },

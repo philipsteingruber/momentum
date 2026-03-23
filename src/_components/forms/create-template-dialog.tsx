@@ -66,6 +66,7 @@ const CreateTemplateDialog = ({
       form.reset(getDefaultValues(defaultCategoryId));
       trpcUtils.task.getAll.invalidate();
       trpcUtils.recurringTemplate.getAll.invalidate();
+      trpcUtils.category.getAll.invalidate();
     },
   });
   const { isOpen, setIsOpen, handleOpenChange } = useDialogState({
@@ -96,9 +97,7 @@ const CreateTemplateDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>
-            {t("description")}
-          </DialogDescription>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <TemplateFormFields

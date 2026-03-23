@@ -65,7 +65,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (user.userSettings?.discordDmChannelId) {
           try {
-            const embeds = formatDigestEmbeds({ overdue, dueToday, dueThisWeek });
+            const embeds = formatDigestEmbeds({ overdue, dueToday, dueThisWeek }, timezone);
             await sendDmToChannel(user.userSettings.discordDmChannelId, { embeds });
             await cronLog({
               runId,

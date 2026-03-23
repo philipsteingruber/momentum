@@ -1,5 +1,6 @@
 import { REST } from "@discordjs/rest";
-import { differenceInCalendarDays, format } from "date-fns";
+import { differenceInCalendarDays, format, startOfDay } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import type {
   APIEmbed,
   RESTPostAPIChannelMessageJSONBody,
@@ -29,10 +30,10 @@ export const followUpInteraction = async (
   await discordRest.patch(Routes.webhookMessage(applicationId, interactionToken), { body: payload });
 };
 
-export const formatDigestEmbeds = (groups: DigestTaskGroups): APIEmbed[] => {
+export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): APIEmbed[] => {
   const { overdue, dueToday, dueThisWeek } = groups;
   const embeds: APIEmbed[] = [];
-  const today = new Date();
+  const today = startOfDay(toZonedTime(new Date(), timezone));
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
   if (!BASE_URL) throw new Error("NEXT_PUBLIC_BASE_URL is not set");
 
@@ -42,7 +43,7 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups): APIEmbed[] => {
       color: 0xef4444,
       description: overdue
         .map((task) => {
-          const daysAgo = differenceInCalendarDays(today, task.dueDate!);
+          const daysAgo = differenceInCalendarDays(today, startOfDay(toZonedTime(task.dueDate!, timezone)));
           return `**[${task.title}](${BASE_URL}/task/${task.id})** - ${daysAgo} day${daysAgo !== 1 ? "s" : ""} overdue`;
         })
         .join("\n"),

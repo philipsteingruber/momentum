@@ -1,6 +1,6 @@
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
-import { OVERDUE_STATUS, groupTasksByStatus } from "@/lib/task-utils";
+import { OVERDUE_STATUS, groupTasksByStatus, sortTasksForKanban } from "@/lib/task-utils";
 import type { TaskWithTags } from "@/lib/types/task";
 import KanbanColumnReadonly from "./kanban-column-readonly";
 
@@ -23,7 +23,7 @@ export const KanbanBoardReadonly = ({
         .map((status) => (
           <KanbanColumnReadonly
             key={status}
-            tasks={tasksByStatus[status]}
+            tasks={sortTasksForKanban(tasksByStatus[status], status)}
             status={status}
             isPending={isPending}
             grantorId={grantorId}

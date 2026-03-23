@@ -61,6 +61,24 @@ export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
   return tasksByGroup;
 };
 
+export const sortTasksForKanban = (tasks: Task[], status: TaskStatus | typeof OVERDUE_STATUS): Task[] => {
+  if (status === TaskStatus.COMPLETED || status === TaskStatus.CANCELLED) {
+    return [...tasks].sort((a, b) => {
+      const aTime = a.completedAt?.getTime() ?? 0;
+      const bTime = b.completedAt?.getTime() ?? 0;
+      return bTime - aTime;
+    });
+  }
+
+  return [...tasks].sort((a, b) => {
+    if (!a.dueDate && !b.dueDate) return a.createdAt.getTime() - b.createdAt.getTime();
+    if (!a.dueDate) return 1;
+    if (!b.dueDate) return -1;
+    const dateDiff = a.dueDate.getTime() - b.dueDate.getTime();
+    return dateDiff !== 0 ? dateDiff : a.createdAt.getTime() - b.createdAt.getTime();
+  });
+};
+
 export type DigestTaskGroups = {
   overdue: Task[];
   dueToday: Task[];

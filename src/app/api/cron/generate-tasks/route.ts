@@ -12,7 +12,7 @@ export const handler = async (req: Request): Promise<Response> => {
   const runId = crypto.randomUUID();
   await cronLog({ runId, job: JOB, event: "start", level: "info", data: { timestamp: new Date().toISOString() } });
 
-  if (!verifyCronAuth(req)) {
+  if (!(await verifyCronAuth(req))) {
     await cronLog({ runId, job: JOB, event: "auth.failed", level: "error" });
     return new Response("Unauthorized", { status: 401 });
   }

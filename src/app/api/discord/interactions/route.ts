@@ -1,5 +1,5 @@
 import { TaskStatus } from "@/generated/prisma/enums";
-import { computeSnoozeDueDate } from "@/lib/date-utils";
+import { computeSnoozeDueDate, endOfDayInTz } from "@/lib/date-utils";
 import { followUpInteraction } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
 import {
@@ -11,7 +11,7 @@ import {
   type APIChatInputApplicationCommandInteraction,
   type APIInteraction,
 } from "discord-api-types/v10";
-import { endOfDay, startOfDay } from "date-fns";
+import { startOfDay } from "date-fns";
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { after } from "next/server";
 import nacl from "tweetnacl";
@@ -202,7 +202,7 @@ const handleToday = async (
 ): Promise<void> => {
   const now = new Date();
   const zonedNow = toZonedTime(now, timezone);
-  const endOfToday = fromZonedTime(endOfDay(zonedNow), timezone);
+  const endOfToday = endOfDayInTz(now, timezone);
   const startOfToday = fromZonedTime(startOfDay(zonedNow), timezone);
 
   const tasks = await prisma.task.findMany({

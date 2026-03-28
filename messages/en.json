@@ -200,7 +200,10 @@
     "heading": "History",
     "empty": "No history yet.",
     "error": "Failed to load history.",
-    "snoozeCount": "Snoozed {count, plural, one {# time} other {# times}}"
+    "snoozeCount": "Snoozed {count, plural, one {# time} other {# times}}",
+    "hasNotes": "Notes",
+    "onTime": "On time",
+    "late": "Late"
   },
   "EmptyCard": {
     "default": "No items found."

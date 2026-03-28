@@ -82,6 +82,7 @@ model Task {
 
     @@index([userId, status])
     @@index([userId, dueDate])
+    @@index([userId, recurringTemplateId, status])
 }
 
 enum RecurrenceType {

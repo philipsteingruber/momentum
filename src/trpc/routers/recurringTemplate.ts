@@ -4,6 +4,7 @@ import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { createRecurringTemplateSchema, updateRecurringTemplateSchema } from "@/lib/schemas";
 import { TRPCError } from "@trpc/server";
+import { endOfDayInTz } from "@/lib/date-utils";
 import z from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
 
@@ -25,7 +26,8 @@ export const recurringTemplateRouter = createTRPCRouter({
   }),
 
   getHistory: authedProcedure.input(z.object({ templateId: z.cuid() })).query(async ({ ctx, input }) => {
-    return await ctx.db.task.findMany({
+    const timezone = ctx.currentUser.userSettings.timezone;
+    const tasks = await ctx.db.task.findMany({
       where: {
         recurringTemplateId: input.templateId,
         userId: ctx.currentUser.id,
@@ -33,8 +35,17 @@ export const recurringTemplateRouter = createTRPCRouter({
       },
       orderBy: { dueDate: "desc" },
       take: 10,
-      select: { id: true, status: true, dueDate: true },
+      select: { id: true, status: true, dueDate: true, completedAt: true, _count: { select: { notes: true } } },
     });
+
+    return tasks.map(({ _count, ...task }) => ({
+      ...task,
+      hasNotes: _count.notes > 0,
+      isOnTime:
+        task.status === TaskStatus.COMPLETED && task.dueDate && task.completedAt
+          ? task.completedAt <= endOfDayInTz(task.dueDate, timezone)
+          : null,
+    }));
   }),
 
   create: authedProcedure.input(createRecurringTemplateSchema).mutation(async ({ ctx, input }) => {

@@ -200,7 +200,10 @@
     "heading": "Historik",
     "empty": "Ingen historik ännu.",
     "error": "Kunde inte ladda historik.",
-    "snoozeCount": "Uppskjuten {count, plural, one {# gång} other {# gånger}}"
+    "snoozeCount": "Uppskjuten {count, plural, one {# gång} other {# gånger}}",
+    "hasNotes": "Anteckningar",
+    "onTime": "I tid",
+    "late": "Försenad"
   },
   "EmptyCard": {
     "default": "Inga resultat hittades."

@@ -1,6 +1,6 @@
 import type { Locale } from "date-fns";
-import { formatRelative, isBefore, startOfDay } from "date-fns";
-import { formatInTimeZone, toZonedTime } from "date-fns-tz";
+import { addDays, formatRelative, isBefore, startOfDay } from "date-fns";
+import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { enUS, sv } from "date-fns/locale";
 
 export const DEFAULT_TIMEZONE = "Europe/Stockholm";
@@ -54,10 +54,20 @@ export function formatInUserTz(date: Date, fmt: string, timezone: string): strin
   return formatInTimeZone(date, timezone, fmt);
 }
 
+function startOfDayInTz(date: Date, timezone: string): Date {
+  return startOfDay(toZonedTime(date, timezone));
+}
+
 export function isOverdueInUserTz(dueDate: Date, timezone: string): boolean {
-  const startOfDueDay = startOfDay(toZonedTime(dueDate, timezone));
-  const startOfToday = startOfDay(toZonedTime(new Date(), timezone));
-  return isBefore(startOfDueDay, startOfToday);
+  return isBefore(startOfDayInTz(dueDate, timezone), startOfDayInTz(new Date(), timezone));
+}
+
+export function computeSnoozeDueDate(currentDueDate: Date, days: number, timezone: string): Date {
+  const startOfTodayInTz = startOfDayInTz(new Date(), timezone);
+  const anchor = isBefore(startOfDayInTz(currentDueDate, timezone), startOfTodayInTz)
+    ? fromZonedTime(startOfTodayInTz, timezone)
+    : currentDueDate;
+  return addDays(anchor, days);
 }
 
 export function formatRelativeInUserTz(

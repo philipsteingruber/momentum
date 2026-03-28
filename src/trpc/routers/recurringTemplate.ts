@@ -80,21 +80,23 @@ export const recurringTemplateRouter = createTRPCRouter({
     }
 
     try {
-      const nextDueDate =
+      const scheduleChanged =
         input.data.recurrenceType !== undefined ||
         input.data.dayOfWeek !== undefined ||
-        input.data.dayOfMonth !== undefined
-          ? computeNextDueDate({
-              recurrenceType: input.data.recurrenceType ?? existing.recurrenceType,
-              dayOfWeek: input.data.dayOfWeek ?? existing.dayOfWeek ?? undefined,
-              dayOfMonth: input.data.dayOfMonth ?? existing.dayOfMonth ?? undefined,
-              timezone: ctx.currentUser.userSettings.timezone,
-            })
-          : existing.nextDueDate;
+        input.data.dayOfMonth !== undefined;
+
+      const nextDueDate = scheduleChanged
+        ? computeNextDueDate({
+            recurrenceType: input.data.recurrenceType ?? existing.recurrenceType,
+            dayOfWeek: input.data.dayOfWeek ?? existing.dayOfWeek ?? undefined,
+            dayOfMonth: input.data.dayOfMonth ?? existing.dayOfMonth ?? undefined,
+            timezone: ctx.currentUser.userSettings.timezone,
+          })
+        : existing.nextDueDate;
 
       return await ctx.db.recurringTemplate.update({
         where: { id: input.templateId, userId: ctx.currentUser.id },
-        data: { ...input.data, nextDueDate },
+        data: { ...input.data, nextDueDate, ...(scheduleChanged && { snoozeCount: 0 }) },
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {

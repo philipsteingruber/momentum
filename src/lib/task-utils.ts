@@ -9,6 +9,12 @@ export const TERMINAL_TASK_STATUSES = [TaskStatus.COMPLETED, TaskStatus.CANCELLE
 
 export const SNOOZE_OPTIONS = [1, 3, 7] as const;
 
+export const SNOOZE_TRANSLATION_KEYS: Record<typeof SNOOZE_OPTIONS[number], string> = {
+  1: "snooze1Day",
+  3: "snooze3Days",
+  7: "snooze7Days",
+};
+
 export const parseTaskStatus = (taskStatus: TaskStatus) => {
   const words = taskStatus.split("_");
   return words.map((word) => capitaliseFirstCharacter(word)).join(" ");

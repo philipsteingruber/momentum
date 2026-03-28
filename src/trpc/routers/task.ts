@@ -1,12 +1,45 @@
 import { TaskStatus } from "@/generated/prisma/enums";
-import { computeSnoozeDueDate } from "@/lib/date-utils";
+import { computeNextMondayDueDate, computeSnoozeDueDate } from "@/lib/date-utils";
 import { createTaskSchema, updateTaskSchema } from "@/lib/schemas";
 import { TERMINAL_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
 import { subDays } from "date-fns";
 import { z } from "zod";
-import { authedProcedure, createTRPCRouter } from "../init";
+import { authedProcedure, type AuthedContext, createTRPCRouter } from "../init";
+
+async function executeSnooze(
+  ctx: AuthedContext,
+  taskId: string,
+  computeNewDate: (dueDate: Date, timezone: string) => Date,
+) {
+  const timezone = ctx.currentUser.userSettings.timezone;
+  const task = await ctx.db.task.findUnique({ where: { id: taskId, userId: ctx.currentUser.id } });
+
+  if (!task) throw new TRPCError({ code: "NOT_FOUND" });
+  if (!task.dueDate) throw new TRPCError({ code: "PRECONDITION_FAILED" });
+
+  const newDueDate = computeNewDate(task.dueDate, timezone);
+
+  if (task.recurringTemplateId) {
+    return await ctx.db.$transaction(async (tx) => {
+      const updatedTask = await tx.task.update({
+        where: { id: taskId, userId: ctx.currentUser.id },
+        data: { dueDate: newDueDate },
+      });
+      await tx.recurringTemplate.update({
+        where: { id: task.recurringTemplateId! },
+        data: { snoozeCount: { increment: 1 } },
+      });
+      return updatedTask;
+    });
+  }
+
+  return await ctx.db.task.update({
+    where: { id: taskId, userId: ctx.currentUser.id },
+    data: { dueDate: newDueDate },
+  });
+}
 
 export const taskRouter = createTRPCRouter({
   getAll: authedProcedure
@@ -152,33 +185,13 @@ export const taskRouter = createTRPCRouter({
 
   snooze: authedProcedure
     .input(z.object({ taskId: z.cuid(), days: z.int().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      const timezone = ctx.currentUser.userSettings.timezone;
-      return await ctx.db.$transaction(async (tx) => {
-        const task = await tx.task.findUnique({ where: { id: input.taskId, userId: ctx.currentUser.id } });
+    .mutation(({ ctx, input }) =>
+      executeSnooze(ctx, input.taskId, (dueDate, tz) => computeSnoozeDueDate(dueDate, input.days, tz)),
+    ),
 
-        if (!task) {
-          throw new TRPCError({ code: "NOT_FOUND" });
-        }
-        if (!task.dueDate) {
-          throw new TRPCError({ code: "PRECONDITION_FAILED" });
-        }
-
-        const newDueDate = computeSnoozeDueDate(task.dueDate, input.days, timezone);
-
-        const updatedTask = await tx.task.update({
-          where: { id: input.taskId, userId: ctx.currentUser.id },
-          data: { dueDate: newDueDate },
-        });
-
-        if (task.recurringTemplateId) {
-          await tx.recurringTemplate.update({
-            where: { id: task.recurringTemplateId },
-            data: { snoozeCount: { increment: 1 } },
-          });
-        }
-
-        return updatedTask;
-      });
-    }),
+  snoozeToNextMonday: authedProcedure
+    .input(z.object({ taskId: z.cuid() }))
+    .mutation(({ ctx, input }) =>
+      executeSnooze(ctx, input.taskId, (_dueDate, tz) => computeNextMondayDueDate(tz)),
+    ),
 });

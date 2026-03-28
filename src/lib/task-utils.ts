@@ -96,7 +96,7 @@ export const groupTasksForDigest = (tasks: Task[], timezone: string): DigestTask
   const byDate = new Map<number, { date: Date; tasks: Task[] }>();
 
   for (const task of tasks) {
-    if (task.status === "CANCELLED" || task.status === "COMPLETED" || !task.dueDate) {
+    if (task.status === "CANCELLED" || task.status === "COMPLETED" || task.status === "SKIPPED" || !task.dueDate) {
       continue;
     }
 

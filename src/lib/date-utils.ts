@@ -1,5 +1,5 @@
 import type { Locale } from "date-fns";
-import { addDays, formatRelative, isBefore, startOfDay } from "date-fns";
+import { addDays, formatRelative, isBefore, nextMonday, startOfDay } from "date-fns";
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { enUS, sv } from "date-fns/locale";
 
@@ -60,6 +60,10 @@ function startOfDayInTz(date: Date, timezone: string): Date {
 
 export function isOverdueInUserTz(dueDate: Date, timezone: string): boolean {
   return isBefore(startOfDayInTz(dueDate, timezone), startOfDayInTz(new Date(), timezone));
+}
+
+export function computeNextMondayDueDate(timezone: string): Date {
+  return fromZonedTime(nextMonday(startOfDayInTz(new Date(), timezone)), timezone);
 }
 
 export function computeSnoozeDueDate(currentDueDate: Date, days: number, timezone: string): Date {

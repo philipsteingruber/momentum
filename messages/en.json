@@ -83,6 +83,8 @@
     "statusUpdatedToast": "Updated task status to {status}",
     "deletedToast": "Task successfully deleted",
     "snoozedToast": "Task successfully snoozed for {days} day(s)",
+    "snoozeNextWeek": "Snooze to Next Week",
+    "snoozedNextWeekToast": "Task snoozed to next Monday",
     "complete": "Complete"
   },
   "TaskList": {

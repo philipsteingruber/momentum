@@ -40,6 +40,12 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const trpcUtils = trpc.useUtils();
   const router = useRouter();
 
+  const invalidateAfterSnooze = () => {
+    trpcUtils.task.getAll.invalidate();
+    trpcUtils.task.getById.invalidate({ taskId });
+    trpcUtils.category.getAll.invalidate();
+  };
+
   const { data: task, isPending: isLoadingTask, isError, error } = trpc.task.getById.useQuery({ taskId });
   const { data: categories } = trpc.category.getAll.useQuery();
 
@@ -69,13 +75,17 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const { mutate: snoozeTask, isPending: isSnoozingTask } = trpc.task.snooze.useMutation({
     onSuccess: (_data, variables) => {
       toast.success(t("snoozedToast", { days: variables.days }));
-      trpcUtils.task.getAll.invalidate();
-      trpcUtils.task.getById.invalidate({ taskId });
-      trpcUtils.category.getAll.invalidate();
+      invalidateAfterSnooze();
+    },
+  });
+  const { mutate: snoozeToNextMonday, isPending: isSnoozingToNextMonday } = trpc.task.snoozeToNextMonday.useMutation({
+    onSuccess: () => {
+      toast.success(t("snoozedNextWeekToast"));
+      invalidateAfterSnooze();
     },
   });
 
-  const isMutationRunning = isCreatingNote || isDeletingTask || isSnoozingTask;
+  const isMutationRunning = isCreatingNote || isDeletingTask || isSnoozingTask || isSnoozingToNextMonday;
   const [noteValue, setNoteValue] = useState<string>("");
   const { handleOpenChange, isOpen, setIsOpen } = useDialogState({ preventClose: isDeletingTask });
   const { fmt, fmtRelative, timezone } = useFormatInUserTz();
@@ -181,13 +191,16 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
               <>
                 {SNOOZE_OPTIONS.map((days) => {
                   const newDate = computeSnoozeDueDate(task.dueDate!, days, timezone);
-                  const label = `${t(SNOOZE_TRANSLATION_KEYS[days])} → ${fmt(newDate, "MMM d")}`;
+                  const label = `${t(SNOOZE_TRANSLATION_KEYS[days])} → ${fmtRelative(newDate)}`;
                   return (
-                    <Button key={days} onClick={() => snoozeTask({ taskId, days })} disabled={isMutationRunning} className="w-36">
+                    <Button key={days} onClick={() => snoozeTask({ taskId, days })} disabled={isMutationRunning}>
                       {isSnoozingTask ? <Spinner /> : label}
                     </Button>
                   );
                 })}
+                <Button onClick={() => snoozeToNextMonday({ taskId })} disabled={isMutationRunning}>
+                  {isSnoozingToNextMonday ? <Spinner /> : t("snoozeNextWeek")}
+                </Button>
               </>
             )}
           </div>

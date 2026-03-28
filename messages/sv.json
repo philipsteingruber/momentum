@@ -83,6 +83,8 @@
     "statusUpdatedToast": "Status uppdaterad till {status}",
     "deletedToast": "Uppgift borttagen",
     "snoozedToast": "Uppgift uppskjuten {days} dag(ar)",
+    "snoozeNextWeek": "Skjut upp till nästa vecka",
+    "snoozedNextWeekToast": "Uppgift uppskjuten till nästa måndag",
     "complete": "Slutför"
   },
   "TaskList": {

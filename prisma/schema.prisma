@@ -108,6 +108,7 @@ model RecurringTemplate {
     dayOfWeek      Int?
     dayOfMonth     Int?
     nextDueDate    DateTime
+    snoozeCount    Int            @default(0)
 
     user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     tasks      Task[]

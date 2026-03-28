@@ -197,7 +197,8 @@
   "TemplateHistory": {
     "heading": "History",
     "empty": "No history yet.",
-    "error": "Failed to load history."
+    "error": "Failed to load history.",
+    "snoozeCount": "Snoozed {count, plural, one {# time} other {# times}}"
   },
   "EmptyCard": {
     "default": "No items found."

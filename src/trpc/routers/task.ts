@@ -1,9 +1,10 @@
 import { TaskStatus } from "@/generated/prisma/enums";
+import { computeSnoozeDueDate } from "@/lib/date-utils";
 import { createTaskSchema, updateTaskSchema } from "@/lib/schemas";
 import { TERMINAL_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
-import { addDays, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { z } from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
 
@@ -152,6 +153,7 @@ export const taskRouter = createTRPCRouter({
   snooze: authedProcedure
     .input(z.object({ taskId: z.cuid(), days: z.int().min(1) }))
     .mutation(async ({ ctx, input }) => {
+      const timezone = ctx.currentUser.userSettings.timezone;
       return await ctx.db.$transaction(async (tx) => {
         const task = await tx.task.findUnique({ where: { id: input.taskId, userId: ctx.currentUser.id } });
 
@@ -162,10 +164,21 @@ export const taskRouter = createTRPCRouter({
           throw new TRPCError({ code: "PRECONDITION_FAILED" });
         }
 
-        return await tx.task.update({
+        const newDueDate = computeSnoozeDueDate(task.dueDate, input.days, timezone);
+
+        const updatedTask = await tx.task.update({
           where: { id: input.taskId, userId: ctx.currentUser.id },
-          data: { dueDate: addDays(task.dueDate, input.days) },
+          data: { dueDate: newDueDate },
         });
+
+        if (task.recurringTemplateId) {
+          await tx.recurringTemplate.update({
+            where: { id: task.recurringTemplateId },
+            data: { snoozeCount: { increment: 1 } },
+          });
+        }
+
+        return updatedTask;
       });
     }),
 });

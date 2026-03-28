@@ -22,7 +22,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useDialogState } from "@/hooks/use-dialog-state";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
-import { capitaliseFirstCharacter, parseTaskStatus, SNOOZE_OPTIONS } from "@/lib/task-utils";
+import { computeSnoozeDueDate } from "@/lib/date-utils";
+import { capitaliseFirstCharacter, parseTaskStatus, SNOOZE_OPTIONS, SNOOZE_TRANSLATION_KEYS } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { differenceInDays } from "date-fns";
 import { CalendarIcon, CheckIcon, FileIcon, LinkIcon, TrashIcon, UserIcon, WorkflowIcon } from "lucide-react";
@@ -77,12 +78,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const isMutationRunning = isCreatingNote || isDeletingTask || isSnoozingTask;
   const [noteValue, setNoteValue] = useState<string>("");
   const { handleOpenChange, isOpen, setIsOpen } = useDialogState({ preventClose: isDeletingTask });
-  const { fmt, fmtRelative } = useFormatInUserTz();
-  const snoozeLabels: Record<typeof SNOOZE_OPTIONS[number], string> = {
-    1: t("snooze1Day"),
-    3: t("snooze3Days"),
-    7: t("snooze7Days"),
-  };
+  const { fmt, fmtRelative, timezone } = useFormatInUserTz();
 
   return (
     <QueryState
@@ -183,11 +179,15 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
             </Button>
             {task.dueDate && (
               <>
-                {SNOOZE_OPTIONS.map((days) => (
-                  <Button key={days} onClick={() => snoozeTask({ taskId, days })} disabled={isMutationRunning} className="w-30">
-                    {isSnoozingTask ? <Spinner /> : snoozeLabels[days]}
-                  </Button>
-                ))}
+                {SNOOZE_OPTIONS.map((days) => {
+                  const newDate = computeSnoozeDueDate(task.dueDate!, days, timezone);
+                  const label = `${t(SNOOZE_TRANSLATION_KEYS[days])} → ${fmt(newDate, "MMM d")}`;
+                  return (
+                    <Button key={days} onClick={() => snoozeTask({ taskId, days })} disabled={isMutationRunning} className="w-36">
+                      {isSnoozingTask ? <Spinner /> : label}
+                    </Button>
+                  );
+                })}
               </>
             )}
           </div>

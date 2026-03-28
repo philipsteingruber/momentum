@@ -16,7 +16,7 @@ const historyBadgeVariant = (status: TaskStatus): HistoryBadgeVariant => {
   return "secondary";
 };
 
-export const TemplateHistory = ({ templateId }: { templateId: string }) => {
+export const TemplateHistory = ({ templateId, snoozeCount }: { templateId: string; snoozeCount: number }) => {
   const t = useTranslations("TemplateHistory");
   const tStatus = useTranslations("TaskStatus");
   const { fmt } = useFormatInUserTz();
@@ -26,7 +26,12 @@ export const TemplateHistory = ({ templateId }: { templateId: string }) => {
     <>
       <Separator className="mt-4" />
       <div className="mt-4 flex flex-col gap-y-2 px-4 pb-4">
-        <h3 className="text-sm font-semibold text-muted-foreground">{t("heading")}</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-muted-foreground">{t("heading")}</h3>
+          {snoozeCount > 0 && (
+            <span className="text-xs text-muted-foreground">{t("snoozeCount", { count: snoozeCount })}</span>
+          )}
+        </div>
         {isPending && <Spinner />}
         {isError && <p className="text-sm text-destructive">{t("error")}</p>}
         {!isPending && !isError && data.length === 0 && (

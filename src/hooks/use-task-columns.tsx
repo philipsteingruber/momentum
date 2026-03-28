@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { type Task } from "@/generated/prisma/client";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
-import { SNOOZE_OPTIONS } from "@/lib/task-utils";
+import { computeSnoozeDueDate } from "@/lib/date-utils";
+import { SNOOZE_OPTIONS, SNOOZE_TRANSLATION_KEYS } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDownIcon, MoreHorizontalIcon } from "lucide-react";
@@ -22,7 +23,7 @@ import { toast } from "sonner";
 export function useTaskColumns() {
   const t = useTranslations("TaskColumns");
   const trpcUtils = trpc.useUtils();
-  const { fmtRelative } = useFormatInUserTz();
+  const { fmtRelative, fmt, timezone } = useFormatInUserTz();
   const { mutate: snoozeTask } = trpc.task.snooze.useMutation({
     onSuccess: (_data, variables) => {
       toast.success(t("snoozedToast", { days: variables.days }));
@@ -113,11 +114,14 @@ export function useTaskColumns() {
         id: "actions",
         cell: ({ row }) => {
           const task = row.original;
-          const snoozeLabels: Record<typeof SNOOZE_OPTIONS[number], string> = {
-            1: t("snooze1Day"),
-            3: t("snooze3Days"),
-            7: t("snooze7Days"),
-          };
+          const snoozeLabels = Object.fromEntries(
+            SNOOZE_OPTIONS.map((days) => [
+              days,
+              task.dueDate
+                ? `${t(SNOOZE_TRANSLATION_KEYS[days])} → ${fmt(computeSnoozeDueDate(task.dueDate, days, timezone), "MMM d")}`
+                : t(SNOOZE_TRANSLATION_KEYS[days]),
+            ]),
+          ) as Record<typeof SNOOZE_OPTIONS[number], string>;
 
           return (
             <DropdownMenu>
@@ -142,6 +146,6 @@ export function useTaskColumns() {
         },
       },
     ],
-    [snoozeTask, fmtRelative, t],
+    [snoozeTask, fmtRelative, fmt, timezone, t],
   );
 }

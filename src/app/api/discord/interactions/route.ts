@@ -1,4 +1,5 @@
 import { TaskStatus } from "@/generated/prisma/enums";
+import { computeSnoozeDueDate } from "@/lib/date-utils";
 import { followUpInteraction } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
 import {
@@ -323,14 +324,26 @@ const handleSnooze = async (
     return;
   }
 
-  const base = task.dueDate ?? new Date();
-  const newDue = new Date(base);
-  newDue.setDate(newDue.getDate() + Number(days));
+  if (!task.dueDate) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "This task has no due date and cannot be snoozed.",
+    });
+    return;
+  }
 
-  await prisma.task.update({
-    where: { id: taskId },
-    data: { dueDate: newDue },
-  });
+  const newDue = computeSnoozeDueDate(task.dueDate, Number(days), timezone);
+
+  if (task.recurringTemplateId) {
+    await prisma.$transaction(async (tx) => {
+      await tx.task.update({ where: { id: taskId }, data: { dueDate: newDue } });
+      await tx.recurringTemplate.update({
+        where: { id: task.recurringTemplateId! },
+        data: { snoozeCount: { increment: 1 } },
+      });
+    });
+  } else {
+    await prisma.task.update({ where: { id: taskId }, data: { dueDate: newDue } });
+  }
 
   await followUpInteraction(APPLICATION_ID, token, {
     embeds: [

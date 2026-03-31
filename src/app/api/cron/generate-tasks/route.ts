@@ -48,14 +48,14 @@ export const handler = async (req: Request): Promise<Response> => {
               if (activeTask) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
               }
-              const taskDueDate = template.nextDueDate;
-              const newNextDueDate = computeNextDueDate({
+              const taskDueDate = computeNextDueDate({
                 recurrenceType: template.recurrenceType,
                 dayOfMonth: template.dayOfMonth ?? undefined,
                 dayOfWeek: template.dayOfWeek ?? undefined,
                 from: template.nextDueDate,
                 timezone: user.userSettings?.timezone ?? DEFAULT_TIMEZONE,
               });
+              const newNextDueDate = taskDueDate;
               const newTask = await tx.task.create({
                 data: {
                   title: template.title,

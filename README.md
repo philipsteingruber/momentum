@@ -16,11 +16,15 @@ A full-stack task management application built with Next.js, featuring recurring
 ## Features
 
 - **Task management** — Create, organize, and track tasks with statuses: `PENDING`, `IN_PROGRESS`, `BLOCKED`, `COMPLETED`, `CANCELLED`, `SKIPPED`
+- **Kanban board** — Drag-and-drop board view for updating task status
 - **Task dependencies** — Block tasks on other tasks to model dependency graphs
+- **Task snooze** — Extend a task's due date from the UI or via Discord
+- **Task notes** — Attach notes to tasks from the UI or via Discord
 - **Categories & tags** — Organize tasks with user-scoped categories and tags
 - **Recurring templates** — Auto-generate tasks on daily/weekly/monthly schedules
 - **Daily digest** — Email + Discord DM digests grouped by overdue / due today / due this week
-- **Discord bot** — Slash commands: `/list [status]` and `/complete task_id:<id>`
+- **Discord bot** — Slash commands for listing, creating, completing, snoozing, and annotating tasks
+- **Shared access** — Grant read-only access to your task list to other users
 - **Admin panel** — Cron job log viewer at `/admin` with filtering and search
 - **Internationalization** — English and Swedish supported
 
@@ -103,6 +107,9 @@ Open [http://localhost:3000](http://localhost:3000).
 | `pnpm lint` | Run ESLint |
 | `pnpm email` | Start the React Email preview server |
 | `pnpm discord:register` | Register Discord slash commands (one-time) |
+| `pnpm test` | Run tests once |
+| `pnpm test:watch` | Run tests in watch mode |
+| `pnpm test:coverage` | Run tests with coverage report |
 
 ## Project Structure
 
@@ -123,6 +130,9 @@ Open [http://localhost:3000](http://localhost:3000).
     /categories               # Category list page
     /category/[categoryId]    # Category detail page
     /settings/discord         # Discord account linking
+    /settings/shared-access   # Shared access management
+    /shared/[userId]          # Read-only shared task view
+    /shared/[userId]/task/[taskId]  # Read-only shared task detail
     /task/[taskId]            # Task detail page
     /templates                # Recurring templates page
     /page.tsx                 # Home (task list)
@@ -160,5 +170,10 @@ The Discord bot uses **HTTP Interactions** (no persistent WebSocket gateway), ma
 **Account linking:** Users link their Discord account via OAuth2 at `/settings/discord`. A DM channel is opened at link time for digest delivery.
 
 **Slash commands:**
+
 - `/list [status]` — Lists tasks, optionally filtered by status
+- `/today` — Lists tasks due today or overdue
+- `/add title [due] [category]` — Creates a new task
 - `/complete task_id:<id>` — Marks a task as completed
+- `/snooze task days` — Extends a task's due date by 1–7 days
+- `/note task content` — Adds a note to a task

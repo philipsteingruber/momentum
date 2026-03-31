@@ -51,17 +51,10 @@ export const recurringTemplateRouter = createTRPCRouter({
   create: authedProcedure.input(createRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
     const { timezone } = ctx.currentUser.userSettings;
     const firstDueDate = computeNextDueDate({ ...input, timezone });
-    const templateNextDueDate = computeNextDueDate({
-      recurrenceType: input.recurrenceType,
-      dayOfWeek: input.dayOfWeek,
-      dayOfMonth: input.dayOfMonth,
-      from: firstDueDate,
-      timezone,
-    });
 
     return await ctx.db.$transaction(async (tx) => {
       const template = await tx.recurringTemplate.create({
-        data: { ...input, userId: ctx.currentUser.id, nextDueDate: templateNextDueDate },
+        data: { ...input, userId: ctx.currentUser.id, nextDueDate: firstDueDate },
       });
 
       await tx.task.create({
@@ -105,9 +98,34 @@ export const recurringTemplateRouter = createTRPCRouter({
           })
         : existing.nextDueDate;
 
-      return await ctx.db.recurringTemplate.update({
-        where: { id: input.templateId, userId: ctx.currentUser.id },
-        data: { ...input.data, nextDueDate, ...(scheduleChanged && { snoozeCount: 0 }) },
+      return await ctx.db.$transaction(async (tx) => {
+        if (scheduleChanged) {
+          await tx.task.updateMany({
+            where: {
+              recurringTemplateId: input.templateId,
+              userId: ctx.currentUser.id,
+              status: { in: [...ACTIVE_TASK_STATUSES] },
+            },
+            data: { status: TaskStatus.CANCELLED },
+          });
+          await tx.task.create({
+            data: {
+              title: input.data.title ?? existing.title,
+              description: input.data.description ?? existing.description,
+              externalContact: input.data.externalContact ?? existing.externalContact,
+              categoryId: input.data.categoryId ?? existing.categoryId,
+              link: input.data.link ?? existing.link,
+              userId: ctx.currentUser.id,
+              dueDate: nextDueDate,
+              recurringTemplateId: input.templateId,
+            },
+          });
+        }
+
+        return await tx.recurringTemplate.update({
+          where: { id: input.templateId, userId: ctx.currentUser.id },
+          data: { ...input.data, nextDueDate, ...(scheduleChanged && { snoozeCount: 0 }) },
+        });
       });
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {

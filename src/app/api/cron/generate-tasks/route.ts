@@ -5,6 +5,7 @@ import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
 import { computeNextDueDate } from "@/lib/recurring-template-utils";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
+import { addDays, startOfDay } from "date-fns";
 
 const JOB = "generate-tasks";
 
@@ -17,11 +18,11 @@ export const handler = async (req: Request): Promise<Response> => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const now = new Date();
+  const startOfTomorrow = startOfDay(addDays(new Date(), 1));
   const users = await prisma.user.findMany({
     include: {
       recurringTemplates: {
-        where: { nextDueDate: { lte: now } },
+        where: { nextDueDate: { lt: startOfTomorrow } },
         include: {
           tasks: {
             where: { status: { in: [...ACTIVE_TASK_STATUSES] } },
@@ -31,7 +32,7 @@ export const handler = async (req: Request): Promise<Response> => {
       },
       userSettings: { select: { timezone: true } },
     },
-    where: { recurringTemplates: { some: { nextDueDate: { lte: now } } } },
+    where: { recurringTemplates: { some: { nextDueDate: { lt: startOfTomorrow } } } },
   });
 
   const errors: Error[] = [];
@@ -48,20 +49,19 @@ export const handler = async (req: Request): Promise<Response> => {
               if (activeTask) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
               }
-              const taskDueDate = computeNextDueDate({
+              const newNextDueDate = computeNextDueDate({
                 recurrenceType: template.recurrenceType,
                 dayOfMonth: template.dayOfMonth ?? undefined,
                 dayOfWeek: template.dayOfWeek ?? undefined,
                 from: template.nextDueDate,
                 timezone: user.userSettings?.timezone ?? DEFAULT_TIMEZONE,
               });
-              const newNextDueDate = taskDueDate;
               const newTask = await tx.task.create({
                 data: {
                   title: template.title,
                   description: template.description,
                   status: TaskStatus.PENDING,
-                  dueDate: taskDueDate,
+                  dueDate: template.nextDueDate,
                   externalContact: template.externalContact,
                   categoryId: template.categoryId,
                   recurringTemplateId: template.id,

@@ -49,14 +49,14 @@ export const computeNextDueDate = ({
       throw new RecurrenceValidationError("BAD_REQUEST");
     }
     const zonedTime = toZonedTime(from, timezone);
-    const updatedTime = nextDay(zonedTime, dayOfWeek as Day);
+    const updatedTime = startOfDay(nextDay(zonedTime, dayOfWeek as Day));
     return fromZonedTime(updatedTime, timezone);
   } else {
     if (dayOfMonth === undefined) {
       throw new RecurrenceValidationError("BAD_REQUEST");
     }
     const zonedTime = toZonedTime(from, timezone);
-    const updatedTime = addMonths(setDate(zonedTime, dayOfMonth), 1);
+    const updatedTime = startOfDay(addMonths(setDate(zonedTime, dayOfMonth), 1));
     return fromZonedTime(updatedTime, timezone);
   }
 };

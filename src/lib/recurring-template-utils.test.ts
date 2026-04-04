@@ -26,19 +26,19 @@ describe("computeNextDueDate", () => {
   });
 
   describe("WEEKLY recurrence", () => {
-    it("returns the next occurrence of the given weekday, preserving the time component", () => {
-      // From: Saturday June 15 12:00 Stockholm. Next Monday = June 17 12:00 Stockholm = June 17 10:00 UTC
+    it("returns midnight of the next occurrence of the given weekday in the given timezone", () => {
+      // From: Saturday June 15 12:00 Stockholm. Next Monday = June 17 00:00 Stockholm (CEST) = June 16 22:00 UTC
       const result = computeNextDueDate({
         recurrenceType: RecurrenceType.WEEKLY,
         dayOfWeek: 1, // Monday
         from: FROM,
         timezone: TZ,
       });
-      expect(result.toISOString()).toBe("2024-06-17T10:00:00.000Z");
+      expect(result.toISOString()).toBe("2024-06-16T22:00:00.000Z");
     });
 
     it("skips to next week if from date is already the target weekday", () => {
-      // From: Monday June 10, next Monday = June 17
+      // From: Monday June 10, next Monday = June 17 00:00 Stockholm (CEST) = June 16 22:00 UTC
       const monday = new Date("2024-06-10T10:00:00Z");
       const result = computeNextDueDate({
         recurrenceType: RecurrenceType.WEEKLY,
@@ -46,8 +46,7 @@ describe("computeNextDueDate", () => {
         from: monday,
         timezone: TZ,
       });
-      // June 17 12:00 Stockholm = June 17 10:00 UTC
-      expect(result.toISOString()).toBe("2024-06-17T10:00:00.000Z");
+      expect(result.toISOString()).toBe("2024-06-16T22:00:00.000Z");
     });
 
     it("throws RecurrenceValidationError when dayOfWeek is not provided", () => {
@@ -58,27 +57,26 @@ describe("computeNextDueDate", () => {
   });
 
   describe("MONTHLY recurrence", () => {
-    it("returns the same day-of-month next month, preserving the time component", () => {
-      // From: June 15 12:00 Stockholm. dayOfMonth: 15 → July 15 12:00 Stockholm = July 15 10:00 UTC
+    it("returns midnight of the same day-of-month next month in the given timezone", () => {
+      // From: June 15 12:00 Stockholm. dayOfMonth: 15 → July 15 00:00 Stockholm (CEST) = July 14 22:00 UTC
       const result = computeNextDueDate({
         recurrenceType: RecurrenceType.MONTHLY,
         dayOfMonth: 15,
         from: FROM,
         timezone: TZ,
       });
-      expect(result.toISOString()).toBe("2024-07-15T10:00:00.000Z");
+      expect(result.toISOString()).toBe("2024-07-14T22:00:00.000Z");
     });
 
     it("can target a different day of the month", () => {
-      // From: June 15. dayOfMonth: 1 → July 1
+      // From: June 15. dayOfMonth: 1 → July 1 00:00 Stockholm (CEST) = June 30 22:00 UTC
       const result = computeNextDueDate({
         recurrenceType: RecurrenceType.MONTHLY,
         dayOfMonth: 1,
         from: FROM,
         timezone: TZ,
       });
-      // July 1 12:00 Stockholm = July 1 10:00 UTC
-      expect(result.toISOString()).toBe("2024-07-01T10:00:00.000Z");
+      expect(result.toISOString()).toBe("2024-06-30T22:00:00.000Z");
     });
 
     it("throws RecurrenceValidationError when dayOfMonth is not provided", () => {

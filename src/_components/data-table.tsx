@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
+import type { RouterOutputs } from "@/trpc/client";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { cn } from "@/lib/utils";
 import type { SortingState } from "@tanstack/react-table";
@@ -23,9 +23,11 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+type TaskRow = RouterOutputs["task"]["getAll"][number];
+
 interface DataTableProps {
-  columns: ColumnDef<Task, unknown>[];
-  data: Task[];
+  columns: ColumnDef<TaskRow, unknown>[];
+  data: TaskRow[];
   isPending: boolean;
   deleteTask: ({ taskId }: { taskId: string }) => void;
   isDeletingTask: boolean;

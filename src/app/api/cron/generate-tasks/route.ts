@@ -1,4 +1,4 @@
-import { TaskStatus } from "@/generated/prisma/enums";
+import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
 import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
@@ -18,11 +18,12 @@ export const handler = async (req: Request): Promise<Response> => {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const startOfTomorrow = startOfDay(addDays(new Date(), 1));
+  const now = new Date();
+  const startOfTomorrow = startOfDay(addDays(now, 1));
   const users = await prisma.user.findMany({
     include: {
       recurringTemplates: {
-        where: { nextDueDate: { lt: startOfTomorrow } },
+        where: { nextGenerateOn: { lt: startOfTomorrow } },
         include: {
           tasks: {
             where: { status: { in: [...ACTIVE_TASK_STATUSES] } },
@@ -32,7 +33,7 @@ export const handler = async (req: Request): Promise<Response> => {
       },
       userSettings: { select: { timezone: true } },
     },
-    where: { recurringTemplates: { some: { nextDueDate: { lt: startOfTomorrow } } } },
+    where: { recurringTemplates: { some: { nextGenerateOn: { lt: startOfTomorrow } } } },
   });
 
   const errors: Error[] = [];
@@ -43,25 +44,48 @@ export const handler = async (req: Request): Promise<Response> => {
       await Promise.all(
         user.recurringTemplates.map(async (template) => {
           const activeTask = template.tasks[0];
+          const timezone = user.userSettings?.timezone ?? DEFAULT_TIMEZONE;
 
           await prisma.$transaction(async (tx) => {
             try {
+              if (addDays(template.nextGenerateOn, 1) < now) {
+                await cronLog({
+                  runId,
+                  job: JOB,
+                  event: "task.late",
+                  level: "warn",
+                  data: {
+                    userId: user.id,
+                    email: user.email,
+                    nextGenerateOn: template.nextGenerateOn.toISOString(),
+                    timestamp: now.toISOString(),
+                  },
+                });
+              }
+
               if (activeTask) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
               }
-              const newNextDueDate = computeNextDueDate({
-                recurrenceType: template.recurrenceType,
-                dayOfMonth: template.dayOfMonth ?? undefined,
-                dayOfWeek: template.dayOfWeek ?? undefined,
-                from: template.nextDueDate,
-                timezone: user.userSettings?.timezone ?? DEFAULT_TIMEZONE,
-              });
+
+              const taskDueDate =
+                template.recurrenceType === RecurrenceType.DAILY
+                  ? template.nextGenerateOn
+                  : computeNextDueDate({
+                      recurrenceType: template.recurrenceType,
+                      dayOfMonth: template.dayOfMonth ?? undefined,
+                      dayOfWeek: template.dayOfWeek ?? undefined,
+                      from: template.nextGenerateOn,
+                      timezone,
+                    });
+
+              const newNextGenerateOn = addDays(taskDueDate, 1);
+
               const newTask = await tx.task.create({
                 data: {
                   title: template.title,
                   description: template.description,
                   status: TaskStatus.PENDING,
-                  dueDate: template.nextDueDate,
+                  dueDate: taskDueDate,
                   externalContact: template.externalContact,
                   categoryId: template.categoryId,
                   recurringTemplateId: template.id,
@@ -69,16 +93,18 @@ export const handler = async (req: Request): Promise<Response> => {
                   userId: user.id,
                 },
               });
+
               await tx.recurringTemplate.update({
                 where: { id: template.id },
-                data: { nextDueDate: newNextDueDate },
+                data: { nextGenerateOn: newNextGenerateOn },
               });
+
               await cronLog({
                 runId,
                 job: JOB,
                 event: "task.created",
                 level: "info",
-                data: { userId: user.id, email: user.email, taskId: newTask.id, timestamp: new Date().toISOString() },
+                data: { userId: user.id, email: user.email, taskId: newTask.id, timestamp: now.toISOString() },
               });
               successes.push(newTask.id);
             } catch (err) {
@@ -87,7 +113,7 @@ export const handler = async (req: Request): Promise<Response> => {
                 job: JOB,
                 event: "task.failed",
                 level: "error",
-                data: { userId: user.id, email: user.email, error: String(err), timestamp: new Date().toISOString() },
+                data: { userId: user.id, email: user.email, error: String(err), timestamp: now.toISOString() },
               });
               errors.push(err as Error);
             }
@@ -102,7 +128,7 @@ export const handler = async (req: Request): Promise<Response> => {
     job: JOB,
     event: "complete",
     level: "info",
-    data: { successes: successes.length, errors: errors.length, timestamp: new Date().toISOString() },
+    data: { successes: successes.length, errors: errors.length, timestamp: now.toISOString() },
   });
 
   if (errors.length > 0) {

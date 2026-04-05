@@ -1,5 +1,6 @@
 import { TaskStatus } from "@/generated/prisma/enums";
 import { computeNextDueDate, RecurrenceValidationError } from "@/lib/recurring-template-utils";
+import { addDays } from "date-fns";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { createRecurringTemplateSchema, updateRecurringTemplateSchema } from "@/lib/schemas";
@@ -51,10 +52,11 @@ export const recurringTemplateRouter = createTRPCRouter({
   create: authedProcedure.input(createRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
     const { timezone } = ctx.currentUser.userSettings;
     const firstDueDate = computeNextDueDate({ ...input, timezone });
+    const nextGenerateOn = addDays(firstDueDate, 1);
 
     return await ctx.db.$transaction(async (tx) => {
       const template = await tx.recurringTemplate.create({
-        data: { ...input, userId: ctx.currentUser.id, nextDueDate: firstDueDate },
+        data: { ...input, userId: ctx.currentUser.id, nextGenerateOn },
       });
 
       await tx.task.create({
@@ -89,17 +91,21 @@ export const recurringTemplateRouter = createTRPCRouter({
         input.data.dayOfWeek !== undefined ||
         input.data.dayOfMonth !== undefined;
 
-      const nextDueDate = scheduleChanged
-        ? computeNextDueDate({
-            recurrenceType: input.data.recurrenceType ?? existing.recurrenceType,
-            dayOfWeek: input.data.dayOfWeek ?? existing.dayOfWeek ?? undefined,
-            dayOfMonth: input.data.dayOfMonth ?? existing.dayOfMonth ?? undefined,
-            timezone: ctx.currentUser.userSettings.timezone,
-          })
-        : existing.nextDueDate;
+      let nextGenerateOn = existing.nextGenerateOn;
+      let newTaskDueDate: Date | null = null;
+
+      if (scheduleChanged) {
+        newTaskDueDate = computeNextDueDate({
+          recurrenceType: input.data.recurrenceType ?? existing.recurrenceType,
+          dayOfWeek: input.data.dayOfWeek ?? existing.dayOfWeek ?? undefined,
+          dayOfMonth: input.data.dayOfMonth ?? existing.dayOfMonth ?? undefined,
+          timezone: ctx.currentUser.userSettings.timezone,
+        });
+        nextGenerateOn = addDays(newTaskDueDate, 1);
+      }
 
       return await ctx.db.$transaction(async (tx) => {
-        if (scheduleChanged) {
+        if (scheduleChanged && newTaskDueDate) {
           await tx.task.updateMany({
             where: {
               recurringTemplateId: input.templateId,
@@ -116,7 +122,7 @@ export const recurringTemplateRouter = createTRPCRouter({
               categoryId: input.data.categoryId ?? existing.categoryId,
               link: input.data.link ?? existing.link,
               userId: ctx.currentUser.id,
-              dueDate: nextDueDate,
+              dueDate: newTaskDueDate,
               recurringTemplateId: input.templateId,
             },
           });
@@ -124,7 +130,7 @@ export const recurringTemplateRouter = createTRPCRouter({
 
         return await tx.recurringTemplate.update({
           where: { id: input.templateId, userId: ctx.currentUser.id },
-          data: { ...input.data, nextDueDate, ...(scheduleChanged && { snoozeCount: 0 }) },
+          data: { ...input.data, nextGenerateOn, ...(scheduleChanged && { snoozeCount: 0 }) },
         });
       });
     } catch (err) {

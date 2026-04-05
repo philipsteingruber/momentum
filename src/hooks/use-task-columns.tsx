@@ -9,7 +9,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { type Task } from "@/generated/prisma/client";
+import { RecurrenceType } from "@/generated/prisma/enums";
+import type { RouterOutputs } from "@/trpc/client";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { computeSnoozeDueDate } from "@/lib/date-utils";
 import { SNOOZE_OPTIONS, SNOOZE_TRANSLATION_KEYS } from "@/lib/task-utils";
@@ -31,7 +32,9 @@ export function useTaskColumns() {
     },
   });
 
-  return useMemo<ColumnDef<Task>[]>(
+  type TaskRow = RouterOutputs["task"]["getAll"][number];
+
+  return useMemo<ColumnDef<TaskRow>[]>(
     () => [
       {
         id: "select",
@@ -132,14 +135,22 @@ export function useTaskColumns() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>{t("snoozeLabel")}</DropdownMenuLabel>
-                <DropdownMenuGroup>
-                  {SNOOZE_OPTIONS.map((days) => (
-                    <DropdownMenuItem key={days} onClick={() => snoozeTask({ taskId: task.id, days })}>
-                      {snoozeLabels[days]}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuGroup>
+                {task.recurringTemplate?.recurrenceType === RecurrenceType.DAILY ? (
+                  <DropdownMenuLabel className="font-normal text-muted-foreground">
+                    {t("snoozeUnavailableDaily")}
+                  </DropdownMenuLabel>
+                ) : (
+                  <>
+                    <DropdownMenuLabel>{t("snoozeLabel")}</DropdownMenuLabel>
+                    <DropdownMenuGroup>
+                      {SNOOZE_OPTIONS.map((days) => (
+                        <DropdownMenuItem key={days} onClick={() => snoozeTask({ taskId: task.id, days })}>
+                          {snoozeLabels[days]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuGroup>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           );

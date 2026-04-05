@@ -1,4 +1,4 @@
-import { TaskStatus } from "@/generated/prisma/enums";
+import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { computeSnoozeDueDate, endOfDayInTz } from "@/lib/date-utils";
 import { followUpInteraction } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
@@ -11,7 +11,7 @@ import {
   type APIChatInputApplicationCommandInteraction,
   type APIInteraction,
 } from "discord-api-types/v10";
-import { startOfDay } from "date-fns";
+import { addDays, startOfDay } from "date-fns";
 import { formatInTimeZone, fromZonedTime, toZonedTime } from "date-fns-tz";
 import { after } from "next/server";
 import nacl from "tweetnacl";
@@ -316,7 +316,10 @@ const handleSnooze = async (
     return;
   }
 
-  const task = await prisma.task.findFirst({ where: { id: taskId, userId } });
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, userId },
+    include: { recurringTemplate: { select: { recurrenceType: true } } },
+  });
   if (!task) {
     await followUpInteraction(APPLICATION_ID, token, {
       content: "Task not found or you don't have permission.",
@@ -331,6 +334,13 @@ const handleSnooze = async (
     return;
   }
 
+  if (task.recurringTemplate?.recurrenceType === RecurrenceType.DAILY) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "Daily recurring tasks cannot be snoozed.",
+    });
+    return;
+  }
+
   const newDue = computeSnoozeDueDate(task.dueDate, Number(days), timezone);
 
   if (task.recurringTemplateId) {
@@ -338,7 +348,7 @@ const handleSnooze = async (
       await tx.task.update({ where: { id: taskId }, data: { dueDate: newDue } });
       await tx.recurringTemplate.update({
         where: { id: task.recurringTemplateId! },
-        data: { snoozeCount: { increment: 1 } },
+        data: { snoozeCount: { increment: 1 }, nextGenerateOn: addDays(newDue, 1) },
       });
     });
   } else {

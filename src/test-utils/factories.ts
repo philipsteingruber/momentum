@@ -62,7 +62,7 @@ export const createMockRecurringTemplate = (overrides: Partial<RecurringTemplate
   recurrenceType: RecurrenceType.WEEKLY,
   dayOfWeek: 1,
   dayOfMonth: null,
-  nextDueDate: new Date("2024-01-08"),
+  nextGenerateOn: new Date("2024-01-09"),
   snoozeCount: 0,
   userId: nextId(),
   categoryId: null,

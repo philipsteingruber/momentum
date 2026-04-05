@@ -1,10 +1,10 @@
-import { TaskStatus } from "@/generated/prisma/enums";
+import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { computeNextMondayDueDate, computeSnoozeDueDate } from "@/lib/date-utils";
 import { createTaskSchema, updateTaskSchema } from "@/lib/schemas";
 import { TERMINAL_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
-import { subDays } from "date-fns";
+import { addDays, subDays } from "date-fns";
 import { z } from "zod";
 import { authedProcedure, type AuthedContext, createTRPCRouter } from "../init";
 
@@ -14,10 +14,17 @@ async function executeSnooze(
   computeNewDate: (dueDate: Date, timezone: string) => Date,
 ) {
   const timezone = ctx.currentUser.userSettings.timezone;
-  const task = await ctx.db.task.findUnique({ where: { id: taskId, userId: ctx.currentUser.id } });
+  const task = await ctx.db.task.findUnique({
+    where: { id: taskId, userId: ctx.currentUser.id },
+    include: { recurringTemplate: { select: { recurrenceType: true } } },
+  });
 
   if (!task) throw new TRPCError({ code: "NOT_FOUND" });
   if (!task.dueDate) throw new TRPCError({ code: "PRECONDITION_FAILED" });
+
+  if (task.recurringTemplate?.recurrenceType === RecurrenceType.DAILY) {
+    throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Daily recurring tasks cannot be snoozed" });
+  }
 
   const newDueDate = computeNewDate(task.dueDate, timezone);
 
@@ -29,7 +36,7 @@ async function executeSnooze(
       });
       await tx.recurringTemplate.update({
         where: { id: task.recurringTemplateId! },
-        data: { snoozeCount: { increment: 1 } },
+        data: { snoozeCount: { increment: 1 }, nextGenerateOn: addDays(newDueDate, 1) },
       });
       return updatedTask;
     });
@@ -73,6 +80,7 @@ export const taskRouter = createTRPCRouter({
         include: {
           notes: true,
           tags: true,
+          recurringTemplate: { select: { recurrenceType: true } },
         },
         orderBy: { createdAt: "asc" },
       });
@@ -99,7 +107,11 @@ export const taskRouter = createTRPCRouter({
   getById: authedProcedure.input(z.object({ taskId: z.cuid() })).query(async ({ ctx, input }) => {
     const task = await ctx.db.task.findUnique({
       where: { id: input.taskId, userId: ctx.currentUser.id },
-      include: { notes: { orderBy: { createdAt: "desc" } }, category: true },
+      include: {
+        notes: { orderBy: { createdAt: "desc" } },
+        category: true,
+        recurringTemplate: { select: { recurrenceType: true } },
+      },
     });
 
     if (!task) {

@@ -108,7 +108,7 @@ model RecurringTemplate {
     recurrenceType RecurrenceType
     dayOfWeek      Int?
     dayOfMonth     Int?
-    nextDueDate    DateTime
+    nextGenerateOn DateTime @map("nextDueDate")
     snoozeCount    Int            @default(0)
 
     user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)

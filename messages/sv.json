@@ -107,6 +107,7 @@
     "updatedHeader": "Uppdaterad",
     "statusHeader": "Status",
     "snoozeLabel": "Skjut Upp",
+    "snoozeUnavailableDaily": "Dagliga uppgifter kan inte skjutas upp",
     "snooze1Day": "1 dag",
     "snooze3Days": "3 dagar",
     "snooze7Days": "7 dagar",

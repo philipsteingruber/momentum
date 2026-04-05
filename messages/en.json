@@ -107,6 +107,7 @@
     "updatedHeader": "Updated",
     "statusHeader": "Status",
     "snoozeLabel": "Snooze",
+    "snoozeUnavailableDaily": "Daily tasks cannot be snoozed",
     "snooze1Day": "1 day",
     "snooze3Days": "3 days",
     "snooze7Days": "7 days",

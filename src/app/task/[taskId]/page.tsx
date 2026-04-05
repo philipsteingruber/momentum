@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
-import { TaskStatus } from "@/generated/prisma/enums";
+import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { useDialogState } from "@/hooks/use-dialog-state";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { computeSnoozeDueDate } from "@/lib/date-utils";
@@ -187,7 +187,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
                 </div>
               )}
             </Button>
-            {task.dueDate && (
+            {task.dueDate && task.recurringTemplate?.recurrenceType !== RecurrenceType.DAILY && (
               <>
                 {SNOOZE_OPTIONS.map((days) => {
                   const newDate = computeSnoozeDueDate(task.dueDate!, days, timezone);

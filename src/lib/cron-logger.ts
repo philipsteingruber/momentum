@@ -1,7 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
-type LogLevel = "info" | "error" | "debug";
+type LogLevel = "info" | "error" | "debug" | "warn";
 
 interface CronLogEntry {
   runId: string;

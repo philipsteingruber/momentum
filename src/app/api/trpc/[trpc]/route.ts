@@ -1,6 +1,7 @@
 import { createTRPCContext } from "@/trpc/init";
 import { appRouter } from "@/trpc/routers/_app";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { ZodError } from "zod";
 
 const handler = async (req: Request): Promise<Response> => {
   const url = new URL(req.url);
@@ -12,6 +13,19 @@ const handler = async (req: Request): Promise<Response> => {
       req,
       router: appRouter,
       createContext: createTRPCContext,
+      onError({ error, type, path, input }) {
+        console.error(
+          {
+            path,
+            type,
+            code: error.code,
+            message: error.message,
+            input,
+            zodIssues: error.cause instanceof ZodError ? error.cause.issues : undefined,
+          },
+          "tRPC error",
+        );
+      },
     });
 
     return response;

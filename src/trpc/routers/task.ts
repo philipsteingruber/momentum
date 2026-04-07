@@ -142,9 +142,10 @@ export const taskRouter = createTRPCRouter({
 
   update: authedProcedure.input(updateTaskSchema).mutation(async ({ ctx, input }) => {
     try {
+      const { timezone: _tz, ...taskData } = input.data;
       const updatedTask = await ctx.db.task.update({
         where: { id: input.taskId, userId: ctx.currentUser.id },
-        data: input.data,
+        data: taskData,
       });
 
       return updatedTask;

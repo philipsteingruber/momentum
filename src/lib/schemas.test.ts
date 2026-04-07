@@ -11,43 +11,47 @@ describe("makeCreateTaskSchema", () => {
   const schema = makeCreateTaskSchema();
 
   it("accepts a minimal valid task", () => {
-    expect(schema.safeParse({ title: "Buy groceries", categoryId: VALID_CUID }).success).toBe(true);
+    expect(schema.safeParse({ title: "Buy groceries", categoryId: VALID_CUID, timezone: "UTC" }).success).toBe(true);
   });
 
   it("rejects an empty title", () => {
-    expect(schema.safeParse({ title: "", categoryId: VALID_CUID }).success).toBe(false);
+    expect(schema.safeParse({ title: "", categoryId: VALID_CUID, timezone: "UTC" }).success).toBe(false);
   });
 
   it("rejects a title longer than 32 characters", () => {
-    expect(schema.safeParse({ title: "a".repeat(33), categoryId: VALID_CUID }).success).toBe(false);
+    expect(schema.safeParse({ title: "a".repeat(33), categoryId: VALID_CUID, timezone: "UTC" }).success).toBe(false);
   });
 
   it("accepts a title exactly at the 32-character limit", () => {
-    expect(schema.safeParse({ title: "a".repeat(32), categoryId: VALID_CUID }).success).toBe(true);
+    expect(schema.safeParse({ title: "a".repeat(32), categoryId: VALID_CUID, timezone: "UTC" }).success).toBe(true);
   });
 
   it("rejects a description longer than 100 characters", () => {
     expect(
-      schema.safeParse({ title: "Test", description: "x".repeat(101), categoryId: VALID_CUID }).success,
+      schema.safeParse({ title: "Test", description: "x".repeat(101), categoryId: VALID_CUID, timezone: "UTC" })
+        .success,
     ).toBe(false);
   });
 
   it("rejects an invalid URL for link", () => {
-    expect(schema.safeParse({ title: "Test", link: "not-a-url", categoryId: VALID_CUID }).success).toBe(false);
+    expect(
+      schema.safeParse({ title: "Test", link: "not-a-url", categoryId: VALID_CUID, timezone: "UTC" }).success,
+    ).toBe(false);
   });
 
   it("accepts an empty string for link (clearing the field)", () => {
-    expect(schema.safeParse({ title: "Test", link: "", categoryId: VALID_CUID }).success).toBe(true);
+    expect(schema.safeParse({ title: "Test", link: "", categoryId: VALID_CUID, timezone: "UTC" }).success).toBe(true);
   });
 
   it("accepts a valid HTTPS URL for link", () => {
     expect(
-      schema.safeParse({ title: "Test", link: "https://example.com", categoryId: VALID_CUID }).success,
+      schema.safeParse({ title: "Test", link: "https://example.com", categoryId: VALID_CUID, timezone: "UTC" })
+        .success,
     ).toBe(true);
   });
 
   it("rejects an invalid categoryId", () => {
-    expect(schema.safeParse({ title: "Test", categoryId: "not-a-cuid" }).success).toBe(false);
+    expect(schema.safeParse({ title: "Test", categoryId: "not-a-cuid", timezone: "UTC" }).success).toBe(false);
   });
 
   describe("dueDate validation", () => {
@@ -59,19 +63,22 @@ describe("makeCreateTaskSchema", () => {
 
     it("accepts a dueDate that is today (not in the past)", () => {
       expect(
-        schema.safeParse({ title: "Test", categoryId: VALID_CUID, dueDate: new Date("2024-06-15") }).success,
+        schema.safeParse({ title: "Test", categoryId: VALID_CUID, timezone: "UTC", dueDate: new Date("2024-06-15") })
+          .success,
       ).toBe(true);
     });
 
     it("accepts a dueDate in the future", () => {
       expect(
-        schema.safeParse({ title: "Test", categoryId: VALID_CUID, dueDate: new Date("2024-06-20") }).success,
+        schema.safeParse({ title: "Test", categoryId: VALID_CUID, timezone: "UTC", dueDate: new Date("2024-06-20") })
+          .success,
       ).toBe(true);
     });
 
     it("rejects a dueDate in the past", () => {
       expect(
-        schema.safeParse({ title: "Test", categoryId: VALID_CUID, dueDate: new Date("2024-06-14") }).success,
+        schema.safeParse({ title: "Test", categoryId: VALID_CUID, timezone: "UTC", dueDate: new Date("2024-06-14") })
+          .success,
       ).toBe(false);
     });
   });
@@ -116,7 +123,7 @@ describe("makeCategorySchema", () => {
 
 describe("makeCreateRecurringTemplateSchema", () => {
   const schema = makeCreateRecurringTemplateSchema();
-  const base = { title: "Weekly task", categoryId: VALID_CUID };
+  const base = { title: "Weekly task", categoryId: VALID_CUID, timezone: "UTC" };
 
   it("accepts DAILY recurrence without any day field", () => {
     expect(schema.safeParse({ ...base, recurrenceType: RecurrenceType.DAILY }).success).toBe(true);

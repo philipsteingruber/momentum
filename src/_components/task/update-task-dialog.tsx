@@ -35,6 +35,7 @@ const getDefaultValues = (task: Task) => ({
     externalContact: task.externalContact ?? "",
     link: task.link ?? "",
     dueDate: task.dueDate ?? undefined,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   },
 });
 

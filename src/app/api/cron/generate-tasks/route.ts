@@ -5,7 +5,8 @@ import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
 import { computeNextDueDate } from "@/lib/recurring-template-utils";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
-import { addDays, startOfDay } from "date-fns";
+import { addDays, isBefore, startOfDay } from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 const JOB = "generate-tasks";
 
@@ -63,7 +64,14 @@ export const handler = async (req: Request): Promise<Response> => {
                 });
               }
 
-              if (activeTask) {
+              const startOfTodayInTz = fromZonedTime(startOfDay(toZonedTime(now, timezone)), timezone);
+              const isActiveTaskOverdue = activeTask && activeTask.dueDate !== null && isBefore(activeTask.dueDate, startOfTodayInTz);
+
+              if (activeTask && !isActiveTaskOverdue) {
+                return;
+              }
+
+              if (isActiveTaskOverdue) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
               }
 

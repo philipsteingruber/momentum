@@ -262,6 +262,13 @@ const handleAdd = async (
     return;
   }
 
+  if (!categoryId) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "Missing `category`.",
+    });
+    return;
+  }
+
   let dueDate: Date | undefined;
   if (dueRaw) {
     const parts = dueRaw.split("-").map(Number);

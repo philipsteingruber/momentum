@@ -12,7 +12,7 @@ const KanbanColumn = ({ tasks, status, isPending }: { tasks: Task[]; status: Tas
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
-    <div className="flex h-[1000px] w-[400px] flex-col items-center">
+    <div className="flex h-[1000px] min-w-0 flex-1 flex-col items-center">
       <span className="w-full text-center">{tStatus(status)}</span>
       <div
         className={cn("flex h-full w-full overflow-hidden rounded border-2", isOver && "border-primary bg-gray-800")}

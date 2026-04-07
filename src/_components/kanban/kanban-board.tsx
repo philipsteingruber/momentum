@@ -50,7 +50,7 @@ export const KanbanBoard = ({
       onDragCancel={() => setActiveTask(null)}
       sensors={sensors}
     >
-      <div className="flex gap-x-4">
+      <div className="flex w-full gap-x-4">
         {(Object.keys(tasksByStatus) as (TaskStatus | typeof OVERDUE_STATUS)[])
           .filter((status) => status !== TaskStatus.SKIPPED && status !== OVERDUE_STATUS)
           .map((status) => {

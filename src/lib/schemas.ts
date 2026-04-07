@@ -1,5 +1,6 @@
 import { RecurrenceType } from "@/generated/prisma/enums";
 import { isBefore, startOfDay } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import z from "zod";
 
 export type TaskSchemaMessages = {
@@ -20,7 +21,7 @@ export type RecurrenceSchemaMessages = {
   recurrenceInvalidCombination: string;
 };
 
-export function makeCreateTaskSchema(msgs?: Partial<TaskSchemaMessages>) {
+function makeTaskBaseSchema(msgs?: Partial<TaskSchemaMessages>) {
   return z.object({
     title: z
       .string()
@@ -30,21 +31,32 @@ export function makeCreateTaskSchema(msgs?: Partial<TaskSchemaMessages>) {
       .string()
       .max(100, msgs?.descriptionMaxLength ?? "Description cannot be more than 100 characters long")
       .optional(),
-    dueDate: z
-      .date()
-      .refine(
-        (date) => !isBefore(startOfDay(date), startOfDay(new Date())),
-        msgs?.dueDateInPast ?? "Due Date cannot be in the past",
-      )
-      .optional(),
+    dueDate: z.date().optional(),
     categoryId: z.cuid("Incorrectly formatted category ID"),
     externalContact: z.string().optional(),
     link: z.url(msgs?.linkInvalid ?? "Must be a valid URL").or(z.literal("")).optional(),
+    timezone: z.string(),
+  });
+}
+
+export function makeCreateTaskSchema(msgs?: Partial<TaskSchemaMessages>) {
+  return makeTaskBaseSchema(msgs).superRefine((data, ctx) => {
+    if (data.dueDate) {
+      const zonedDue = toZonedTime(data.dueDate, data.timezone);
+      const zonedNow = toZonedTime(new Date(), data.timezone);
+      if (isBefore(startOfDay(zonedDue), startOfDay(zonedNow))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["dueDate"],
+          message: msgs?.dueDateInPast ?? "Due Date cannot be in the past",
+        });
+      }
+    }
   });
 }
 
 export function makeUpdateTaskSchema(msgs?: Partial<TaskSchemaMessages>) {
-  return z.object({ taskId: z.cuid(), data: makeCreateTaskSchema(msgs).partial() });
+  return z.object({ taskId: z.cuid(), data: makeTaskBaseSchema(msgs).partial() });
 }
 
 export function makeCategorySchema(msgs?: Partial<CategorySchemaMessages>) {
@@ -65,7 +77,7 @@ export function makeUpdateCategorySchema(msgs?: Partial<CategorySchemaMessages>)
 }
 
 function makeBaseRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages>) {
-  return makeCreateTaskSchema(msgs)
+  return makeTaskBaseSchema(msgs)
     .extend({
       recurrenceType: z.enum(RecurrenceType),
       dayOfWeek: z.int().nonnegative().max(6).optional(),

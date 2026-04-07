@@ -30,6 +30,7 @@ const getDefaultValues = (defaultCategoryId?: string) => ({
   categoryId: defaultCategoryId ?? undefined,
   externalContact: "",
   link: "",
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 });
 
 const CreateTaskDialog = ({

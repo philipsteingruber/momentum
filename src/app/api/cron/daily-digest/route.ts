@@ -23,6 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
       tasks: {
         where: {
           dueDate: { not: null },
+          OR: [{ recurringTemplateId: null }, { recurringTemplate: { recurrenceType: { not: "DAILY" } } }],
         },
         orderBy: { dueDate: "asc" },
       },

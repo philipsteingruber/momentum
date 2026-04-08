@@ -26,7 +26,15 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
         <CardDescription className="line-clamp-2 text-sm">{task.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-y-2">
-        {task.recurringTemplateId && <Badge>{t("recurring")}</Badge>}
+        {task.recurringTemplateId && (
+          <Badge
+            onClick={() => router.push("/templates")}
+            onPointerDown={(e) => e.stopPropagation()}
+            className="hover:opacity-80"
+          >
+            {t("recurring")}
+          </Badge>
+        )}
         {task.dueDate && (
           <div className="flex items-center gap-x-2">
             <CalendarIcon className="size-4" />

@@ -89,6 +89,7 @@ export type DigestTaskGroups = {
   overdue: Task[];
   dueToday: Task[];
   dueThisWeek: { date: Date; tasks: Task[] }[];
+  dailyRecurring: Task[];
 };
 
 export const groupTasksForDigest = (tasks: Task[], timezone: string): DigestTaskGroups => {
@@ -123,5 +124,5 @@ export const groupTasksForDigest = (tasks: Task[], timezone: string): DigestTask
 
   const dueThisWeek = Array.from(byDate.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
 
-  return { overdue, dueToday, dueThisWeek };
+  return { overdue, dueToday, dueThisWeek, dailyRecurring: [] };
 };

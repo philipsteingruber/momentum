@@ -31,7 +31,7 @@ export const followUpInteraction = async (
 };
 
 export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): APIEmbed[] => {
-  const { overdue, dueToday, dueThisWeek } = groups;
+  const { overdue, dueToday, dueThisWeek, dailyRecurring } = groups;
   const embeds: APIEmbed[] = [];
   const today = startOfDay(toZonedTime(new Date(), timezone));
   const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
@@ -55,6 +55,14 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
       title: `🔵 Due Today (${dueToday.length})`,
       color: 0x6366f1,
       description: dueToday.map((task) => `**[${task.title}](${BASE_URL}/task/${task.id})**`).join("\n"),
+    });
+  }
+
+  if (dailyRecurring.length > 0) {
+    embeds.push({
+      title: `🟡 Daily Tasks (${dailyRecurring.length})`,
+      color: 0xf59e0b,
+      description: dailyRecurring.map((task) => `**[${task.title}](${BASE_URL}/task/${task.id})**`).join("\n"),
     });
   }
 

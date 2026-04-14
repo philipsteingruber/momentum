@@ -1,3 +1,4 @@
+import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
 import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
@@ -21,10 +22,8 @@ const handler = async (req: Request): Promise<Response> => {
   const users = await prisma.user.findMany({
     include: {
       tasks: {
-        where: {
-          dueDate: { not: null },
-          OR: [{ recurringTemplateId: null }, { recurringTemplate: { recurrenceType: { not: "DAILY" } } }],
-        },
+        where: { dueDate: { not: null } },
+        include: { recurringTemplate: { select: { recurrenceType: true } } },
         orderBy: { dueDate: "asc" },
       },
       userSettings: { select: { discordDmChannelId: true, timezone: true } },
@@ -39,10 +38,24 @@ const handler = async (req: Request): Promise<Response> => {
         if (!user.email) return null;
 
         const timezone = user.userSettings?.timezone ?? DEFAULT_TIMEZONE;
-        const { overdue, dueToday, dueThisWeek } = groupTasksForDigest(user.tasks, timezone);
+
+        const dailyRecurring = user.tasks.filter(
+          (t) =>
+            t.recurringTemplate?.recurrenceType === RecurrenceType.DAILY &&
+            t.status !== TaskStatus.CANCELLED &&
+            t.status !== TaskStatus.COMPLETED &&
+            t.status !== TaskStatus.SKIPPED,
+        );
+        const otherTasks = user.tasks.filter(
+          (t) => t.recurringTemplate?.recurrenceType !== RecurrenceType.DAILY,
+        );
+
+        const { overdue, dueToday, dueThisWeek } = groupTasksForDigest(otherTasks, timezone);
+        const groups = { overdue, dueToday, dueThisWeek, dailyRecurring };
+
         const { success, error, id } = await sendDailyDigest({
           to: user.email,
-          payload: { overdue, dueToday, dueThisWeek },
+          payload: groups,
         });
 
         if (!success) {
@@ -66,7 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         if (user.userSettings?.discordDmChannelId) {
           try {
-            const embeds = formatDigestEmbeds({ overdue, dueToday, dueThisWeek }, timezone);
+            const embeds = formatDigestEmbeds(groups, timezone);
             await sendDmToChannel(user.userSettings.discordDmChannelId, { embeds });
             await cronLog({
               runId,

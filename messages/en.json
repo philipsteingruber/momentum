@@ -259,7 +259,12 @@
     "revokeSuccess": "Access revoked.",
     "removeSuccess": "Removed shared access.",
     "acceptSuccess": "Access accepted.",
-    "declineSuccess": "Invite declined."
+    "declineSuccess": "Invite declined.",
+    "manageVisibilityButton": "Manage visibility",
+    "manageVisibilityTitle": "Category Visibility",
+    "manageVisibilityDescription": "Choose which categories {name} can see. Hidden categories and their tasks won't be visible.",
+    "noCategories": "You have no categories.",
+    "toggleExclusionError": "Failed to update visibility."
   },
   "TaskStatus": {
     "PENDING": "Pending",

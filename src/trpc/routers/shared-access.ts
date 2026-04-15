@@ -6,6 +6,10 @@ import { subDays } from "date-fns";
 import { z } from "zod";
 import { type AuthedContext, authedProcedure, createTRPCRouter } from "../init";
 
+/**
+ * Use for shared data reads that do NOT need category filtering (e.g. tags).
+ * For reads that filter by category exclusions, use `getAcceptedGrantExcludedIds` instead.
+ */
 async function assertAcceptedGrant(ctx: AuthedContext, grantorId: string): Promise<void> {
   const grant = await ctx.db.userAccessGrant.findFirst({
     where: {
@@ -114,45 +118,6 @@ export const sharedAccessRouter = createTRPCRouter({
     }
   }),
 
-  toggleExclusion: authedProcedure
-    .input(z.object({ grantId: z.cuid(), categoryId: z.cuid() }))
-    .mutation(async ({ ctx, input }) => {
-      const grant = await ctx.db.userAccessGrant.findFirst({
-        where: { id: input.grantId, grantorId: ctx.currentUser.id },
-      });
-
-      if (!grant) {
-        throw new TRPCError({ code: "NOT_FOUND" });
-      }
-
-      const existing = await ctx.db.accessGrantCategoryExclusion.findUnique({
-        where: {
-          grantId_categoryId: {
-            grantId: input.grantId,
-            categoryId: input.categoryId,
-          },
-        },
-      });
-
-      if (existing) {
-        await ctx.db.accessGrantCategoryExclusion.delete({
-          where: {
-            grantId_categoryId: {
-              grantId: input.grantId,
-              categoryId: input.categoryId,
-            },
-          },
-        });
-        return { excluded: false };
-      }
-
-      await ctx.db.accessGrantCategoryExclusion.create({
-        data: { grantId: input.grantId, categoryId: input.categoryId },
-      });
-
-      return { excluded: true };
-    }),
-
   // ─── Queries ───────────────────────────────────────────────────────────────
 
   getGrantsGiven: authedProcedure.query(async ({ ctx }) => {
@@ -190,9 +155,28 @@ export const sharedAccessRouter = createTRPCRouter({
     });
   }),
 
+  // ─── Exclusions ───────────────────────────────────────────────────────────
+
   getExclusionsForGrant: authedProcedure
     .input(z.object({ grantId: z.cuid() }))
     .query(async ({ ctx, input }) => {
+      const grant = await ctx.db.userAccessGrant.findFirst({
+        where: { id: input.grantId, grantorId: ctx.currentUser.id },
+        include: {
+          categoryExclusions: { select: { categoryId: true } },
+        },
+      });
+
+      if (!grant) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      return grant.categoryExclusions.map((e) => e.categoryId);
+    }),
+
+  toggleExclusion: authedProcedure
+    .input(z.object({ grantId: z.cuid(), categoryId: z.cuid() }))
+    .mutation(async ({ ctx, input }) => {
       const grant = await ctx.db.userAccessGrant.findFirst({
         where: { id: input.grantId, grantorId: ctx.currentUser.id },
       });
@@ -201,12 +185,39 @@ export const sharedAccessRouter = createTRPCRouter({
         throw new TRPCError({ code: "NOT_FOUND" });
       }
 
-      const exclusions = await ctx.db.accessGrantCategoryExclusion.findMany({
-        where: { grantId: input.grantId },
-        select: { categoryId: true },
+      const category = await ctx.db.category.findFirst({
+        where: { id: input.categoryId, userId: ctx.currentUser.id },
+      });
+      if (!category) {
+        throw new TRPCError({ code: "NOT_FOUND" });
+      }
+
+      const existing = await ctx.db.accessGrantCategoryExclusion.findUnique({
+        where: {
+          grantId_categoryId: {
+            grantId: input.grantId,
+            categoryId: input.categoryId,
+          },
+        },
       });
 
-      return exclusions.map((e) => e.categoryId);
+      if (existing) {
+        await ctx.db.accessGrantCategoryExclusion.delete({
+          where: {
+            grantId_categoryId: {
+              grantId: input.grantId,
+              categoryId: input.categoryId,
+            },
+          },
+        });
+        return { excluded: false };
+      }
+
+      await ctx.db.accessGrantCategoryExclusion.create({
+        data: { grantId: input.grantId, categoryId: input.categoryId },
+      });
+
+      return { excluded: true };
     }),
 
   // ─── Shared data access ────────────────────────────────────────────────────
@@ -228,6 +239,7 @@ export const sharedAccessRouter = createTRPCRouter({
               { OR: [{ completedAt: { lt: cutoff } }, { completedAt: null }] },
             ],
           },
+          // Include uncategorized tasks always; exclude tasks in hidden categories
           ...(excludedCategoryIds.length > 0
             ? {
                 OR: [

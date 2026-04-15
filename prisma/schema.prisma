@@ -214,5 +214,4 @@ model AccessGrantCategoryExclusion {
     createdAt DateTime @default(now())
 
     @@unique([grantId, categoryId])
-    @@index([grantId])
 }

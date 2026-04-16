@@ -1,5 +1,6 @@
 "use client";
 
+import { ManageVisibilityPopover } from "@/_components/forms/manage-visibility-popover";
 import { MaxWidthWrapper } from "@/_components/max-width-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,9 +104,15 @@ const Page = () => {
                         {grant.status === GrantStatus.ACCEPTED ? t("statusAccepted") : t("statusPending")}
                       </Badge>
                     </div>
-                    <Button variant={"outline"} size={"sm"} onClick={() => revoke({ grantId: grant.id })}>
-                      {t("revokeButton")}
-                    </Button>
+                    <div className="flex items-center gap-x-2">
+                      <ManageVisibilityPopover
+                        grantId={grant.id}
+                        granteeName={grant.grantee.name ?? grant.grantee.email}
+                      />
+                      <Button variant={"outline"} size={"sm"} onClick={() => revoke({ grantId: grant.id })}>
+                        {t("revokeButton")}
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

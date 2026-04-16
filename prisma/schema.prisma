@@ -133,6 +133,7 @@ model Category {
     user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId             String
     recurringTemplates RecurringTemplate[]
+    accessGrantExclusions AccessGrantCategoryExclusion[]
 
     @@unique([userId, name])
     @@index([userId])
@@ -194,7 +195,23 @@ model UserAccessGrant {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    categoryExclusions AccessGrantCategoryExclusion[]
+
     @@unique([grantorId, granteeId])
     @@index([granteeId, status])
     @@index([grantorId, status])
+}
+
+model AccessGrantCategoryExclusion {
+    id String @id @default(cuid())
+
+    grant      UserAccessGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+    grantId    String
+
+    category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+    categoryId String
+
+    createdAt DateTime @default(now())
+
+    @@unique([grantId, categoryId])
 }

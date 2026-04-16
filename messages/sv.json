@@ -259,7 +259,13 @@
     "revokeSuccess": "Åtkomst återkallad.",
     "removeSuccess": "Delad åtkomst borttagen.",
     "acceptSuccess": "Åtkomst accepterad.",
-    "declineSuccess": "Inbjudan avböjd."
+    "declineSuccess": "Inbjudan avböjd.",
+    "manageVisibilityButton": "Hantera synlighet",
+    "manageVisibilityTitle": "Kategorisynlighet",
+    "manageVisibilityDescription": "Välj vilka kategorier {name} kan se. Dolda kategorier och deras uppgifter kommer inte vara synliga.",
+    "noCategories": "Du har inga kategorier.",
+    "toggleExclusionError": "Det gick inte att uppdatera synlighet.",
+    "loadExclusionsError": "Det gick inte att läsa in synlighetsinställningar."
   },
   "TaskStatus": {
     "PENDING": "Väntande",

@@ -18,15 +18,29 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
   const trpcUtils = trpc.useUtils();
 
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
-  const { data: excludedCategoryIds, isPending: isLoadingExclusions } =
+  const { data: excludedCategoryIds, isPending: isLoadingExclusions, isError: isExclusionsError } =
     trpc.sharedAccess.getExclusionsForGrant.useQuery({ grantId });
 
-  const { mutate: toggleExclusion } = trpc.sharedAccess.toggleExclusion.useMutation({
-    onSuccess: () => {
-      trpcUtils.sharedAccess.getExclusionsForGrant.invalidate({ grantId });
+  const { mutate: toggleExclusion, isPending: isToggling } = trpc.sharedAccess.toggleExclusion.useMutation({
+    onMutate: async ({ categoryId }) => {
+      await trpcUtils.sharedAccess.getExclusionsForGrant.cancel({ grantId });
+      const previous = trpcUtils.sharedAccess.getExclusionsForGrant.getData({ grantId });
+      trpcUtils.sharedAccess.getExclusionsForGrant.setData({ grantId }, (old) => {
+        if (!old) return old;
+        return old.includes(categoryId)
+          ? old.filter((id) => id !== categoryId)
+          : [...old, categoryId];
+      });
+      return { previous };
     },
-    onError: () => {
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        trpcUtils.sharedAccess.getExclusionsForGrant.setData({ grantId }, context.previous);
+      }
       toast.error(t("toggleExclusionError"));
+    },
+    onSettled: () => {
+      trpcUtils.sharedAccess.getExclusionsForGrant.invalidate({ grantId });
     },
   });
 
@@ -49,6 +63,8 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
           </div>
           {isLoading ? (
             <Spinner />
+          ) : isExclusionsError ? (
+            <p className="text-destructive text-sm">Failed to load visibility settings.</p>
           ) : !categories || categories.length === 0 ? (
             <p className="text-muted-foreground text-sm">{t("noCategories")}</p>
           ) : (
@@ -71,6 +87,8 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
                       onCheckedChange={() =>
                         toggleExclusion({ grantId, categoryId: category.id })
                       }
+                      disabled={isToggling}
+                      aria-label={category.name}
                     />
                   </div>
                 );

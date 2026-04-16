@@ -64,7 +64,7 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
           {isLoading ? (
             <Spinner />
           ) : isExclusionsError ? (
-            <p className="text-destructive text-sm">Failed to load visibility settings.</p>
+            <p className="text-destructive text-sm">{t("loadExclusionsError")}</p>
           ) : !categories || categories.length === 0 ? (
             <p className="text-muted-foreground text-sm">{t("noCategories")}</p>
           ) : (

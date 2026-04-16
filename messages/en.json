@@ -264,7 +264,8 @@
     "manageVisibilityTitle": "Category visibility",
     "manageVisibilityDescription": "Choose which categories {name} can see. Hidden categories and their tasks won't be visible.",
     "noCategories": "You have no categories.",
-    "toggleExclusionError": "Failed to update visibility."
+    "toggleExclusionError": "Failed to update visibility.",
+    "loadExclusionsError": "Failed to load visibility settings."
   },
   "TaskStatus": {
     "PENDING": "Pending",

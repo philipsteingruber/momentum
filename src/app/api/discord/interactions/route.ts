@@ -1,7 +1,8 @@
 import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { computeSnoozeDueDate, endOfDayInTz } from "@/lib/date-utils";
-import { followUpInteraction } from "@/lib/discord";
+import { followUpInteraction, formatDigestEmbeds } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
+import { groupTasksForDigest } from "@/lib/task-utils";
 import {
   InteractionResponseType,
   InteractionType,
@@ -408,6 +409,33 @@ const handleNote = async (
   });
 };
 
+const handleDigest = async (
+  token: string,
+  userId: string,
+  timezone: string,
+): Promise<void> => {
+  const tasks = await prisma.task.findMany({
+    where: { userId, dueDate: { not: null } },
+    include: { recurringTemplate: { select: { recurrenceType: true } } },
+    orderBy: { dueDate: "asc" },
+  });
+
+  const dailyRecurring = tasks.filter(
+    (t) =>
+      t.recurringTemplate?.recurrenceType === RecurrenceType.DAILY &&
+      t.status !== TaskStatus.CANCELLED &&
+      t.status !== TaskStatus.COMPLETED &&
+      t.status !== TaskStatus.SKIPPED,
+  );
+  const otherTasks = tasks.filter((t) => t.recurringTemplate?.recurrenceType !== RecurrenceType.DAILY);
+
+  const { overdue, dueToday, dueThisWeek } = groupTasksForDigest(otherTasks, timezone);
+  const groups = { overdue, dueToday, dueThisWeek, dailyRecurring };
+  const embeds = formatDigestEmbeds(groups, timezone);
+
+  await followUpInteraction(APPLICATION_ID, token, { embeds });
+};
+
 const handleCommand = async (interaction: APIChatInputApplicationCommandInteraction): Promise<void> => {
   const token = interaction.token;
 
@@ -446,6 +474,8 @@ const handleCommand = async (interaction: APIChatInputApplicationCommandInteract
     await handleSnooze(interaction, token, settings.user.id, timezone);
   } else if (commandName === "note") {
     await handleNote(interaction, token, settings.user.id);
+  } else if (commandName === "digest") {
+    await handleDigest(token, settings.user.id, timezone);
   } else {
     await followUpInteraction(APPLICATION_ID, token, {
       content: `Unknown command: \`${commandName}\``,

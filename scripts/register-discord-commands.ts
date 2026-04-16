@@ -107,6 +107,10 @@ const commands: RESTPostAPIApplicationCommandsJSONBody[] = [
       },
     ],
   },
+  {
+    name: "digest",
+    description: "Send your daily digest right now",
+  },
 ];
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN!);

@@ -261,7 +261,7 @@
     "acceptSuccess": "Access accepted.",
     "declineSuccess": "Invite declined.",
     "manageVisibilityButton": "Manage visibility",
-    "manageVisibilityTitle": "Category Visibility",
+    "manageVisibilityTitle": "Category visibility",
     "manageVisibilityDescription": "Choose which categories {name} can see. Hidden categories and their tasks won't be visible.",
     "noCategories": "You have no categories.",
     "toggleExclusionError": "Failed to update visibility."

@@ -65,7 +65,17 @@ export const handler = async (req: Request): Promise<Response> => {
               }
 
               const startOfTodayInTz = fromZonedTime(startOfDay(toZonedTime(now, timezone)), timezone);
-              const isActiveTaskOverdue = activeTask && activeTask.dueDate !== null && isBefore(activeTask.dueDate, startOfTodayInTz);
+              const overdueThreshold =
+                activeTask?.dueDate && template.recurrenceType !== RecurrenceType.DAILY
+                  ? computeNextDueDate({
+                      recurrenceType: template.recurrenceType,
+                      dayOfMonth: template.dayOfMonth ?? undefined,
+                      dayOfWeek: template.dayOfWeek ?? undefined,
+                      from: activeTask.dueDate,
+                      timezone,
+                    })
+                  : startOfTodayInTz;
+              const isActiveTaskOverdue = activeTask && activeTask.dueDate !== null && !isBefore(now, overdueThreshold);
 
               if (activeTask && !isActiveTaskOverdue) {
                 return;
@@ -73,6 +83,19 @@ export const handler = async (req: Request): Promise<Response> => {
 
               if (isActiveTaskOverdue) {
                 await tx.task.update({ where: { id: activeTask.id }, data: { status: TaskStatus.SKIPPED } });
+                await cronLog({
+                  runId,
+                  job: JOB,
+                  event: "task.skipped",
+                  level: "info",
+                  data: {
+                    userId: user.id,
+                    email: user.email,
+                    taskId: activeTask.id,
+                    dueDate: activeTask.dueDate!.toISOString(),
+                    timestamp: now.toISOString(),
+                  },
+                });
               }
 
               const taskDueDate =

@@ -74,29 +74,6 @@ export const CreateCategoryDialog = () => {
               </Field>
             )}
           />
-          <Controller
-            name="color"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field aria-invalid={fieldState.invalid} orientation={"horizontal"} className="flex w-full items-center">
-                <FieldLabel htmlFor="color" className="mt-1.5 w-10 flex-none!">
-                  {t("colorLabel")}
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    value={field.value}
-                    onChange={field.onChange}
-                    id="color"
-                    className="size-10 p-0"
-                    type="color"
-                  />
-                  <div className="text-destructive min-h-[1.25rem] text-sm font-normal">
-                    {fieldState.error?.message}
-                  </div>
-                </FieldContent>
-              </Field>
-            )}
-          />
           <div className="flex w-full items-center justify-end gap-x-4">
             <DialogClose asChild>
               <Button variant={"outline"} type="button" disabled={isCreatingCategory}>

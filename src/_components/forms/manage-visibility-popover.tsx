@@ -18,8 +18,11 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
   const trpcUtils = trpc.useUtils();
 
   const { data: categories, isPending: isLoadingCategories } = trpc.category.getAll.useQuery();
-  const { data: excludedCategoryIds, isPending: isLoadingExclusions, isError: isExclusionsError } =
-    trpc.sharedAccess.getExclusionsForGrant.useQuery({ grantId });
+  const {
+    data: excludedCategoryIds,
+    isPending: isLoadingExclusions,
+    isError: isExclusionsError,
+  } = trpc.sharedAccess.getExclusionsForGrant.useQuery({ grantId });
 
   const { mutate: toggleExclusion, isPending: isToggling } = trpc.sharedAccess.toggleExclusion.useMutation({
     onMutate: async ({ categoryId }) => {
@@ -27,9 +30,7 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
       const previous = trpcUtils.sharedAccess.getExclusionsForGrant.getData({ grantId });
       trpcUtils.sharedAccess.getExclusionsForGrant.setData({ grantId }, (old) => {
         if (!old) return old;
-        return old.includes(categoryId)
-          ? old.filter((id) => id !== categoryId)
-          : [...old, categoryId];
+        return old.includes(categoryId) ? old.filter((id) => id !== categoryId) : [...old, categoryId];
       });
       return { previous };
     },
@@ -57,9 +58,7 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
         <div className="flex flex-col gap-y-3">
           <div>
             <p className="text-sm font-medium">{t("manageVisibilityTitle")}</p>
-            <p className="text-muted-foreground text-xs">
-              {t("manageVisibilityDescription", { name: granteeName })}
-            </p>
+            <p className="text-muted-foreground text-xs">{t("manageVisibilityDescription", { name: granteeName })}</p>
           </div>
           {isLoading ? (
             <Spinner />
@@ -74,19 +73,11 @@ export function ManageVisibilityPopover({ grantId, granteeName }: ManageVisibili
                 return (
                   <div key={category.id} className="flex items-center justify-between">
                     <div className="flex items-center gap-x-2">
-                      {category.color && (
-                        <span
-                          className="inline-block h-3 w-3 rounded-full"
-                          style={{ backgroundColor: category.color }}
-                        />
-                      )}
                       <span className="text-sm">{category.name}</span>
                     </div>
                     <Switch
                       checked={!isExcluded}
-                      onCheckedChange={() =>
-                        toggleExclusion({ grantId, categoryId: category.id })
-                      }
+                      onCheckedChange={() => toggleExclusion({ grantId, categoryId: category.id })}
                       disabled={isToggling}
                       aria-label={category.name}
                     />

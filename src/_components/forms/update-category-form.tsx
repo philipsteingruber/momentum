@@ -9,7 +9,7 @@ import type { Category } from "@/generated/prisma/client";
 import { makeUpdateCategorySchema } from "@/lib/schemas";
 import { trpc } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PaintBucketIcon, TagIcon } from "lucide-react";
+import { TagIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -42,7 +42,6 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
       categoryId: category.id,
       data: {
         name: category.name,
-        color: category.color ?? undefined,
       },
     },
     mode: "all",
@@ -64,21 +63,6 @@ export const UpdateCategoryForm = ({ category }: { category: Category }) => {
             </FieldLabel>
             <FieldContent>
               <Input value={field.value} onChange={field.onChange} id="name" className="w-1/2" />
-              <div className="text-destructive min-h-[1.25rem] text-sm font-normal">{fieldState.error?.message}</div>
-            </FieldContent>
-          </Field>
-        )}
-      />
-      <Controller
-        name="data.color"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid} orientation={"horizontal"} className="w-full">
-            <FieldLabel htmlFor="color" className="mt-1 flex-none!">
-              <PaintBucketIcon />
-            </FieldLabel>
-            <FieldContent>
-              <Input value={field.value} onChange={field.onChange} id="color" className="size-10 p-0" type="color" />
               <div className="text-destructive min-h-[1.25rem] text-sm font-normal">{fieldState.error?.message}</div>
             </FieldContent>
           </Field>

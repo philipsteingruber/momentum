@@ -1,6 +1,6 @@
 import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { computeSnoozeDueDate, endOfDayInTz } from "@/lib/date-utils";
-import { followUpInteraction, formatDigestEmbeds } from "@/lib/discord";
+import { followUpInteraction, formatDigestEmbeds, sendDmToChannel } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
 import { groupTasksForDigest } from "@/lib/task-utils";
 import {
@@ -413,6 +413,7 @@ const handleDigest = async (
   token: string,
   userId: string,
   timezone: string,
+  dmChannelId: string | null,
 ): Promise<void> => {
   const tasks = await prisma.task.findMany({
     where: { userId, dueDate: { not: null } },
@@ -433,7 +434,12 @@ const handleDigest = async (
   const groups = { overdue, dueToday, dueThisWeek, dailyRecurring };
   const embeds = formatDigestEmbeds(groups, timezone);
 
-  await followUpInteraction(APPLICATION_ID, token, { embeds });
+  if (dmChannelId) {
+    await sendDmToChannel(dmChannelId, { embeds });
+    await followUpInteraction(APPLICATION_ID, token, { content: "✅ Digest sent to your DMs." });
+  } else {
+    await followUpInteraction(APPLICATION_ID, token, { embeds });
+  }
 };
 
 const handleCommand = async (interaction: APIChatInputApplicationCommandInteraction): Promise<void> => {
@@ -449,7 +455,12 @@ const handleCommand = async (interaction: APIChatInputApplicationCommandInteract
 
   const settings = await prisma.userSettings.findUnique({
     where: { discordId: discordUserId },
-    include: { user: true },
+    select: {
+      discordId: true,
+      timezone: true,
+      discordDmChannelId: true,
+      user: true,
+    },
   });
 
   if (!settings) {
@@ -475,7 +486,7 @@ const handleCommand = async (interaction: APIChatInputApplicationCommandInteract
   } else if (commandName === "note") {
     await handleNote(interaction, token, settings.user.id);
   } else if (commandName === "digest") {
-    await handleDigest(token, settings.user.id, timezone);
+    await handleDigest(token, settings.user.id, timezone, settings.discordDmChannelId);
   } else {
     await followUpInteraction(APPLICATION_ID, token, {
       content: `Unknown command: \`${commandName}\``,

@@ -34,8 +34,6 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
   const { overdue, dueToday, dueThisWeek, dailyRecurring } = groups;
   const embeds: APIEmbed[] = [];
   const today = startOfDay(toZonedTime(new Date(), timezone));
-  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
-  if (!BASE_URL) throw new Error("NEXT_PUBLIC_BASE_URL is not set");
 
   if (overdue.length > 0) {
     embeds.push({
@@ -44,7 +42,7 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
       description: overdue
         .map((task) => {
           const daysAgo = differenceInCalendarDays(today, startOfDay(toZonedTime(task.dueDate!, timezone)));
-          return `**[${task.title}](${BASE_URL}/task/${task.id})** - ${daysAgo} day${daysAgo !== 1 ? "s" : ""} overdue`;
+          return `**${task.title}** - ${daysAgo} day${daysAgo !== 1 ? "s" : ""} overdue`;
         })
         .join("\n"),
     });
@@ -54,7 +52,7 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
     embeds.push({
       title: `🔵 Due Today (${dueToday.length})`,
       color: 0x6366f1,
-      description: dueToday.map((task) => `**[${task.title}](${BASE_URL}/task/${task.id})**`).join("\n"),
+      description: dueToday.map((task) => `**${task.title}**`).join("\n"),
     });
   }
 
@@ -62,7 +60,7 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
     embeds.push({
       title: `🟡 Daily Tasks (${dailyRecurring.length})`,
       color: 0xf59e0b,
-      description: dailyRecurring.map((task) => `**[${task.title}](${BASE_URL}/task/${task.id})**`).join("\n"),
+      description: dailyRecurring.map((task) => `**${task.title}**`).join("\n"),
     });
   }
 
@@ -70,7 +68,7 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
     embeds.push({
       title: format(group.date, "EEEE, MMM d"),
       color: 0x6b7280,
-      description: group.tasks.map((task) => `**[${task.title}](${BASE_URL}/task/${task.id})**`).join("\n"),
+      description: group.tasks.map((task) => `**${task.title}**`).join("\n"),
     });
   }
 

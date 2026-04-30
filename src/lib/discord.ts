@@ -34,7 +34,7 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
   const { overdue, dueToday, dueThisWeek, dailyRecurring } = groups;
   const embeds: APIEmbed[] = [];
   const today = startOfDay(toZonedTime(new Date(), timezone));
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
 
   const taskLink = (task: { id: string; title: string }) =>
     `**[${task.title}](${baseUrl}/task/${task.id})**`;

@@ -18,7 +18,7 @@ import { after } from "next/server";
 import nacl from "tweetnacl";
 
 const APPLICATION_ID = process.env.DISCORD_CLIENT_ID!;
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+const BASE_URL = (process.env.NEXT_PUBLIC_BASE_URL ?? "").replace(/\/$/, "");
 
 const getOptions = (
   interaction: APIChatInputApplicationCommandInteraction,

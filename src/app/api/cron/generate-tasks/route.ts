@@ -66,7 +66,7 @@ export const handler = async (req: Request): Promise<Response> => {
 
               const startOfTodayInTz = fromZonedTime(startOfDay(toZonedTime(now, timezone)), timezone);
               const overdueThreshold =
-                activeTask?.dueDate && template.recurrenceType !== RecurrenceType.DAILY
+                activeTask?.dueDate
                   ? computeNextDueDate({
                       recurrenceType: template.recurrenceType,
                       dayOfMonth: template.dayOfMonth ?? undefined,

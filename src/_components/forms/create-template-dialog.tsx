@@ -26,14 +26,13 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type z from "zod";
 
-const getDefaultValues = (defaultCategoryId?: string, timezone?: string) => ({
+const getDefaultValues = (defaultCategoryId?: string) => ({
   title: "",
   description: "",
   categoryId: defaultCategoryId,
   externalContact: "",
   link: "",
   recurrenceType: RecurrenceType.DAILY,
-  timezone: timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone,
 });
 
 const CreateTemplateDialog = ({
@@ -45,7 +44,6 @@ const CreateTemplateDialog = ({
 }) => {
   const t = useTranslations("CreateTemplateDialog");
   const tSchemas = useTranslations("Schemas");
-  const { data: settings } = trpc.userSettings.get.useQuery();
   const schema = makeCreateRecurringTemplateSchema({
     titleRequired: tSchemas("titleRequired"),
     titleMaxLength: tSchemas("titleMaxLength"),
@@ -56,7 +54,7 @@ const CreateTemplateDialog = ({
   });
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: getDefaultValues(defaultCategoryId, settings?.timezone),
+    defaultValues: getDefaultValues(defaultCategoryId),
     mode: "all",
   });
   const trpcUtils = trpc.useUtils();
@@ -65,7 +63,7 @@ const CreateTemplateDialog = ({
     onSuccess: () => {
       toast.success(t("createdToast"));
       setIsOpen(false);
-      form.reset(getDefaultValues(defaultCategoryId, settings?.timezone));
+      form.reset(getDefaultValues(defaultCategoryId));
       trpcUtils.task.getAll.invalidate();
       trpcUtils.recurringTemplate.getAll.invalidate();
       trpcUtils.category.getAll.invalidate();
@@ -73,14 +71,14 @@ const CreateTemplateDialog = ({
   });
   const { isOpen, setIsOpen, handleOpenChange } = useDialogState({
     preventClose: isCreatingTemplate,
-    onClose: () => form.reset(getDefaultValues(defaultCategoryId, settings?.timezone)),
+    onClose: () => form.reset(getDefaultValues(defaultCategoryId)),
   });
 
   useEffect(() => {
     if (isOpen) {
-      form.reset(getDefaultValues(defaultCategoryId, settings?.timezone));
+      form.reset(getDefaultValues(defaultCategoryId));
     }
-  }, [isOpen, defaultCategoryId, settings?.timezone, form]);
+  }, [isOpen, defaultCategoryId, form]);
 
   const onSubmit = (data: z.infer<typeof schema>) => {
     createTemplate(data);

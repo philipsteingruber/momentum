@@ -83,7 +83,7 @@ function makeBaseRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages>) {
       dayOfWeek: z.int().nonnegative().max(6).optional(),
       dayOfMonth: z.int().min(1).max(31).optional(),
     })
-    .omit({ dueDate: true });
+    .omit({ dueDate: true, timezone: true });
 }
 
 export function makeCreateRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages & RecurrenceSchemaMessages>) {

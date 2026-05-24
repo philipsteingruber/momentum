@@ -5,13 +5,14 @@ async function main() {
   console.log("Seeding database...");
 
   // Dev user
+  const clerkId = process.env.SEED_CLERK_USER_ID ?? "user_dev_placeholder";
   const user = await prisma.user.upsert({
-    where: { clerkId: "user_dev_placeholder" },
+    where: { clerkId },
     update: {},
     create: {
-      clerkId: "user_dev_placeholder",
-      email: "dev@example.com",
-      name: "Dev User",
+      clerkId,
+      email: process.env.SEED_USER_EMAIL ?? "dev@example.com",
+      name: process.env.SEED_USER_NAME ?? "Dev User",
       userSettings: { create: {} },
     },
   });

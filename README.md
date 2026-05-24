@@ -4,7 +4,7 @@ A full-stack task management application built with Next.js, featuring recurring
 
 ## Tech Stack
 
-- **Framework:** Next.js 16 (App Router)
+- **Framework:** Next.js 16.1 (App Router)
 - **Database:** PostgreSQL + Prisma ORM
 - **API:** tRPC with TanStack React Query
 - **Auth:** Clerk
@@ -12,6 +12,8 @@ A full-stack task management application built with Next.js, featuring recurring
 - **Email:** Resend + React Email
 - **Discord:** HTTP Interactions (webhook-based, no gateway)
 - **Forms:** React Hook Form + Zod
+- **Logging:** Axiom
+- **Background jobs:** Upstash QStash
 
 ## Features
 
@@ -72,6 +74,11 @@ DISCORD_REDIRECT_URI=http://localhost:3000/api/discord/callback
 
 # App
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+# Seed script (optional, only needed for local dev seeding)
+SEED_CLERK_USER_ID=
+SEED_USER_EMAIL=
+SEED_USER_NAME=
 ```
 
 ### 3. Push the database schema

@@ -11,6 +11,7 @@
     "postinstall": "prisma generate",
     "email": "email dev --dir src/_components/emails",
     "discord:register": "tsx scripts/register-discord-commands.ts",
+    "momentum": "tsx scripts/momentum-cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

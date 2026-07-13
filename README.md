@@ -106,7 +106,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Available Scripts
 
 | Command | Description |
-|---|---|
+| --- | --- |
 | `pnpm dev` | Start the development server |
 | `pnpm dev:fresh` | Reset DB, seed, generate Prisma types, then start dev |
 | `pnpm build` | Production build |
@@ -114,6 +114,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `pnpm lint` | Run ESLint |
 | `pnpm email` | Start the React Email preview server |
 | `pnpm discord:register` | Register Discord slash commands (one-time) |
+| `pnpm momentum <command>` | CLI for tasks/categories/recurring templates, driven directly through the tRPC routers (run with no args for the command list) |
 | `pnpm test` | Run tests once |
 | `pnpm test:watch` | Run tests in watch mode |
 | `pnpm test:coverage` | Run tests with coverage report |
@@ -153,6 +154,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 /scripts
   register-discord-commands.ts
+  momentum-cli.ts             # pnpm momentum — tasks/categories/templates CLI
 
 /messages
   en.json                     # English translations
@@ -164,7 +166,7 @@ Open [http://localhost:3000](http://localhost:3000).
 Cron jobs are secured with a shared `CRON_SECRET` header and must be triggered externally (e.g., Vercel Cron, GitHub Actions).
 
 | Route | Purpose |
-|---|---|
+| --- | --- |
 | `POST /api/cron/daily-digest` | Sends daily task digest via email and Discord DM |
 | `POST /api/cron/generate-tasks` | Generates tasks from due recurring templates |
 

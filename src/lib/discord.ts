@@ -30,14 +30,15 @@ export const followUpInteraction = async (
   await discordRest.patch(Routes.webhookMessage(applicationId, interactionToken), { body: payload });
 };
 
+const taskLink = (task: { id: string; title: string }): string => {
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, "");
+  return `[**${task.title}**](${baseUrl}/task/${task.id})`;
+};
+
 export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): APIEmbed[] => {
   const { overdue, dueToday, dueThisWeek, dailyRecurring } = groups;
   const embeds: APIEmbed[] = [];
   const today = startOfDay(toZonedTime(new Date(), timezone));
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, "");
-
-  const taskLink = (task: { id: string; title: string }) =>
-    `[**${task.title}**](${baseUrl}/task/${task.id})`;
 
   if (overdue.length > 0) {
     embeds.push({
@@ -86,11 +87,8 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
   return embeds;
 };
 
-export const formatReminderEmbed = (task: { id: string; title: string }): APIEmbed => {
-  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, "");
-  return {
-    title: "⏰ Reminder",
-    color: 0xf59e0b,
-    description: `[**${task.title}**](${baseUrl}/task/${task.id})`,
-  };
-};
+export const formatReminderEmbed = (tasks: { id: string; title: string }[]): APIEmbed => ({
+  title: `⏰ Reminder${tasks.length > 1 ? ` (${tasks.length})` : ""}`,
+  color: 0xf59e0b,
+  description: tasks.map(taskLink).join("\n"),
+});

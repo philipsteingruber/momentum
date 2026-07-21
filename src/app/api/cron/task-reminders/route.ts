@@ -53,27 +53,30 @@ const handler = async (req: Request): Promise<Response> => {
             task.reminderTime! <= currentLocalTime,
         );
 
-        for (const task of dueTasks) {
-          try {
-            await sendDmToChannel(channelId, { embeds: [formatReminderEmbed(task)] });
-            await prisma.task.update({ where: { id: task.id }, data: { reminderSentAt: now } });
-            sent++;
-            await cronLog({
-              runId,
-              job: JOB,
-              event: "reminder.sent",
-              level: "info",
-              data: { userId: user.id, taskId: task.id },
-            });
-          } catch (error) {
-            await cronLog({
-              runId,
-              job: JOB,
-              event: "reminder.failed",
-              level: "error",
-              data: { userId: user.id, taskId: task.id, error: String(error) },
-            });
-          }
+        if (dueTasks.length === 0) return;
+
+        try {
+          await sendDmToChannel(channelId, { embeds: [formatReminderEmbed(dueTasks)] });
+          await prisma.task.updateMany({
+            where: { id: { in: dueTasks.map((task) => task.id) } },
+            data: { reminderSentAt: now },
+          });
+          sent += dueTasks.length;
+          await cronLog({
+            runId,
+            job: JOB,
+            event: "reminder.sent",
+            level: "info",
+            data: { userId: user.id, taskIds: dueTasks.map((task) => task.id) },
+          });
+        } catch (error) {
+          await cronLog({
+            runId,
+            job: JOB,
+            event: "reminder.failed",
+            level: "error",
+            data: { userId: user.id, taskIds: dueTasks.map((task) => task.id), error: String(error) },
+          });
         }
       }),
     ),

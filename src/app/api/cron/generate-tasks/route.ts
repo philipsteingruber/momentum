@@ -121,6 +121,7 @@ export const handler = async (req: Request): Promise<Response> => {
                   categoryId: template.categoryId,
                   recurringTemplateId: template.id,
                   link: template.link,
+                  reminderTime: template.reminderTime,
                   userId: user.id,
                 },
               });

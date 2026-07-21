@@ -66,6 +66,7 @@ export const recurringTemplateRouter = createTRPCRouter({
           link: input.link,
           description: input.description,
           externalContact: input.externalContact,
+          reminderTime: input.reminderTime,
           userId: ctx.currentUser.id,
           dueDate: firstDueDate,
           recurringTemplateId: template.id,
@@ -93,6 +94,7 @@ export const recurringTemplateRouter = createTRPCRouter({
 
       let nextGenerateOn = existing.nextGenerateOn;
       let newTaskDueDate: Date | null = null;
+      const reminderTimeProvided = input.data.reminderTime !== undefined;
 
       if (scheduleChanged) {
         newTaskDueDate = computeNextDueDate({
@@ -121,10 +123,20 @@ export const recurringTemplateRouter = createTRPCRouter({
               externalContact: input.data.externalContact ?? existing.externalContact,
               categoryId: input.data.categoryId ?? existing.categoryId,
               link: input.data.link ?? existing.link,
+              reminderTime: reminderTimeProvided ? input.data.reminderTime : existing.reminderTime,
               userId: ctx.currentUser.id,
               dueDate: newTaskDueDate,
               recurringTemplateId: input.templateId,
             },
+          });
+        } else if (reminderTimeProvided) {
+          await tx.task.updateMany({
+            where: {
+              recurringTemplateId: input.templateId,
+              userId: ctx.currentUser.id,
+              status: { in: [...ACTIVE_TASK_STATUSES] },
+            },
+            data: { reminderTime: input.data.reminderTime },
           });
         }
 

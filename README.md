@@ -169,6 +169,7 @@ Cron jobs are secured with a shared `CRON_SECRET` header and must be triggered e
 | --- | --- |
 | `POST /api/cron/daily-digest` | Sends daily task digest via email and Discord DM |
 | `POST /api/cron/generate-tasks` | Generates tasks from due recurring templates |
+| `POST /api/cron/task-reminders` | Sends a Discord DM for tasks with a due reminder time that hasn't fired yet; run this on a short interval (e.g. every 15 min) |
 
 All cron activity is logged to the `CronLog` database table and viewable at `/admin`.
 

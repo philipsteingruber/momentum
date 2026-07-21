@@ -152,6 +152,7 @@ async function main() {
         recurrenceType: flags.recurrence as RecurrenceType,
         dayOfWeek: flags.dayOfWeek ? Number(flags.dayOfWeek) : undefined,
         dayOfMonth: flags.dayOfMonth ? Number(flags.dayOfMonth) : undefined,
+        reminderTime: flags.reminder,
       });
       console.log(`Created template ${template.id}: ${template.title}`);
       break;
@@ -178,7 +179,7 @@ async function main() {
           "  task:snooze <taskId> <days>",
           "  task:delete <taskId>",
           "  templates",
-          "  template:create --title T --category NAME_OR_ID --recurrence DAILY|WEEKLY|MONTHLY [--dayOfWeek N] [--dayOfMonth N]",
+          "  template:create --title T --category NAME_OR_ID --recurrence DAILY|WEEKLY|MONTHLY [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm]",
           "  template:delete <templateId>",
         ].join("\n"),
       );

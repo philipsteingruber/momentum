@@ -27,6 +27,8 @@ export const UpdateTemplateForm = ({
     titleMaxLength: tSchemas("titleMaxLength"),
     descriptionMaxLength: tSchemas("descriptionMaxLength"),
     linkInvalid: tSchemas("linkInvalid"),
+    reminderTimeInvalid: tSchemas("reminderTimeInvalid"),
+    reminderTimeRequiresDaily: tSchemas("reminderTimeRequiresDaily"),
   });
   const trpcUtils = trpc.useUtils();
 
@@ -59,6 +61,7 @@ export const UpdateTemplateForm = ({
         categoryId: template.categoryId ?? "",
         externalContact: template.externalContact ?? "",
         link: template.link ?? "",
+        reminderTime: template.reminderTime ?? undefined,
       },
     },
     mode: "all",
@@ -90,6 +93,7 @@ export const UpdateTemplateForm = ({
           onEveryLabel: t("onEveryLabel"),
           dayOfMonthPlaceholder: t("dayOfMonthPlaceholder"),
           dayOfWeekPlaceholder: t("dayOfWeekPlaceholder"),
+          reminderTimeLabel: t("reminderTimeLabel"),
           categoryLabel: t("categoryLabel"),
           categoryPlaceholder: t("categoryPlaceholder"),
           externalContactLabel: t("externalContactLabel"),

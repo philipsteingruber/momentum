@@ -85,3 +85,12 @@ export const formatDigestEmbeds = (groups: DigestTaskGroups, timezone: string): 
 
   return embeds;
 };
+
+export const formatReminderEmbed = (task: { id: string; title: string }): APIEmbed => {
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "").trim().replace(/\/$/, "");
+  return {
+    title: "⏰ Reminder",
+    color: 0xf59e0b,
+    description: `[**${task.title}**](${baseUrl}/task/${task.id})`,
+  };
+};

@@ -22,6 +22,7 @@ interface TemplateFieldLabels {
   onEveryLabel: string;
   dayOfMonthPlaceholder: string;
   dayOfWeekPlaceholder: string;
+  reminderTimeLabel: string;
   categoryLabel: string;
   categoryPlaceholder: string;
   externalContactLabel: string;
@@ -174,6 +175,25 @@ export function TemplateFormFields<T extends FieldValues>({
                       ))}
                     </SelectContent>
                   </Select>
+                </Field>
+              )}
+            />
+          )}
+          {selectedRecurrenceType === RecurrenceType.DAILY && (
+            <Controller
+              name={field("reminderTime")}
+              control={control}
+              render={({ field: f, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor={id("reminderTime")}>{labels.reminderTimeLabel}</FieldLabel>
+                  <Input
+                    {...f}
+                    value={(f.value as string | null | undefined) ?? ""}
+                    type="time"
+                    id={id("reminderTime")}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}
             />

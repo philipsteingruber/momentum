@@ -157,6 +157,7 @@
     "onEveryLabel": "On Every",
     "dayOfMonthPlaceholder": "Choose day of the month",
     "dayOfWeekPlaceholder": "Choose day of the week",
+    "reminderTimeLabel": "Reminder Time (optional)",
     "categoryLabel": "Category",
     "categoryPlaceholder": "Select a Category",
     "externalContactLabel": "External Contact",
@@ -177,6 +178,7 @@
     "onEveryLabel": "On Every",
     "dayOfMonthPlaceholder": "Choose day of the month",
     "dayOfWeekPlaceholder": "Choose day of the week",
+    "reminderTimeLabel": "Reminder Time (optional)",
     "categoryLabel": "Category",
     "categoryPlaceholder": "Select a Category",
     "externalContactLabel": "External Contact",
@@ -235,7 +237,9 @@
     "nameRequired": "Name is required",
     "nameMaxLength": "Name cannot be more than 30 characters long",
     "recurrenceDayRequired": "Either Day of Week or Day of Month must be supplied",
-    "recurrenceInvalidCombination": "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth"
+    "recurrenceInvalidCombination": "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth",
+    "reminderTimeInvalid": "Must be a valid time (HH:mm)",
+    "reminderTimeRequiresDaily": "Reminder time is only supported for daily templates"
   },
   "SharedAccessSettings": {
     "title": "Shared Access",

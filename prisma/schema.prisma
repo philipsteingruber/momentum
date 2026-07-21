@@ -62,6 +62,8 @@ model Task {
     externalContact String?
     link            String?
     completedAt     DateTime?
+    reminderTime    String?
+    reminderSentAt  DateTime?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -104,6 +106,7 @@ model RecurringTemplate {
     description     String?
     externalContact String?
     link            String?
+    reminderTime    String?
 
     recurrenceType RecurrenceType
     dayOfWeek      Int?

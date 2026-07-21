@@ -19,6 +19,8 @@ export type CategorySchemaMessages = {
 export type RecurrenceSchemaMessages = {
   recurrenceDayRequired: string;
   recurrenceInvalidCombination: string;
+  reminderTimeInvalid: string;
+  reminderTimeRequiresDaily: string;
 };
 
 function makeTaskBaseSchema(msgs?: Partial<TaskSchemaMessages>) {
@@ -76,12 +78,17 @@ export function makeUpdateCategorySchema(msgs?: Partial<CategorySchemaMessages>)
   return z.object({ categoryId: z.cuid(), data: makeCategorySchema(msgs).partial() });
 }
 
-function makeBaseRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages>) {
+function makeBaseRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages & RecurrenceSchemaMessages>) {
   return makeTaskBaseSchema(msgs)
     .extend({
       recurrenceType: z.enum(RecurrenceType),
       dayOfWeek: z.int().nonnegative().max(6).optional(),
       dayOfMonth: z.int().min(1).max(31).optional(),
+      reminderTime: z
+        .string()
+        .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, msgs?.reminderTimeInvalid ?? "Must be a valid time (HH:mm)")
+        .nullable()
+        .optional(),
     })
     .omit({ dueDate: true, timezone: true });
 }
@@ -98,6 +105,10 @@ export function makeCreateRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessa
         (data.recurrenceType === RecurrenceType.MONTHLY && !!data.dayOfMonth) ||
         (data.recurrenceType === RecurrenceType.WEEKLY && !!data.dayOfWeek),
       msgs?.recurrenceInvalidCombination ?? "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth",
+    )
+    .refine(
+      (data) => !data.reminderTime || data.recurrenceType === RecurrenceType.DAILY,
+      msgs?.reminderTimeRequiresDaily ?? "Reminder time is only supported for daily templates",
     );
 }
 

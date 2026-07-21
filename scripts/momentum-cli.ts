@@ -158,6 +158,27 @@ async function main() {
       break;
     }
 
+    case "template:update": {
+      if (!positional[0]) throw new Error("templateId is required");
+      const categoryId = flags.category ? await resolveCategoryId(caller, flags.category) : undefined;
+      const template = await caller.recurringTemplate.update({
+        templateId: positional[0],
+        data: {
+          title: flags.title,
+          categoryId,
+          description: flags.desc,
+          link: flags.link,
+          externalContact: flags.contact,
+          recurrenceType: flags.recurrence as RecurrenceType | undefined,
+          dayOfWeek: flags.dayOfWeek ? Number(flags.dayOfWeek) : undefined,
+          dayOfMonth: flags.dayOfMonth ? Number(flags.dayOfMonth) : undefined,
+          reminderTime: flags.reminder,
+        },
+      });
+      console.log(`Updated template ${template.id}: ${template.title}`);
+      break;
+    }
+
     case "template:delete": {
       await caller.recurringTemplate.delete({ templateId: positional[0] });
       console.log(`Deleted template ${positional[0]}`);
@@ -180,6 +201,7 @@ async function main() {
           "  task:delete <taskId>",
           "  templates",
           "  template:create --title T --category NAME_OR_ID --recurrence DAILY|WEEKLY|MONTHLY [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm]",
+          "  template:update <templateId> [--title T] [--category NAME_OR_ID] [--recurrence D|W|M] [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm] [--desc D] [--link L] [--contact C]",
           "  template:delete <templateId>",
         ].join("\n"),
       );

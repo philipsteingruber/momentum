@@ -189,6 +189,7 @@ export function TemplateFormFields<T extends FieldValues>({
                   <Input
                     {...f}
                     value={(f.value as string | null | undefined) ?? ""}
+                    onChange={(e) => f.onChange(e.target.value || null)}
                     type="time"
                     id={id("reminderTime")}
                     aria-invalid={fieldState.invalid}

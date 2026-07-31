@@ -1,0 +1,5 @@
+[mcp_servers.Neon]
+url = "https://mcp.neon.tech/mcp"
+
+[mcp_servers.Prisma]
+url = "https://mcp.prisma.io/mcp"

@@ -1,6 +1,7 @@
 import { TaskStatus } from "@/generated/prisma/enums";
 import { cronLog } from "@/lib/cron-logger";
 import { prisma } from "@/lib/prisma";
+import { timingSafeEqual } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
 
@@ -11,14 +12,21 @@ import { z } from "zod";
 // the same way the /today and /list Discord commands do.
 
 const JOB = "automations.complete-recurring-task";
+const OPEN_STATUSES_NOT_IN = [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.SKIPPED];
 
-const bodySchema = z.object({ recurringTemplateId: z.string() });
+const bodySchema = z.object({ recurringTemplateId: z.cuid() });
 
 function isAuthorized(req: NextRequest): boolean {
   const expected = process.env.AUTOMATION_API_KEY;
   if (!expected) return false;
   const header = req.headers.get("authorization");
-  return header === `Bearer ${expected}`;
+  if (!header) return false;
+
+  const expectedBuf = Buffer.from(`Bearer ${expected}`);
+  const headerBuf = Buffer.from(header);
+  if (expectedBuf.length !== headerBuf.length) return false;
+
+  return timingSafeEqual(headerBuf, expectedBuf);
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -54,7 +62,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     where: {
       userId: user.id,
       recurringTemplateId,
-      status: { notIn: [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.SKIPPED] },
+      status: { notIn: OPEN_STATUSES_NOT_IN },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -64,10 +72,23 @@ export async function POST(req: NextRequest): Promise<Response> {
     return new Response("No open task instance found for this recurring template", { status: 404 });
   }
 
-  await prisma.task.update({
-    where: { id: task.id },
+  // Re-check status in the update itself, not just the findFirst above - the task could have
+  // been completed/cancelled/skipped elsewhere (the web UI, Discord) in between the two calls.
+  const { count } = await prisma.task.updateMany({
+    where: { id: task.id, status: { notIn: OPEN_STATUSES_NOT_IN } },
     data: { status: TaskStatus.COMPLETED, completedAt: new Date() },
   });
+
+  if (count === 0) {
+    await cronLog({
+      runId,
+      job: JOB,
+      event: "task.already_terminal",
+      level: "warn",
+      data: { recurringTemplateId, taskId: task.id },
+    });
+    return new Response("Task was already completed, cancelled, or skipped", { status: 409 });
+  }
 
   await cronLog({
     runId,

@@ -65,6 +65,9 @@ RESEND_API_KEY=
 # Cron security
 CRON_SECRET=
 
+# External automation callers (e.g. Home Assistant), see /api/automations
+AUTOMATION_API_KEY=
+
 # Discord Bot (optional)
 DISCORD_BOT_TOKEN=
 DISCORD_CLIENT_ID=
@@ -182,6 +185,12 @@ All cron activity is logged to the `CronLog` database table and viewable at `/ad
 | `GET /api/discord/auth` | Starts the OAuth2 flow; requires a signed-in Clerk session, redirects to Discord's consent screen |
 | `GET /api/discord/callback` | OAuth2 redirect target; exchanges the code for a token, opens a DM channel, and links the Discord account to the signed-in user |
 | `POST /api/discord/interactions` | Discord's HTTP Interactions webhook (slash commands, autocomplete); verified via `nacl` signature against `DISCORD_PUBLIC_KEY` |
+
+### Automations
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/automations/complete-recurring-task` | Completes the current open task instance for a recurring template, given `{ recurringTemplateId }`; for external callers (e.g. a Home Assistant automation) that only know the template, not the daily-generated task id. Requires `Authorization: Bearer <AUTOMATION_API_KEY>` |
 
 ### Other
 

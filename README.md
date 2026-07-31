@@ -161,17 +161,34 @@ Open [http://localhost:3000](http://localhost:3000).
   sv.json                     # Swedish translations
 ```
 
-## Cron Jobs
+## API Routes
+
+### Cron jobs
 
 Cron jobs are secured with a shared `CRON_SECRET` header and must be triggered externally (e.g., Vercel Cron, GitHub Actions).
 
 | Route | Purpose |
 | --- | --- |
-| `POST /api/cron/daily-digest` | Sends daily task digest via email and Discord DM |
-| `POST /api/cron/generate-tasks` | Generates tasks from due recurring templates |
-| `POST /api/cron/task-reminders` | Sends a Discord DM for tasks with a due reminder time that hasn't fired yet; run this on a short interval (e.g. every 15 min) |
+| `GET /api/cron/daily-digest` | Sends daily task digest via email and Discord DM |
+| `GET /api/cron/generate-tasks` | Generates tasks from due recurring templates |
+| `GET /api/cron/task-reminders` | Sends a Discord DM for tasks with a due reminder time that hasn't fired yet; run this on a short interval (e.g. every 15 min) |
 
 All cron activity is logged to the `CronLog` database table and viewable at `/admin`.
+
+### Discord
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/discord/auth` | Starts the OAuth2 flow; requires a signed-in Clerk session, redirects to Discord's consent screen |
+| `GET /api/discord/callback` | OAuth2 redirect target; exchanges the code for a token, opens a DM channel, and links the Discord account to the signed-in user |
+| `POST /api/discord/interactions` | Discord's HTTP Interactions webhook (slash commands, autocomplete); verified via `nacl` signature against `DISCORD_PUBLIC_KEY` |
+
+### Other
+
+| Route | Purpose |
+| --- | --- |
+| `GET`/`POST` `/api/trpc/[trpc]` | tRPC endpoint serving all routers (`task`, `category`, `recurringTemplate`, etc.) |
+| `POST /api/webhooks` | Clerk lifecycle webhook; provisions a `User` + `UserSettings` row on `user.created`, verified via `verifyWebhook` |
 
 ## Discord Integration
 
@@ -187,3 +204,26 @@ The Discord bot uses **HTTP Interactions** (no persistent WebSocket gateway), ma
 - `/complete task_id:<id>` — Marks a task as completed
 - `/snooze task days` — Extends a task's due date by 1–7 days
 - `/note task content` — Adds a note to a task
+- `/digest` — Sends the daily digest embed on demand (DM if linked, otherwise as a reply)
+
+## CLI Commands
+
+`pnpm momentum <command> [args]` drives tasks/categories/recurring templates directly through the tRPC routers as the user identified by `ADMIN_CLERK_USER_ID`, bypassing HTTP and Clerk. Run `pnpm momentum` with no args to print this list.
+
+| Command | Description |
+| --- | --- |
+| `categories` | List categories with active/overdue task counts |
+| `category:create --name N [--color #RRGGBB]` | Create a category |
+| `tasks [--status S] [--search S]` | List tasks, optionally filtered |
+| `task <taskId>` | Print a single task as JSON |
+| `task:create --title T --category NAME_OR_ID [--due YYYY-MM-DD] [--desc D] [--link L] [--contact C]` | Create a task |
+| `task:status <taskId> <STATUS>` | Update a task's status |
+| `task:complete <taskId>` | Mark a task completed |
+| `task:snooze <taskId> <days>` | Extend a task's due date |
+| `task:delete <taskId>` | Delete a task |
+| `templates` | List recurring templates, showing pause windows if set |
+| `template:create --title T --category NAME_OR_ID --recurrence DAILY\|WEEKLY\|MONTHLY [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm]` | Create a recurring template |
+| `template:update <templateId> [--title T] [--category NAME_OR_ID] [--recurrence D\|W\|M] [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm] [--desc D] [--link L] [--contact C]` | Update a recurring template |
+| `template:delete <templateId>` | Delete a recurring template |
+| `template:pause <templateId> --from YYYY-MM-DD --until YYYY-MM-DD` | Pause task generation for a date range |
+| `template:resume <templateId>` | Resume a paused template |

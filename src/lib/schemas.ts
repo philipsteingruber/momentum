@@ -116,6 +116,46 @@ export function makeUpdateRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessa
   return z.object({ templateId: z.cuid(), data: makeBaseRecurringTemplateSchema(msgs).partial() });
 }
 
+export type PauseRecurringTemplateSchemaMessages = {
+  pausedUntilBeforeFrom: string;
+  pausedFromInPast: string;
+};
+
+export function makePauseRecurringTemplateSchema(msgs?: Partial<PauseRecurringTemplateSchemaMessages>) {
+  return z
+    .object({
+      templateId: z.cuid(),
+      pausedFrom: z.date(),
+      pausedUntil: z.date(),
+      timezone: z.string(),
+    })
+    .superRefine((data, ctx) => {
+      const zonedFrom = toZonedTime(data.pausedFrom, data.timezone);
+      const zonedUntil = toZonedTime(data.pausedUntil, data.timezone);
+      const zonedNow = toZonedTime(new Date(), data.timezone);
+
+      if (isBefore(startOfDay(zonedUntil), startOfDay(zonedFrom))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pausedUntil"],
+          message: msgs?.pausedUntilBeforeFrom ?? "End date must be on or after the start date",
+        });
+      }
+
+      if (isBefore(startOfDay(zonedFrom), startOfDay(zonedNow))) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["pausedFrom"],
+          message: msgs?.pausedFromInPast ?? "Pause start date cannot be in the past",
+        });
+      }
+    });
+}
+
+export function makeResumeRecurringTemplateSchema() {
+  return z.object({ templateId: z.cuid() });
+}
+
 // Static defaults — used by TRPC routers and for type inference at call sites
 export const createTaskSchema = makeCreateTaskSchema();
 export const updateTaskSchema = makeUpdateTaskSchema();
@@ -123,3 +163,5 @@ export const createCategorySchema = makeCategorySchema();
 export const updateCategorySchema = makeUpdateCategorySchema();
 export const createRecurringTemplateSchema = makeCreateRecurringTemplateSchema();
 export const updateRecurringTemplateSchema = makeUpdateRecurringTemplateSchema();
+export const pauseRecurringTemplateSchema = makePauseRecurringTemplateSchema();
+export const resumeRecurringTemplateSchema = makeResumeRecurringTemplateSchema();

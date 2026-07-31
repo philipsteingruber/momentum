@@ -111,6 +111,33 @@ export const handler = async (req: Request): Promise<Response> => {
 
               const newNextGenerateOn = addDays(taskDueDate, 1);
 
+              const isPaused =
+                template.pausedFrom &&
+                template.pausedUntil &&
+                !isBefore(taskDueDate, template.pausedFrom) &&
+                !isBefore(template.pausedUntil, taskDueDate);
+
+              if (isPaused) {
+                await tx.recurringTemplate.update({
+                  where: { id: template.id },
+                  data: { nextGenerateOn: newNextGenerateOn },
+                });
+                await cronLog({
+                  runId,
+                  job: JOB,
+                  event: "task.paused",
+                  level: "info",
+                  data: {
+                    userId: user.id,
+                    email: user.email,
+                    templateId: template.id,
+                    dueDate: taskDueDate.toISOString(),
+                    timestamp: now.toISOString(),
+                  },
+                });
+                return;
+              }
+
               const newTask = await tx.task.create({
                 data: {
                   title: template.title,

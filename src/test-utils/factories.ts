@@ -67,6 +67,8 @@ export const createMockRecurringTemplate = (overrides: Partial<RecurringTemplate
   dayOfMonth: null,
   nextGenerateOn: new Date("2024-01-09"),
   snoozeCount: 0,
+  pausedFrom: null,
+  pausedUntil: null,
   userId: nextId(),
   categoryId: null,
   ...overrides,

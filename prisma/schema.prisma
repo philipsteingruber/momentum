@@ -113,6 +113,8 @@ model RecurringTemplate {
     dayOfMonth     Int?
     nextGenerateOn DateTime @map("nextDueDate")
     snoozeCount    Int            @default(0)
+    pausedFrom     DateTime?
+    pausedUntil    DateTime?
 
     user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     tasks      Task[]

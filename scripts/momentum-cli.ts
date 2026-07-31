@@ -1,5 +1,7 @@
 import "dotenv/config";
+import { fromZonedTime } from "date-fns-tz";
 import { TaskStatus, RecurrenceType } from "@/generated/prisma/enums";
+import { formatInUserTz } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
 import { createCallerFactory, createTRPCContext } from "@/trpc/init";
 import { appRouter } from "@/trpc/routers/_app";
@@ -131,9 +133,14 @@ async function main() {
     }
 
     case "templates": {
+      const timezone = ctx.currentUser!.userSettings!.timezone;
       const templates = await caller.recurringTemplate.getAll();
       for (const t of templates) {
-        console.log(`${t.id}  ${t.title}  (${t.recurrenceType})`);
+        const pausedSuffix =
+          t.pausedFrom && t.pausedUntil
+            ? `  [PAUSED ${formatInUserTz(t.pausedFrom, "yyyy-MM-dd", timezone)} to ${formatInUserTz(t.pausedUntil, "yyyy-MM-dd", timezone)}]`
+            : "";
+        console.log(`${t.id}  ${t.title}  (${t.recurrenceType})${pausedSuffix}`);
       }
       break;
     }
@@ -185,6 +192,27 @@ async function main() {
       break;
     }
 
+    case "template:pause": {
+      if (!positional[0]) throw new Error("templateId is required");
+      if (!flags.from || !flags.until) throw new Error("--from and --until (YYYY-MM-DD) are required");
+      const timezone = ctx.currentUser!.userSettings!.timezone;
+      const template = await caller.recurringTemplate.pause({
+        templateId: positional[0],
+        pausedFrom: fromZonedTime(`${flags.from}T00:00:00`, timezone),
+        pausedUntil: fromZonedTime(`${flags.until}T00:00:00`, timezone),
+        timezone,
+      });
+      console.log(`Paused template ${template.id} from ${flags.from} to ${flags.until}`);
+      break;
+    }
+
+    case "template:resume": {
+      if (!positional[0]) throw new Error("templateId is required");
+      const template = await caller.recurringTemplate.resume({ templateId: positional[0] });
+      console.log(`Resumed template ${template.id}`);
+      break;
+    }
+
     default:
       console.log(
         [
@@ -203,6 +231,8 @@ async function main() {
           "  template:create --title T --category NAME_OR_ID --recurrence DAILY|WEEKLY|MONTHLY [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm]",
           "  template:update <templateId> [--title T] [--category NAME_OR_ID] [--recurrence D|W|M] [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm] [--desc D] [--link L] [--contact C]",
           "  template:delete <templateId>",
+          "  template:pause <templateId> --from YYYY-MM-DD --until YYYY-MM-DD",
+          "  template:resume <templateId>",
         ].join("\n"),
       );
   }

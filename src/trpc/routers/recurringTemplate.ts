@@ -3,7 +3,12 @@ import { computeNextDueDate, RecurrenceValidationError } from "@/lib/recurring-t
 import { addDays } from "date-fns";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
-import { createRecurringTemplateSchema, updateRecurringTemplateSchema } from "@/lib/schemas";
+import {
+  createRecurringTemplateSchema,
+  pauseRecurringTemplateSchema,
+  resumeRecurringTemplateSchema,
+  updateRecurringTemplateSchema,
+} from "@/lib/schemas";
 import { TRPCError } from "@trpc/server";
 import { endOfDayInTz } from "@/lib/date-utils";
 import z from "zod";
@@ -151,6 +156,46 @@ export const recurringTemplateRouter = createTRPCRouter({
       }
       if (err instanceof RecurrenceValidationError) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid recurrence type and day combination" });
+      }
+      throw err;
+    }
+  }),
+
+  pause: authedProcedure.input(pauseRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
+    return await ctx.db.$transaction(async (tx) => {
+      await tx.task.updateMany({
+        where: {
+          recurringTemplateId: input.templateId,
+          userId: ctx.currentUser.id,
+          status: { in: [...ACTIVE_TASK_STATUSES] },
+          dueDate: { gte: input.pausedFrom, lte: input.pausedUntil },
+        },
+        data: { status: TaskStatus.CANCELLED },
+      });
+
+      try {
+        return await tx.recurringTemplate.update({
+          where: { id: input.templateId, userId: ctx.currentUser.id },
+          data: { pausedFrom: input.pausedFrom, pausedUntil: input.pausedUntil },
+        });
+      } catch (err) {
+        if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+        throw err;
+      }
+    });
+  }),
+
+  resume: authedProcedure.input(resumeRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
+    try {
+      return await ctx.db.recurringTemplate.update({
+        where: { id: input.templateId, userId: ctx.currentUser.id },
+        data: { pausedFrom: null, pausedUntil: null },
+      });
+    } catch (err) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
+        throw new TRPCError({ code: "NOT_FOUND" });
       }
       throw err;
     }

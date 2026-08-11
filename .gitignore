@@ -64,3 +64,4 @@ DISCORD_INTEGRATION.md
 *.sql
 skills-lock.json
 CADENCE_SPEC.md
+.playwright-mcp/

@@ -120,6 +120,7 @@ const CreateTemplateDialog = ({
               dayOfMonthPlaceholder: t("dayOfMonthPlaceholder"),
               dayOfWeekPlaceholder: t("dayOfWeekPlaceholder"),
               reminderTimeLabel: t("reminderTimeLabel"),
+              clearReminderTimeLabel: t("clearReminderTimeLabel"),
               categoryLabel: t("categoryLabel"),
               categoryPlaceholder: t("categoryPlaceholder"),
               externalContactLabel: t("externalContactLabel"),

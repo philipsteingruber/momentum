@@ -3,12 +3,14 @@
 import { CategorySelect } from "@/_components/category-select";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { Category } from "@/generated/prisma/client";
 import { RecurrenceType } from "@/generated/prisma/enums";
 import { DAY_OF_MONTH_OPTIONS, DAY_OF_WEEK_OPTIONS } from "@/lib/recurring-template-utils";
 import { capitaliseFirstCharacter } from "@/lib/task-utils";
+import { XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
@@ -23,6 +25,7 @@ interface TemplateFieldLabels {
   dayOfMonthPlaceholder: string;
   dayOfWeekPlaceholder: string;
   reminderTimeLabel: string;
+  clearReminderTimeLabel: string;
   categoryLabel: string;
   categoryPlaceholder: string;
   externalContactLabel: string;
@@ -183,20 +186,36 @@ export function TemplateFormFields<T extends FieldValues>({
             <Controller
               name={field("reminderTime")}
               control={control}
-              render={({ field: f, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={id("reminderTime")}>{labels.reminderTimeLabel}</FieldLabel>
-                  <Input
-                    {...f}
-                    value={(f.value as string | null | undefined) ?? ""}
-                    onChange={(e) => f.onChange(e.target.value || null)}
-                    type="time"
-                    id={id("reminderTime")}
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
+              render={({ field: f, fieldState }) => {
+                const value = (f.value as string | null | undefined) ?? "";
+                return (
+                  <Field data-invalid={fieldState.invalid}>
+                    <FieldLabel htmlFor={id("reminderTime")}>{labels.reminderTimeLabel}</FieldLabel>
+                    <InputGroup>
+                      <InputGroupInput
+                        {...f}
+                        value={value}
+                        onChange={(e) => f.onChange(e.target.value || null)}
+                        type="time"
+                        id={id("reminderTime")}
+                        aria-invalid={fieldState.invalid}
+                      />
+                      {value && (
+                        <InputGroupAddon align="inline-end">
+                          <InputGroupButton
+                            size="icon-xs"
+                            aria-label={labels.clearReminderTimeLabel}
+                            onClick={() => f.onChange(null)}
+                          >
+                            <XIcon />
+                          </InputGroupButton>
+                        </InputGroupAddon>
+                      )}
+                    </InputGroup>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </Field>
+                );
+              }}
             />
           )}
         </div>

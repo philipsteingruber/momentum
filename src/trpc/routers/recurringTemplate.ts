@@ -11,8 +11,13 @@ import {
 } from "@/lib/schemas";
 import { TRPCError } from "@trpc/server";
 import { endOfDayInTz } from "@/lib/date-utils";
+import { cronLog } from "@/lib/cron-logger";
 import z from "zod";
 import { authedProcedure, createTRPCRouter } from "../init";
+
+// Reuses the CronLog table as a generic append-only audit trail for template mutations —
+// not just cron jobs. Distinguished from the generate-tasks cron by job name.
+const TEMPLATE_LOG_JOB = "recurringTemplate";
 
 export const recurringTemplateRouter = createTRPCRouter({
   getAll: authedProcedure.query(async ({ ctx }) => {
@@ -59,7 +64,7 @@ export const recurringTemplateRouter = createTRPCRouter({
     const firstDueDate = computeNextDueDate({ ...input, timezone });
     const nextGenerateOn = addDays(firstDueDate, 1);
 
-    return await ctx.db.$transaction(async (tx) => {
+    const template = await ctx.db.$transaction(async (tx) => {
       const template = await tx.recurringTemplate.create({
         data: { ...input, userId: ctx.currentUser.id, nextGenerateOn },
       });
@@ -80,6 +85,16 @@ export const recurringTemplateRouter = createTRPCRouter({
 
       return template;
     });
+
+    await cronLog({
+      runId: crypto.randomUUID(),
+      job: TEMPLATE_LOG_JOB,
+      event: "create",
+      level: "info",
+      data: { userId: ctx.currentUser.id, templateId: template.id, title: template.title },
+    });
+
+    return template;
   }),
 
   update: authedProcedure.input(updateRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
@@ -111,7 +126,7 @@ export const recurringTemplateRouter = createTRPCRouter({
         nextGenerateOn = addDays(newTaskDueDate, 1);
       }
 
-      return await ctx.db.$transaction(async (tx) => {
+      const updated = await ctx.db.$transaction(async (tx) => {
         if (scheduleChanged && newTaskDueDate) {
           await tx.task.updateMany({
             where: {
@@ -150,6 +165,16 @@ export const recurringTemplateRouter = createTRPCRouter({
           data: { ...input.data, nextGenerateOn, ...(scheduleChanged && { snoozeCount: 0 }) },
         });
       });
+
+      await cronLog({
+        runId: crypto.randomUUID(),
+        job: TEMPLATE_LOG_JOB,
+        event: "update",
+        level: "info",
+        data: { userId: ctx.currentUser.id, templateId: input.templateId, changes: input.data },
+      });
+
+      return updated;
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
         throw new TRPCError({ code: "NOT_FOUND" });
@@ -162,7 +187,7 @@ export const recurringTemplateRouter = createTRPCRouter({
   }),
 
   pause: authedProcedure.input(pauseRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
-    return await ctx.db.$transaction(async (tx) => {
+    const updated = await ctx.db.$transaction(async (tx) => {
       await tx.task.updateMany({
         where: {
           recurringTemplateId: input.templateId,
@@ -185,14 +210,49 @@ export const recurringTemplateRouter = createTRPCRouter({
         throw err;
       }
     });
+
+    await cronLog({
+      runId: crypto.randomUUID(),
+      job: TEMPLATE_LOG_JOB,
+      event: "pause",
+      level: "info",
+      data: {
+        userId: ctx.currentUser.id,
+        templateId: input.templateId,
+        pausedFrom: input.pausedFrom.toISOString(),
+        pausedUntil: input.pausedUntil.toISOString(),
+      },
+    });
+
+    return updated;
   }),
 
   resume: authedProcedure.input(resumeRecurringTemplateSchema).mutation(async ({ ctx, input }) => {
     try {
-      return await ctx.db.recurringTemplate.update({
+      const existing = await ctx.db.recurringTemplate.findUnique({
+        where: { id: input.templateId, userId: ctx.currentUser.id },
+        select: { pausedFrom: true, pausedUntil: true },
+      });
+
+      const updated = await ctx.db.recurringTemplate.update({
         where: { id: input.templateId, userId: ctx.currentUser.id },
         data: { pausedFrom: null, pausedUntil: null },
       });
+
+      await cronLog({
+        runId: crypto.randomUUID(),
+        job: TEMPLATE_LOG_JOB,
+        event: "resume",
+        level: "info",
+        data: {
+          userId: ctx.currentUser.id,
+          templateId: input.templateId,
+          previousPausedFrom: existing?.pausedFrom?.toISOString() ?? null,
+          previousPausedUntil: existing?.pausedUntil?.toISOString() ?? null,
+        },
+      });
+
+      return updated;
     } catch (err) {
       if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
         throw new TRPCError({ code: "NOT_FOUND" });
@@ -202,6 +262,11 @@ export const recurringTemplateRouter = createTRPCRouter({
   }),
 
   delete: authedProcedure.input(z.object({ templateId: z.cuid() })).mutation(async ({ ctx, input }) => {
+    const existing = await ctx.db.recurringTemplate.findUnique({
+      where: { id: input.templateId, userId: ctx.currentUser.id },
+      select: { title: true },
+    });
+
     await ctx.db.$transaction(async (tx) => {
       await tx.task.deleteMany({
         where: {
@@ -219,6 +284,14 @@ export const recurringTemplateRouter = createTRPCRouter({
         data: { recurringTemplateId: null },
       });
       await tx.recurringTemplate.delete({ where: { id: input.templateId, userId: ctx.currentUser.id } });
+    });
+
+    await cronLog({
+      runId: crypto.randomUUID(),
+      job: TEMPLATE_LOG_JOB,
+      event: "delete",
+      level: "info",
+      data: { userId: ctx.currentUser.id, templateId: input.templateId, title: existing?.title ?? null },
     });
   }),
 });

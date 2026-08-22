@@ -65,3 +65,4 @@ DISCORD_INTEGRATION.md
 skills-lock.json
 CADENCE_SPEC.md
 .playwright-mcp/
+.worktrees/

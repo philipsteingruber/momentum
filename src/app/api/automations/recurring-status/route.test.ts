@@ -147,6 +147,68 @@ describe("GET /api/automations/recurring-status", () => {
     expect(json[0].currentStreak).toBe(0);
   });
 
+  it("reports 100% completion when every counted cycle is completed", async () => {
+    mockDb.recurringTemplate.findMany.mockResolvedValue([
+      template("t1", "Dishwasher", RecurrenceType.DAILY, [
+        { status: TaskStatus.COMPLETED },
+        { status: TaskStatus.COMPLETED },
+        { status: TaskStatus.COMPLETED },
+      ]),
+    ] as never);
+    const res = await GET(makeRequest());
+    const json = (await res.json()) as { completionPercentage: number | null }[];
+    expect(json[0].completionPercentage).toBe(100);
+  });
+
+  it("counts a skipped cycle as a miss against the percentage", async () => {
+    mockDb.recurringTemplate.findMany.mockResolvedValue([
+      template("t1", "Dishwasher", RecurrenceType.DAILY, [
+        { status: TaskStatus.COMPLETED },
+        { status: TaskStatus.COMPLETED },
+        { status: TaskStatus.SKIPPED },
+        { status: TaskStatus.COMPLETED },
+      ]),
+    ] as never);
+    const res = await GET(makeRequest());
+    const json = (await res.json()) as { completionPercentage: number | null }[];
+    expect(json[0].completionPercentage).toBe(75);
+  });
+
+  it("excludes a cancelled cycle from the percentage's denominator", async () => {
+    mockDb.recurringTemplate.findMany.mockResolvedValue([
+      template("t1", "Dishwasher", RecurrenceType.DAILY, [
+        { status: TaskStatus.COMPLETED },
+        { status: TaskStatus.CANCELLED },
+        { status: TaskStatus.COMPLETED },
+      ]),
+    ] as never);
+    const res = await GET(makeRequest());
+    const json = (await res.json()) as { completionPercentage: number | null }[];
+    expect(json[0].completionPercentage).toBe(100);
+  });
+
+  it("excludes a still-pending newest cycle from the percentage, same as the streak's forgiving rule", async () => {
+    mockDb.recurringTemplate.findMany.mockResolvedValue([
+      template("t1", "Dishwasher", RecurrenceType.DAILY, [
+        { status: TaskStatus.PENDING },
+        { status: TaskStatus.COMPLETED },
+        { status: TaskStatus.SKIPPED },
+      ]),
+    ] as never);
+    const res = await GET(makeRequest());
+    const json = (await res.json()) as { completionPercentage: number | null }[];
+    expect(json[0].completionPercentage).toBe(50);
+  });
+
+  it("returns null completion percentage when no resolved history exists yet", async () => {
+    mockDb.recurringTemplate.findMany.mockResolvedValue([
+      template("t1", "Dishwasher", RecurrenceType.DAILY, [{ status: TaskStatus.PENDING }]),
+    ] as never);
+    const res = await GET(makeRequest());
+    const json = (await res.json()) as { completionPercentage: number | null }[];
+    expect(json[0].completionPercentage).toBeNull();
+  });
+
   it("returns id, title, and recurrenceType alongside the computed fields", async () => {
     mockDb.recurringTemplate.findMany.mockResolvedValue([
       template("t1", "Take Medicine", RecurrenceType.WEEKLY, [{ status: TaskStatus.COMPLETED }]),
@@ -160,6 +222,7 @@ describe("GET /api/automations/recurring-status", () => {
         recurrenceType: RecurrenceType.WEEKLY,
         completedThisCycle: true,
         currentStreak: 1,
+        completionPercentage: 100,
       },
     ]);
   });

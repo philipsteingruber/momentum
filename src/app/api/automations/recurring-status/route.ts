@@ -54,6 +54,33 @@ function computeStreak(historyNewestFirst: HistoryEntry[]): number {
   return streak;
 }
 
+/**
+ * Trailing completion rate over the same history window computeStreak
+ * uses. CANCELLED cycles are excluded from the denominator entirely (the
+ * cycle never should have existed); SKIPPED and any other non-COMPLETED,
+ * non-CANCELLED status counts as a miss. The newest cycle, if still
+ * PENDING, is excluded from both numerator and denominator — same
+ * forgiving exclusion as computeStreak, kept consistent across both
+ * calculations. Returns null (not 0) when nothing is left to count, so a
+ * brand-new template doesn't render as "0%".
+ */
+function computeCompletionPercentage(historyNewestFirst: HistoryEntry[]): number | null {
+  let startIndex = 0;
+  if (historyNewestFirst[0]?.status === TaskStatus.PENDING) {
+    startIndex = 1;
+  }
+
+  let completed = 0;
+  let counted = 0;
+  for (let i = startIndex; i < historyNewestFirst.length; i++) {
+    const status = historyNewestFirst[i].status;
+    if (status === TaskStatus.CANCELLED) continue;
+    counted += 1;
+    if (status === TaskStatus.COMPLETED) completed += 1;
+  }
+  return counted === 0 ? null : Math.round((completed / counted) * 100);
+}
+
 export async function GET(req: NextRequest): Promise<Response> {
   const runId = crypto.randomUUID();
 
@@ -98,6 +125,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     recurrenceType: template.recurrenceType,
     completedThisCycle: template.tasks[0]?.status === TaskStatus.COMPLETED,
     currentStreak: computeStreak(template.tasks),
+    completionPercentage: computeCompletionPercentage(template.tasks),
   }));
 
   await cronLog({ runId, job: JOB, event: "list", level: "info", data: { count: response.length } });

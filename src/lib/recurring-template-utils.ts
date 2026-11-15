@@ -1,5 +1,5 @@
 import type { Day } from "date-fns";
-import { addDays, addMonths, nextDay, setDate, startOfDay } from "date-fns";
+import { addDays, addHours, addMonths, isBefore, nextDay, setDate, startOfDay } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { RecurrenceType } from "./../generated/prisma/enums";
 
@@ -59,4 +59,15 @@ export const computeNextDueDate = ({
     const updatedTime = startOfDay(addMonths(setDate(zonedTime, dayOfMonth), 1));
     return fromZonedTime(updatedTime, timezone);
   }
+};
+
+/**
+ * Due date for the next generated instance of a DAILY template: local midnight of the scheduled day,
+ * but never earlier than today. Scheduled dates are snapped to the nearest local midnight so values
+ * that drifted by an hour across a DST change (from being advanced in UTC) land on the intended day.
+ */
+export const computeDailyTaskDueDate = (nextGenerateOn: Date, now: Date, timezone: string): Date => {
+  const scheduled = fromZonedTime(startOfDay(toZonedTime(addHours(nextGenerateOn, 12), timezone)), timezone);
+  const today = fromZonedTime(startOfDay(toZonedTime(now, timezone)), timezone);
+  return isBefore(scheduled, today) ? today : scheduled;
 };

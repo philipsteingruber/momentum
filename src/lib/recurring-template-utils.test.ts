@@ -1,6 +1,6 @@
 import { RecurrenceType } from "@/generated/prisma/enums";
 import { describe, expect, it } from "vitest";
-import { RecurrenceValidationError, computeNextDueDate } from "./recurring-template-utils";
+import { RecurrenceValidationError, computeDailyTaskDueDate, computeNextDueDate } from "./recurring-template-utils";
 
 // All tests use Europe/Stockholm (UTC+2 in summer) so we can assert exact UTC timestamps.
 
@@ -84,5 +84,40 @@ describe("computeNextDueDate", () => {
         computeNextDueDate({ recurrenceType: RecurrenceType.MONTHLY, from: FROM, timezone: TZ }),
       ).toThrow(RecurrenceValidationError);
     });
+  });
+});
+
+// Stockholm is UTC+1 (CET) in winter and UTC+2 (CEST) in summer.
+// 2026 DST changes: starts 2026-03-29, ends 2026-10-25.
+describe("computeDailyTaskDueDate", () => {
+  // Monday 2026-11-16 07:00 Stockholm, when the generate-tasks cron runs
+  const NOW_WINTER = new Date("2026-11-16T06:00:00Z");
+  const TODAY_MIDNIGHT_WINTER = new Date("2026-11-15T23:00:00Z");
+  const TOMORROW_MIDNIGHT_WINTER = new Date("2026-11-16T23:00:00Z");
+
+  it("uses today's local midnight when the scheduled day has already passed", () => {
+    const staleScheduledDay = new Date("2026-11-10T23:00:00Z");
+
+    expect(computeDailyTaskDueDate(staleScheduledDay, NOW_WINTER, TZ)).toEqual(TODAY_MIDNIGHT_WINTER);
+  });
+
+  it("keeps a scheduled day that is later than today so an early-completed instance is not regenerated", () => {
+    expect(computeDailyTaskDueDate(TOMORROW_MIDNIGHT_WINTER, NOW_WINTER, TZ)).toEqual(TOMORROW_MIDNIGHT_WINTER);
+  });
+
+  it("snaps a scheduled day that drifted an hour early after DST ended onto the intended local midnight", () => {
+    // Summer-offset midnight for Nov 17, i.e. 23:00 on Nov 16 Stockholm time
+    const driftedEarly = new Date("2026-11-16T22:00:00Z");
+
+    expect(computeDailyTaskDueDate(driftedEarly, NOW_WINTER, TZ)).toEqual(TOMORROW_MIDNIGHT_WINTER);
+  });
+
+  it("snaps a scheduled day that drifted an hour late after DST started onto the intended local midnight", () => {
+    // Wednesday 2026-04-01 07:00 Stockholm (CEST)
+    const nowSummer = new Date("2026-04-01T05:00:00Z");
+    // Winter-offset midnight for Apr 2, i.e. 01:00 on Apr 2 Stockholm time
+    const driftedLate = new Date("2026-04-01T23:00:00Z");
+
+    expect(computeDailyTaskDueDate(driftedLate, nowSummer, TZ)).toEqual(new Date("2026-04-01T22:00:00Z"));
   });
 });

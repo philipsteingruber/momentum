@@ -3,7 +3,7 @@ import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
 import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
-import { computeNextDueDate } from "@/lib/recurring-template-utils";
+import { computeDailyTaskDueDate, computeNextDueDate } from "@/lib/recurring-template-utils";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 import { addDays, isBefore, startOfDay } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
@@ -98,18 +98,22 @@ export const handler = async (req: Request): Promise<Response> => {
                 });
               }
 
-              const taskDueDate =
-                template.recurrenceType === RecurrenceType.DAILY
-                  ? template.nextGenerateOn
-                  : computeNextDueDate({
-                      recurrenceType: template.recurrenceType,
-                      dayOfMonth: template.dayOfMonth ?? undefined,
-                      dayOfWeek: template.dayOfWeek ?? undefined,
-                      from: template.nextGenerateOn,
-                      timezone,
-                    });
+              const isDaily = template.recurrenceType === RecurrenceType.DAILY;
+              const taskDueDate = isDaily
+                ? computeDailyTaskDueDate(template.nextGenerateOn, now, timezone)
+                : computeNextDueDate({
+                    recurrenceType: template.recurrenceType,
+                    dayOfMonth: template.dayOfMonth ?? undefined,
+                    dayOfWeek: template.dayOfWeek ?? undefined,
+                    from: template.nextGenerateOn,
+                    timezone,
+                  });
 
-              const newNextGenerateOn = addDays(taskDueDate, 1);
+              // Daily: advance to the next local midnight (DST-safe). addDays in UTC would keep the UTC clock
+              // time and drift an hour off local midnight whenever the timezone offset changes.
+              const newNextGenerateOn = isDaily
+                ? computeNextDueDate({ recurrenceType: RecurrenceType.DAILY, from: taskDueDate, timezone })
+                : addDays(taskDueDate, 1);
 
               const isPaused =
                 template.pausedFrom &&

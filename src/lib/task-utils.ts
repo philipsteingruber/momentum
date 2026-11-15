@@ -9,7 +9,7 @@ export const TERMINAL_TASK_STATUSES = [TaskStatus.COMPLETED, TaskStatus.CANCELLE
 
 export const SNOOZE_OPTIONS = [1, 3, 7] as const;
 
-export const SNOOZE_TRANSLATION_KEYS: Record<typeof SNOOZE_OPTIONS[number], string> = {
+export const SNOOZE_TRANSLATION_KEYS: Record<(typeof SNOOZE_OPTIONS)[number], string> = {
   1: "snooze1Day",
   3: "snooze3Days",
   7: "snooze7Days",
@@ -31,8 +31,37 @@ export const isOverdue = (dueDate: Date | null): boolean => {
 
 export const OVERDUE_STATUS = "OVERDUE" as const;
 
+const isTerminalStatus = (status: TaskStatus) => (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(status);
+
+/**
+ * For each recurring template, keeps only the most recently created terminal (completed/cancelled) instance.
+ * Non-recurring and active tasks pass through untouched. Shared by the task routers and the kanban board so
+ * optimistic cache updates render the same set of tasks the server would return.
+ */
+export const keepLatestTerminalPerTemplate = <
+  T extends Pick<Task, "id" | "status" | "recurringTemplateId" | "createdAt">,
+>(
+  tasks: T[],
+): T[] => {
+  const latestByTemplate = new Map<string, T>();
+  for (const task of tasks) {
+    if (!task.recurringTemplateId || !isTerminalStatus(task.status)) continue;
+    const existing = latestByTemplate.get(task.recurringTemplateId);
+    if (!existing || task.createdAt.getTime() > existing.createdAt.getTime()) {
+      latestByTemplate.set(task.recurringTemplateId, task);
+    }
+  }
+
+  return tasks.filter(
+    (task) =>
+      !task.recurringTemplateId ||
+      !isTerminalStatus(task.status) ||
+      latestByTemplate.get(task.recurringTemplateId)?.id === task.id,
+  );
+};
+
 export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
-  const tasksByGroup = tasks.reduce(
+  const tasksByGroup = keepLatestTerminalPerTemplate(tasks).reduce(
     (groups, task) => {
       groups[task.status].push(task);
       return groups;

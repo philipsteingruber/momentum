@@ -1,5 +1,5 @@
 import { GrantStatus, TaskStatus } from "@/generated/prisma/enums";
-import { TERMINAL_TASK_STATUSES } from "@/lib/task-utils";
+import { TERMINAL_TASK_STATUSES, keepLatestTerminalPerTemplate } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
 import { subDays } from "date-fns";
@@ -256,23 +256,7 @@ export const sharedAccessRouter = createTRPCRouter({
         orderBy: { createdAt: "asc" },
       });
 
-      const latestByTemplate = new Map<string, { id: string; ts: number }>();
-      for (const task of tasks) {
-        if (task.recurringTemplateId && (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(task.status)) {
-          const ts = task.createdAt.getTime();
-          const existing = latestByTemplate.get(task.recurringTemplateId);
-          if (!existing || ts > existing.ts) {
-            latestByTemplate.set(task.recurringTemplateId, { id: task.id, ts });
-          }
-        }
-      }
-
-      return tasks.filter((task) => {
-        if (!task.recurringTemplateId || !(TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(task.status)) {
-          return true;
-        }
-        return latestByTemplate.get(task.recurringTemplateId)?.id === task.id;
-      });
+      return keepLatestTerminalPerTemplate(tasks);
     }),
 
   getCategoriesForGrantor: authedProcedure

@@ -1,7 +1,7 @@
 import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { computeNextMondayDueDate, computeSnoozeDueDate } from "@/lib/date-utils";
 import { createTaskSchema, updateTaskSchema } from "@/lib/schemas";
-import { TERMINAL_TASK_STATUSES } from "@/lib/task-utils";
+import { TERMINAL_TASK_STATUSES, keepLatestTerminalPerTemplate } from "@/lib/task-utils";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
 import { TRPCError } from "@trpc/server";
 import { addDays, subDays } from "date-fns";
@@ -85,23 +85,7 @@ export const taskRouter = createTRPCRouter({
         orderBy: { createdAt: "asc" },
       });
 
-      const latestByTemplate = new Map<string, { id: string; ts: number }>();
-      for (const task of tasks) {
-        if (task.recurringTemplateId && (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(task.status)) {
-          const ts = task.createdAt.getTime();
-          const existing = latestByTemplate.get(task.recurringTemplateId);
-          if (!existing || ts > existing.ts) {
-            latestByTemplate.set(task.recurringTemplateId, { id: task.id, ts });
-          }
-        }
-      }
-
-      return tasks.filter((task) => {
-        if (!task.recurringTemplateId || !(TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(task.status)) {
-          return true;
-        }
-        return latestByTemplate.get(task.recurringTemplateId)?.id === task.id;
-      });
+      return keepLatestTerminalPerTemplate(tasks);
     }),
 
   getById: authedProcedure.input(z.object({ taskId: z.cuid() })).query(async ({ ctx, input }) => {
@@ -204,7 +188,5 @@ export const taskRouter = createTRPCRouter({
 
   snoozeToNextMonday: authedProcedure
     .input(z.object({ taskId: z.cuid() }))
-    .mutation(({ ctx, input }) =>
-      executeSnooze(ctx, input.taskId, (_dueDate, tz) => computeNextMondayDueDate(tz)),
-    ),
+    .mutation(({ ctx, input }) => executeSnooze(ctx, input.taskId, (_dueDate, tz) => computeNextMondayDueDate(tz))),
 });

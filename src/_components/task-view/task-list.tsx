@@ -10,7 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTaskColumns } from "@/hooks/use-task-columns";
-import { parseTaskStatus } from "@/lib/task-utils";
+import type { TaskStatus } from "@/generated/prisma/enums";
+import { TERMINAL_TASK_STATUSES, parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { KanbanSquareIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -37,14 +38,15 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
   const { mutate: updateTaskStatus, isPending: isUpdatingTaskStatus } = trpc.task.updateStatus.useMutation({
     onSuccess: (_data, variables) => {
       toast.success(t("statusUpdatedToast", { status: parseTaskStatus(variables.newStatus) }));
-      trpcUtils.task.getAll.invalidate();
       trpcUtils.category.getAll.invalidate();
     },
     onMutate: async ({ taskId, newStatus }) => {
       await trpcUtils.task.getAll.cancel({ categoryId: activeCategoryId });
       const taskCache = trpcUtils.task.getAll.getData({ categoryId: activeCategoryId });
+      // Mirror the server: terminal statuses stamp completedAt, active statuses clear it.
+      const completedAt = (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(newStatus) ? new Date() : null;
       trpcUtils.task.getAll.setData({ categoryId: activeCategoryId }, (oldTasks) => {
-        return oldTasks?.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task));
+        return oldTasks?.map((task) => (task.id === taskId ? { ...task, status: newStatus, completedAt } : task));
       });
       return taskCache;
     },

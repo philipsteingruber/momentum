@@ -7,6 +7,7 @@ import {
   groupTasksForDigest,
   groupTasksByStatus,
   isOverdue,
+  keepLatestTerminalPerTemplate,
   parseTaskStatus,
 } from "./task-utils";
 
@@ -146,6 +147,82 @@ describe("groupTasksByStatus", () => {
     const result = groupTasksByStatus([cancelledOld, activeNew], TZ);
 
     expect(result[TaskStatus.CANCELLED]).not.toContain(cancelledOld);
+  });
+
+  it("shows only the newest completed instance after the active instance of a recurring template is completed", () => {
+    const templateId = "c_template_4";
+    const completedOld = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2024-06-14T00:00:00Z"),
+    });
+    const justCompleted = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2024-06-15T00:00:00Z"),
+    });
+
+    const result = groupTasksByStatus([completedOld, justCompleted], TZ);
+
+    expect(result[TaskStatus.COMPLETED]).toEqual([justCompleted]);
+  });
+});
+
+// ─── keepLatestTerminalPerTemplate ───────────────────────────────────────────
+
+describe("keepLatestTerminalPerTemplate", () => {
+  const templateId = "c_template_latest";
+
+  it("keeps only the most recently created terminal instance of a recurring template", () => {
+    const older = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2024-06-01"),
+    });
+    const newer = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2024-06-02"),
+    });
+
+    expect(keepLatestTerminalPerTemplate([older, newer])).toEqual([newer]);
+  });
+
+  it("treats completed and cancelled instances of the same template as one group", () => {
+    const completedOlder = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2024-06-01"),
+    });
+    const cancelledNewer = createMockTask({
+      status: TaskStatus.CANCELLED,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2024-06-02"),
+    });
+
+    expect(keepLatestTerminalPerTemplate([completedOlder, cancelledNewer])).toEqual([cancelledNewer]);
+  });
+
+  it("never removes active instances of a recurring template", () => {
+    const completed = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2024-06-01"),
+    });
+    const pendingOlder = createMockTask({
+      status: TaskStatus.PENDING,
+      recurringTemplateId: templateId,
+      createdAt: new Date("2023-01-01"),
+    });
+
+    expect(keepLatestTerminalPerTemplate([completed, pendingOlder])).toContain(pendingOlder);
+  });
+
+  it("keeps every terminal non-recurring task", () => {
+    const first = createMockTask({ status: TaskStatus.COMPLETED });
+    const second = createMockTask({ status: TaskStatus.COMPLETED });
+
+    expect(keepLatestTerminalPerTemplate([first, second])).toEqual([first, second]);
   });
 });
 

@@ -54,6 +54,8 @@ export async function applyTaskStatusChange(
             externalContact: template.externalContact,
             link: template.link,
             reminderTime: template.reminderTime,
+            // Today's reminder already went out for this cycle; don't send it again for the next session.
+            reminderSentAt: existing.reminderSentAt,
             categoryId: template.categoryId,
             status: TaskStatus.PENDING,
             dueDate: existing.dueDate,

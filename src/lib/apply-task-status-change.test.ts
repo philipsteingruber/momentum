@@ -40,6 +40,20 @@ describe("applyTaskStatusChange", () => {
     });
   });
 
+  it("carries the reminder-sent stamp to the spawned session", async () => {
+    const reminderSentAt = new Date("2026-11-18T07:00:00Z");
+    const task = withTemplate({ sessionIndex: 1, status: TaskStatus.PENDING, reminderSentAt });
+    tx.task.findFirst.mockResolvedValue(task);
+    tx.task.update.mockResolvedValue({ ...task, status: TaskStatus.COMPLETED });
+    tx.task.count.mockResolvedValue(0);
+
+    await applyTaskStatusChange(tx, { taskId: task.id, userId: task.userId, newStatus: TaskStatus.COMPLETED });
+
+    expect(tx.task.createMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: [expect.objectContaining({ reminderSentAt })] }),
+    );
+  });
+
   it("spawns no session when completing a session of an ended cycle", async () => {
     const task = withTemplate({ sessionIndex: 1, status: TaskStatus.PENDING });
     tx.task.findFirst.mockResolvedValue(task);

@@ -60,7 +60,7 @@ export const keepLatestTerminalPerTemplate = <
   );
 };
 
-export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
+export const groupTasksByStatus = <T extends Task>(tasks: T[], timezone: string) => {
   const tasksByGroup = keepLatestTerminalPerTemplate(tasks).reduce(
     (groups, task) => {
       groups[task.status].push(task);
@@ -68,11 +68,11 @@ export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
     },
     { PENDING: [], IN_PROGRESS: [], BLOCKED: [], COMPLETED: [], CANCELLED: [], OVERDUE: [], SKIPPED: [] } as Record<
       TaskStatus | typeof OVERDUE_STATUS,
-      Task[]
+      T[]
     >,
   );
 
-  const cycleKey = (t: Task) => `${t.recurringTemplateId}:${t.cycleStart?.getTime() ?? "none"}`;
+  const cycleKey = (t: T) => `${t.recurringTemplateId}:${t.cycleStart?.getTime() ?? "none"}`;
   const activeTasks = tasks.filter(
     (t) => t.recurringTemplateId && (ACTIVE_TASK_STATUSES as readonly TaskStatus[]).includes(t.status),
   );
@@ -102,7 +102,7 @@ export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
   return tasksByGroup;
 };
 
-export const sortTasksForKanban = (tasks: Task[], status: TaskStatus | typeof OVERDUE_STATUS): Task[] => {
+export const sortTasksForKanban = <T extends Task>(tasks: T[], status: TaskStatus | typeof OVERDUE_STATUS): T[] => {
   if (status === TaskStatus.COMPLETED || status === TaskStatus.CANCELLED) {
     return [...tasks].sort((a, b) => {
       const aTime = a.completedAt?.getTime() ?? 0;

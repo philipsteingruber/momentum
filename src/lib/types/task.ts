@@ -1,3 +1,5 @@
 import type { Tag, Task } from "@/generated/prisma/client";
 
-export type TaskWithTags = Task & { tags: Tag[] };
+export type TaskWithSessionInfo = Task & { recurringTemplate?: { timesPerCycle: number } | null };
+
+export type TaskWithTags = TaskWithSessionInfo & { tags: Tag[] };

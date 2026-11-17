@@ -47,7 +47,14 @@ export const recurringTemplateRouter = createTRPCRouter({
       },
       orderBy: { dueDate: "desc" },
       take: 10,
-      select: { id: true, status: true, dueDate: true, completedAt: true, _count: { select: { notes: true } } },
+      select: {
+        id: true,
+        status: true,
+        sessionIndex: true,
+        dueDate: true,
+        completedAt: true,
+        _count: { select: { notes: true } },
+      },
     });
 
     return tasks.map(({ _count, ...task }) => ({

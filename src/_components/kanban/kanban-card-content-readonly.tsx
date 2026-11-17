@@ -1,14 +1,15 @@
+import { SessionBadge } from "@/_components/session-badge";
 import { Badge } from "@/components/ui/badge";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
+import type { TaskWithSessionInfo } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, LinkIcon, UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
-export const KanbanCardContentReadonly = ({ task, grantorId }: { task: Task; grantorId: string }) => {
+export const KanbanCardContentReadonly = ({ task, grantorId }: { task: TaskWithSessionInfo; grantorId: string }) => {
   const router = useRouter();
   const { fmtRelative, isOverdue } = useFormatInUserTz();
   const t = useTranslations("KanbanBoard");
@@ -25,7 +26,12 @@ export const KanbanCardContentReadonly = ({ task, grantorId }: { task: Task; gra
         <CardDescription className="line-clamp-2 text-sm">{task.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-y-2">
-        {task.recurringTemplateId && <Badge>{t("recurring")}</Badge>}
+        {task.recurringTemplateId && (
+          <div className="flex items-center gap-x-2">
+            <Badge>{t("recurring")}</Badge>
+            <SessionBadge task={task} timesPerCycle={task.recurringTemplate?.timesPerCycle ?? 1} />
+          </div>
+        )}
         {task.dueDate && (
           <div className="flex items-center gap-x-2">
             <CalendarIcon className="size-4" />

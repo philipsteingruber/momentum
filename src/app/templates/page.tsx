@@ -44,7 +44,11 @@ const Page = () => {
                 <CollapsibleListItem key={template.id} label={template.title}>
                   <>
                     <UpdateTemplateForm template={template} categories={categories ?? []} />
-                    <TemplateHistory templateId={template.id} snoozeCount={template.snoozeCount} />
+                    <TemplateHistory
+                      templateId={template.id}
+                      snoozeCount={template.snoozeCount}
+                      timesPerCycle={template.timesPerCycle}
+                    />
                   </>
                 </CollapsibleListItem>
               ))

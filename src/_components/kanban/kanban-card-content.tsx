@@ -1,14 +1,16 @@
+import { SessionBadge } from "@/_components/session-badge";
 import { Badge } from "@/components/ui/badge";
 import { CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
+import { isOptimisticPlaceholderId } from "@/lib/recurring-sessions";
+import type { TaskWithSessionInfo } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, LinkIcon, UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
-export const KanbanCardContent = ({ task }: { task: Task }) => {
+export const KanbanCardContent = ({ task }: { task: TaskWithSessionInfo }) => {
   const router = useRouter();
   const { fmtRelative, isOverdue } = useFormatInUserTz();
   const t = useTranslations("KanbanBoard");
@@ -17,7 +19,7 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
     <>
       <CardHeader>
         <CardTitle
-          onClick={() => router.push(`/task/${task.id}`)}
+          onClick={() => !isOptimisticPlaceholderId(task.id) && router.push(`/task/${task.id}`)}
           onPointerDown={(e) => e.stopPropagation()}
           className="line-clamp-1 cursor-pointer text-sm underline decoration-dashed decoration-1 hover:decoration-solid"
         >
@@ -27,13 +29,16 @@ export const KanbanCardContent = ({ task }: { task: Task }) => {
       </CardHeader>
       <CardContent className="flex flex-col gap-y-2">
         {task.recurringTemplateId && (
-          <Badge
-            onClick={() => router.push("/templates")}
-            onPointerDown={(e) => e.stopPropagation()}
-            className="hover:opacity-80"
-          >
-            {t("recurring")}
-          </Badge>
+          <div className="flex items-center gap-x-2">
+            <Badge
+              onClick={() => router.push("/templates")}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="hover:opacity-80"
+            >
+              {t("recurring")}
+            </Badge>
+            <SessionBadge task={task} timesPerCycle={task.recurringTemplate?.timesPerCycle ?? 1} />
+          </div>
         )}
         {task.dueDate && (
           <div className="flex items-center gap-x-2">

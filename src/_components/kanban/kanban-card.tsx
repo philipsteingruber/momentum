@@ -1,14 +1,19 @@
 import { Card } from "@/components/ui/card";
-import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
+import { isOptimisticPlaceholderId } from "@/lib/recurring-sessions";
+import type { TaskWithSessionInfo } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
 import { KanbanCardContent } from "./kanban-card-content";
 
-const KanbanCard = ({ task }: { task: Task }) => {
-  const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({ id: task.id });
+const KanbanCard = ({ task }: { task: TaskWithSessionInfo }) => {
+  const isPlaceholder = isOptimisticPlaceholderId(task.id);
+  const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    disabled: isPlaceholder,
+  });
   const { isOverdue } = useFormatInUserTz();
 
   return (
@@ -23,6 +28,7 @@ const KanbanCard = ({ task }: { task: Task }) => {
         className={cn(
           "border-primary h-[200px] w-full border",
           isDragging ? "opacity-40" : "opacity-100",
+          isPlaceholder && "opacity-60",
           task.dueDate &&
             isOverdue(task.dueDate) &&
             task.status !== TaskStatus.CANCELLED &&

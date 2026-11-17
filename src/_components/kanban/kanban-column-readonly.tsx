@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
-import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
 import { useFormatInUserTz } from "@/hooks/use-format-in-user-tz";
+import type { TaskWithSessionInfo } from "@/lib/types/task";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { KanbanCardContentReadonly } from "./kanban-card-content-readonly";
@@ -13,7 +13,7 @@ const KanbanColumnReadonly = ({
   isPending,
   grantorId,
 }: {
-  tasks: Task[];
+  tasks: TaskWithSessionInfo[];
   status: TaskStatus;
   isPending: boolean;
   grantorId: string;

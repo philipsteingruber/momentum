@@ -1,3 +1,4 @@
+import { SessionBadge } from "@/_components/session-badge";
 import { StatusBadge } from "@/_components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -63,6 +64,12 @@ export function useTaskColumns() {
             {t("titleHeader")}
             <ArrowUpDownIcon className="ml-2 size-4" />
           </Button>
+        ),
+        cell: ({ row }) => (
+          <div className="flex items-center gap-x-2">
+            <span>{row.original.title}</span>
+            <SessionBadge task={row.original} timesPerCycle={row.original.recurringTemplate?.timesPerCycle ?? 1} />
+          </div>
         ),
       },
       {

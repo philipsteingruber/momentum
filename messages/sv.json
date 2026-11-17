@@ -216,7 +216,8 @@
     "snoozeCount": "Uppskjuten {count, plural, one {# gång} other {# gånger}}",
     "hasNotes": "Anteckningar",
     "onTime": "I tid",
-    "late": "Försenad"
+    "late": "Försenad",
+    "session": "Pass {index}/{total}"
   },
   "EmptyCard": {
     "default": "Inga resultat hittades."

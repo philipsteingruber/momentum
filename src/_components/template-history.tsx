@@ -21,7 +21,15 @@ const historyBadgeVariant = (status: TaskStatus): HistoryBadgeVariant => {
 const onTimeBadgeVariant = (isOnTime: boolean): "completed" | "destructive" =>
   isOnTime ? "completed" : "destructive";
 
-export const TemplateHistory = ({ templateId, snoozeCount }: { templateId: string; snoozeCount: number }) => {
+export const TemplateHistory = ({
+  templateId,
+  snoozeCount,
+  timesPerCycle,
+}: {
+  templateId: string;
+  snoozeCount: number;
+  timesPerCycle: number;
+}) => {
   const t = useTranslations("TemplateHistory");
   const tStatus = useTranslations("TaskStatus");
   const { fmt } = useFormatInUserTz();
@@ -48,6 +56,9 @@ export const TemplateHistory = ({ templateId, snoozeCount }: { templateId: strin
               {entry.dueDate ? fmt(entry.dueDate, "PPP") : "—"}
             </Link>
             <div className="flex items-center gap-x-2">
+              {timesPerCycle > 1 && entry.sessionIndex !== null && (
+                <Badge variant="secondary">{t("session", { index: entry.sessionIndex, total: timesPerCycle })}</Badge>
+              )}
               <Badge variant="secondary" className={cn(!entry.hasNotes && "invisible")}>
                 {t("hasNotes")}
               </Badge>

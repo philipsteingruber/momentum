@@ -285,6 +285,7 @@ export const sharedAccessRouter = createTRPCRouter({
         include: {
           notes: true,
           tags: true,
+          recurringTemplate: { select: { timesPerCycle: true } },
         },
         orderBy: { createdAt: "asc" },
       });

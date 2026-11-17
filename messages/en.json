@@ -216,7 +216,8 @@
     "snoozeCount": "Snoozed {count, plural, one {# time} other {# times}}",
     "hasNotes": "Notes",
     "onTime": "On time",
-    "late": "Late"
+    "late": "Late",
+    "session": "Session {index}/{total}"
   },
   "EmptyCard": {
     "default": "No items found."

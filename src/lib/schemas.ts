@@ -1,4 +1,5 @@
 import { RecurrenceType } from "@/generated/prisma/enums";
+import { MAX_TIMES_PER_CYCLE } from "@/lib/recurring-sessions";
 import { isBefore, startOfDay } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import z from "zod";
@@ -21,6 +22,7 @@ export type RecurrenceSchemaMessages = {
   recurrenceInvalidCombination: string;
   reminderTimeInvalid: string;
   reminderTimeRequiresDaily: string;
+  timesPerCycleInvalid: string;
 };
 
 function makeTaskBaseSchema(msgs?: Partial<TaskSchemaMessages>) {
@@ -88,6 +90,11 @@ function makeBaseRecurringTemplateSchema(msgs?: Partial<TaskSchemaMessages & Rec
         .string()
         .regex(/^([01]\d|2[0-3]):([0-5]\d)$/, msgs?.reminderTimeInvalid ?? "Must be a valid time (HH:mm)")
         .nullable()
+        .optional(),
+      timesPerCycle: z
+        .int(msgs?.timesPerCycleInvalid ?? "Must be a whole number between 1 and 10")
+        .min(1, msgs?.timesPerCycleInvalid ?? "Must be a whole number between 1 and 10")
+        .max(MAX_TIMES_PER_CYCLE, msgs?.timesPerCycleInvalid ?? "Must be a whole number between 1 and 10")
         .optional(),
     })
     .omit({ dueDate: true, timezone: true });

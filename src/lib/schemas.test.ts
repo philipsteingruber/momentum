@@ -1,5 +1,6 @@
 import { RecurrenceType } from "@/generated/prisma/enums";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { MAX_TIMES_PER_CYCLE } from "./recurring-sessions";
 import { makeCategorySchema, makeCreateRecurringTemplateSchema, makeCreateTaskSchema } from "./schemas";
 
 // A syntactically valid CUID for use as a required categoryId
@@ -183,5 +184,26 @@ describe("makeCreateRecurringTemplateSchema", () => {
       const messages = result.error.issues.map((i) => i.message);
       expect(messages).toContain("Custom day error");
     }
+  });
+});
+
+describe("makeCreateRecurringTemplateSchema timesPerCycle", () => {
+  const schema = makeCreateRecurringTemplateSchema();
+  const base = { title: "Brush teeth", categoryId: VALID_CUID, recurrenceType: RecurrenceType.DAILY };
+
+  it("accepts a whole number of times per cycle within the allowed range", () => {
+    expect(schema.safeParse({ ...base, timesPerCycle: 2 }).success).toBe(true);
+  });
+
+  it("rejects zero times per cycle", () => {
+    expect(schema.safeParse({ ...base, timesPerCycle: 0 }).success).toBe(false);
+  });
+
+  it("rejects more times per cycle than the maximum", () => {
+    expect(schema.safeParse({ ...base, timesPerCycle: MAX_TIMES_PER_CYCLE + 1 }).success).toBe(false);
+  });
+
+  it("rejects fractional times per cycle", () => {
+    expect(schema.safeParse({ ...base, timesPerCycle: 1.5 }).success).toBe(false);
   });
 });

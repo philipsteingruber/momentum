@@ -167,6 +167,7 @@
     "dayOfWeekPlaceholder": "Välj veckodag",
     "reminderTimeLabel": "Påminnelsetid (valfritt)",
     "clearReminderTimeLabel": "Rensa påminnelsetid",
+    "timesPerCycleLabel": "Gånger per cykel",
     "categoryLabel": "Kategori",
     "categoryPlaceholder": "Välj en Kategori",
     "externalContactLabel": "Extern Part",
@@ -189,6 +190,7 @@
     "dayOfWeekPlaceholder": "Välj veckodag",
     "reminderTimeLabel": "Påminnelsetid (valfritt)",
     "clearReminderTimeLabel": "Rensa påminnelsetid",
+    "timesPerCycleLabel": "Gånger per cykel",
     "categoryLabel": "Kategori",
     "categoryPlaceholder": "Välj en Kategori",
     "externalContactLabel": "Extern Part",
@@ -250,7 +252,8 @@
     "recurrenceDayRequired": "Antingen veckodag eller månadsdag måste anges",
     "recurrenceInvalidCombination": "Ogiltig kombination av upprepningstyp och veckodag/månadsdag",
     "reminderTimeInvalid": "Måste vara ett giltigt klockslag (HH:mm)",
-    "reminderTimeRequiresDaily": "Påminnelsetid stöds endast för dagliga uppgifter"
+    "reminderTimeRequiresDaily": "Påminnelsetid stöds endast för dagliga uppgifter",
+    "timesPerCycleInvalid": "Måste vara ett heltal mellan 1 och 10"
   },
   "SharedAccessSettings": {
     "title": "Delad åtkomst",

@@ -29,6 +29,7 @@ export const UpdateTemplateForm = ({
     linkInvalid: tSchemas("linkInvalid"),
     reminderTimeInvalid: tSchemas("reminderTimeInvalid"),
     reminderTimeRequiresDaily: tSchemas("reminderTimeRequiresDaily"),
+    timesPerCycleInvalid: tSchemas("timesPerCycleInvalid"),
   });
   const trpcUtils = trpc.useUtils();
 
@@ -62,6 +63,7 @@ export const UpdateTemplateForm = ({
         externalContact: template.externalContact ?? "",
         link: template.link ?? "",
         reminderTime: template.reminderTime ?? undefined,
+        timesPerCycle: template.timesPerCycle,
       },
     },
     mode: "all",
@@ -94,6 +96,7 @@ export const UpdateTemplateForm = ({
           dayOfMonthPlaceholder: t("dayOfMonthPlaceholder"),
           dayOfWeekPlaceholder: t("dayOfWeekPlaceholder"),
           reminderTimeLabel: t("reminderTimeLabel"),
+          timesPerCycleLabel: t("timesPerCycleLabel"),
           clearReminderTimeLabel: t("clearReminderTimeLabel"),
           categoryLabel: t("categoryLabel"),
           categoryPlaceholder: t("categoryPlaceholder"),

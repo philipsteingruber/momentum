@@ -167,6 +167,7 @@
     "dayOfWeekPlaceholder": "Choose day of the week",
     "reminderTimeLabel": "Reminder Time (optional)",
     "clearReminderTimeLabel": "Clear reminder time",
+    "timesPerCycleLabel": "Times per cycle",
     "categoryLabel": "Category",
     "categoryPlaceholder": "Select a Category",
     "externalContactLabel": "External Contact",
@@ -189,6 +190,7 @@
     "dayOfWeekPlaceholder": "Choose day of the week",
     "reminderTimeLabel": "Reminder Time (optional)",
     "clearReminderTimeLabel": "Clear reminder time",
+    "timesPerCycleLabel": "Times per cycle",
     "categoryLabel": "Category",
     "categoryPlaceholder": "Select a Category",
     "externalContactLabel": "External Contact",
@@ -250,7 +252,8 @@
     "recurrenceDayRequired": "Either Day of Week or Day of Month must be supplied",
     "recurrenceInvalidCombination": "Invalid combination of Recurrence Type and DayOfWeek/DayOfMonth",
     "reminderTimeInvalid": "Must be a valid time (HH:mm)",
-    "reminderTimeRequiresDaily": "Reminder time is only supported for daily templates"
+    "reminderTimeRequiresDaily": "Reminder time is only supported for daily templates",
+    "timesPerCycleInvalid": "Must be a whole number between 1 and 10"
   },
   "SharedAccessSettings": {
     "title": "Shared Access",

@@ -34,6 +34,7 @@ const getDefaultValues = (defaultCategoryId?: string) => ({
   link: "",
   recurrenceType: RecurrenceType.DAILY,
   reminderTime: undefined,
+  timesPerCycle: 1,
 });
 
 const CreateTemplateDialog = ({
@@ -54,6 +55,7 @@ const CreateTemplateDialog = ({
     recurrenceInvalidCombination: tSchemas("recurrenceInvalidCombination"),
     reminderTimeInvalid: tSchemas("reminderTimeInvalid"),
     reminderTimeRequiresDaily: tSchemas("reminderTimeRequiresDaily"),
+    timesPerCycleInvalid: tSchemas("timesPerCycleInvalid"),
   });
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -121,6 +123,7 @@ const CreateTemplateDialog = ({
               dayOfWeekPlaceholder: t("dayOfWeekPlaceholder"),
               reminderTimeLabel: t("reminderTimeLabel"),
               clearReminderTimeLabel: t("clearReminderTimeLabel"),
+              timesPerCycleLabel: t("timesPerCycleLabel"),
               categoryLabel: t("categoryLabel"),
               categoryPlaceholder: t("categoryPlaceholder"),
               externalContactLabel: t("externalContactLabel"),

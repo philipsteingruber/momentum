@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import type { Category } from "@/generated/prisma/client";
 import { RecurrenceType } from "@/generated/prisma/enums";
+import { MAX_TIMES_PER_CYCLE } from "@/lib/recurring-sessions";
 import { DAY_OF_MONTH_OPTIONS, DAY_OF_WEEK_OPTIONS } from "@/lib/recurring-template-utils";
 import { capitaliseFirstCharacter } from "@/lib/task-utils";
 import { XIcon } from "lucide-react";
@@ -26,6 +27,7 @@ interface TemplateFieldLabels {
   dayOfWeekPlaceholder: string;
   reminderTimeLabel: string;
   clearReminderTimeLabel: string;
+  timesPerCycleLabel: string;
   categoryLabel: string;
   categoryPlaceholder: string;
   externalContactLabel: string;
@@ -219,6 +221,27 @@ export function TemplateFormFields<T extends FieldValues>({
             />
           )}
         </div>
+        <Controller
+          name={field("timesPerCycle")}
+          control={control}
+          render={({ field: f, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel htmlFor={id("timesPerCycle")}>{labels.timesPerCycleLabel}</FieldLabel>
+              <Input
+                {...f}
+                id={id("timesPerCycle")}
+                type="number"
+                min={1}
+                max={MAX_TIMES_PER_CYCLE}
+                step={1}
+                value={(f.value as number | undefined) ?? 1}
+                onChange={(e) => f.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
+                aria-invalid={fieldState.invalid}
+              />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
         <Controller
           name={field("categoryId")}
           control={control}

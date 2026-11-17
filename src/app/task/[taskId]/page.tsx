@@ -49,13 +49,28 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
   const { data: task, isPending: isLoadingTask, isError, error } = trpc.task.getById.useQuery({ taskId });
   const { data: categories } = trpc.category.getAll.useQuery();
 
-  const { mutate: createNote, isPending: isCreatingNote } = trpc.note.create.useMutation({
+  const {
+    mutate: createNote,
+    isPending: isCreatingNote,
+    variables: pendingNote,
+  } = trpc.note.create.useMutation({
+    // Returning the refetch keeps the mutation pending until the real note is in the cache,
+    // so the optimistic row hands over to it without flickering.
     onSuccess: () => {
       toast.success(t("noteCreatedToast"));
-      setNoteValue("");
-      trpcUtils.task.getById.invalidate({ taskId });
+      return trpcUtils.task.getById.invalidate({ taskId });
+    },
+    onError: (_error, variables) => {
+      toast.error(t("noteCreateFailedToast"));
+      // Give the text back unless the user has already started typing a new note.
+      setNoteValue((current) => (current === "" ? variables.content : current));
     },
   });
+
+  const handleAddNote = () => {
+    createNote({ content: noteValue, taskId });
+    setNoteValue("");
+  };
   const { mutate: updateTaskStatus, isPending: isUpdatingStatus } = trpc.task.updateStatus.useMutation({
     onSuccess: (data) => {
       toast.success(t("statusUpdatedToast", { status: parseTaskStatus(data.status) }));
@@ -85,7 +100,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
     },
   });
 
-  const isMutationRunning = isCreatingNote || isDeletingTask || isSnoozingTask || isSnoozingToNextMonday;
+  const isMutationRunning = isDeletingTask || isSnoozingTask || isSnoozingToNextMonday;
   const [noteValue, setNoteValue] = useState<string>("");
   const { handleOpenChange, isOpen, setIsOpen } = useDialogState({ preventClose: isDeletingTask });
   const { fmt, fmtRelative, timezone } = useFormatInUserTz();
@@ -212,14 +227,24 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
                 onChange={(e) => setNoteValue(e.target.value)}
                 className="flex-1 resize-none"
               />
+              {/* Disabled while a note is saving: useMutation only tracks the latest call's variables. */}
               <Button
-                disabled={isMutationRunning || noteValue.trim() === ""}
-                onClick={() => createNote({ content: noteValue, taskId })}
+                disabled={isMutationRunning || isCreatingNote || noteValue.trim() === ""}
+                onClick={handleAddNote}
                 className="w-40"
               >
-                {isCreatingNote ? <Spinner /> : t("addNote")}
+                {t("addNote")}
               </Button>
             </div>
+            {isCreatingNote && pendingNote && (
+              <div className="flex items-start gap-x-4 rounded border p-2 opacity-50" aria-busy="true">
+                <Textarea value={pendingNote.content} className="flex-1 resize-none" readOnly />
+                <div className="flex w-40 items-center gap-x-2">
+                  <Spinner />
+                  <span className="truncate">{t("savingNote")}</span>
+                </div>
+              </div>
+            )}
             {task.notes.map((note) => (
               <div key={note.id} className="flex items-start gap-x-4 rounded border p-2">
                 <Textarea value={note.content} className="flex-1 resize-none" readOnly />

@@ -80,6 +80,8 @@
     "snooze7Days": "Skjut upp 7 dagar",
     "addNote": "Lägg till Anteckning",
     "noteCreatedToast": "Anteckning skapad",
+    "noteCreateFailedToast": "Kunde inte skapa anteckningen",
+    "savingNote": "Sparar…",
     "statusUpdatedToast": "Status uppdaterad till {status}",
     "deletedToast": "Uppgift borttagen",
     "snoozedToast": "Uppgift uppskjuten {days} dag(ar)",

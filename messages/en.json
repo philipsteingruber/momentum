@@ -80,6 +80,8 @@
     "snooze7Days": "Snooze 7 days",
     "addNote": "Add Note",
     "noteCreatedToast": "Note created",
+    "noteCreateFailedToast": "Failed to create note",
+    "savingNote": "Saving…",
     "statusUpdatedToast": "Updated task status to {status}",
     "deletedToast": "Task successfully deleted",
     "snoozedToast": "Task successfully snoozed for {days} day(s)",

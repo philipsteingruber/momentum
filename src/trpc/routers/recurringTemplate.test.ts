@@ -38,7 +38,7 @@ beforeEach(() => mockReset(mockDb));
 
 describe("recurringTemplate.update", () => {
   it("regenerates the open task without failing when the cycle already has its first session", async () => {
-    const template = createMockRecurringTemplate({ recurrenceType: "WEEKLY", dayOfWeek: 5 });
+    const template = createMockRecurringTemplate({ recurrenceType: "WEEKLY", dayOfWeek: 3 });
     mockDb.recurringTemplate.findUnique.mockResolvedValue(template);
     mockDb.$transaction.mockImplementation(((fn: (tx: PrismaClient) => Promise<unknown>) =>
       fn(mockDb as unknown as PrismaClient)) as never);
@@ -55,6 +55,28 @@ describe("recurringTemplate.update", () => {
       expect.objectContaining({
         skipDuplicates: true,
         data: [expect.objectContaining({ sessionIndex: 1 })],
+      }),
+    );
+  });
+  it("keeps the open session when the template is saved without a schedule change", async () => {
+    const template = createMockRecurringTemplate({ recurrenceType: "DAILY", dayOfWeek: null });
+    mockDb.recurringTemplate.findUnique.mockResolvedValue(template);
+    mockDb.$transaction.mockImplementation(((fn: (tx: PrismaClient) => Promise<unknown>) =>
+      fn(mockDb as unknown as PrismaClient)) as never);
+    mockDb.task.updateMany.mockResolvedValue({ count: 1 });
+    mockDb.recurringTemplate.update.mockResolvedValue(template);
+
+    await createCaller(makeCtx()).update({
+      templateId: template.id,
+      data: { recurrenceType: "DAILY", title: "Renamed" },
+    });
+
+    expect(mockDb.task.createMany).not.toHaveBeenCalled();
+    expect(mockDb.task.updateMany).toHaveBeenCalledTimes(1);
+    expect(mockDb.task.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: { in: expect.arrayContaining(["PENDING"]) } }),
+        data: { title: "Renamed" },
       }),
     );
   });

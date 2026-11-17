@@ -117,9 +117,9 @@ export const recurringTemplateRouter = createTRPCRouter({
 
     try {
       const scheduleChanged =
-        input.data.recurrenceType !== undefined ||
-        input.data.dayOfWeek !== undefined ||
-        input.data.dayOfMonth !== undefined;
+        (input.data.recurrenceType !== undefined && input.data.recurrenceType !== existing.recurrenceType) ||
+        (input.data.dayOfWeek !== undefined && input.data.dayOfWeek !== existing.dayOfWeek) ||
+        (input.data.dayOfMonth !== undefined && input.data.dayOfMonth !== existing.dayOfMonth);
 
       let nextGenerateOn = existing.nextGenerateOn;
       let newTaskDueDate: Date | null = null;
@@ -163,15 +163,27 @@ export const recurringTemplateRouter = createTRPCRouter({
             ],
             skipDuplicates: true,
           });
-        } else if (reminderTimeProvided) {
-          await tx.task.updateMany({
-            where: {
-              recurringTemplateId: input.templateId,
-              userId: ctx.currentUser.id,
-              status: { in: [...ACTIVE_TASK_STATUSES] },
-            },
-            data: { reminderTime: input.data.reminderTime },
-          });
+        } else {
+          // Without a schedule change the open session stays; template edits just show on it.
+          const { title, description, externalContact, link, categoryId, reminderTime } = input.data;
+          const openTaskData = {
+            ...(title !== undefined && { title }),
+            ...(description !== undefined && { description }),
+            ...(externalContact !== undefined && { externalContact }),
+            ...(link !== undefined && { link }),
+            ...(categoryId !== undefined && { categoryId }),
+            ...(reminderTime !== undefined && { reminderTime }),
+          };
+          if (Object.keys(openTaskData).length > 0) {
+            await tx.task.updateMany({
+              where: {
+                recurringTemplateId: input.templateId,
+                userId: ctx.currentUser.id,
+                status: { in: [...ACTIVE_TASK_STATUSES] },
+              },
+              data: openTaskData,
+            });
+          }
         }
 
         return await tx.recurringTemplate.update({

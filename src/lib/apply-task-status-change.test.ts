@@ -21,6 +21,7 @@ describe("applyTaskStatusChange", () => {
     const task = withTemplate({ sessionIndex: 1, status: TaskStatus.PENDING });
     tx.task.findFirst.mockResolvedValue(task);
     tx.task.update.mockResolvedValue({ ...task, status: TaskStatus.COMPLETED });
+    tx.task.count.mockResolvedValue(0);
 
     await applyTaskStatusChange(tx, { taskId: task.id, userId: task.userId, newStatus: TaskStatus.COMPLETED });
 
@@ -37,6 +38,28 @@ describe("applyTaskStatusChange", () => {
       ],
       skipDuplicates: true,
     });
+  });
+
+  it("spawns no session when completing a session of an ended cycle", async () => {
+    const task = withTemplate({ sessionIndex: 1, status: TaskStatus.PENDING });
+    tx.task.findFirst.mockResolvedValue(task);
+    tx.task.update.mockResolvedValue({ ...task, status: TaskStatus.COMPLETED });
+    tx.task.count.mockResolvedValue(1);
+
+    await applyTaskStatusChange(tx, { taskId: task.id, userId: task.userId, newStatus: TaskStatus.COMPLETED });
+
+    expect(tx.task.createMany).not.toHaveBeenCalled();
+  });
+
+  it("spawns nothing when the final session is completed", async () => {
+    const task = withTemplate({ sessionIndex: 2, status: TaskStatus.PENDING });
+    tx.task.findFirst.mockResolvedValue(task);
+    tx.task.update.mockResolvedValue({ ...task, status: TaskStatus.COMPLETED });
+    tx.task.count.mockResolvedValue(0);
+
+    await applyTaskStatusChange(tx, { taskId: task.id, userId: task.userId, newStatus: TaskStatus.COMPLETED });
+
+    expect(tx.task.createMany).not.toHaveBeenCalled();
   });
 
   it("deletes the open next session when a completed session is reopened", async () => {

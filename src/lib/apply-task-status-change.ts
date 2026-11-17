@@ -39,6 +39,11 @@ export async function applyTaskStatusChange(
 
   for (const action of planStatusChange(existing, timesPerCycle, newStatus)) {
     if (action.kind === "spawnNextSession") {
+      // A newer cycle already exists, so this cycle has ended and must not grow a new open session.
+      const newerCycleTasks = await tx.task.count({
+        where: { recurringTemplateId: template.id, cycleStart: { gt: action.cycleStart } },
+      });
+      if (newerCycleTasks > 0) continue;
       // skipDuplicates = ON CONFLICT DO NOTHING. A concurrent completion that already spawned this
       // session is a no-op instead of a P2002, which would abort the whole Postgres transaction.
       await tx.task.createMany({

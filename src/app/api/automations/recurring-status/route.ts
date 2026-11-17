@@ -116,7 +116,8 @@ export async function GET(req: NextRequest): Promise<Response> {
       tasks: {
         select: { status: true, cycleStart: true },
         // nulls last: detached (cycle-less) cancelled tasks must not push real cycles out of the window
-        orderBy: [{ cycleStart: { sort: "desc", nulls: "last" } }, { sessionIndex: "desc" }],
+        // dueDate keeps pre-backfill rows (cycleStart and sessionIndex both NULL) in a deterministic order
+        orderBy: [{ cycleStart: { sort: "desc", nulls: "last" } }, { sessionIndex: "desc" }, { dueDate: "desc" }],
         take: HISTORY_LOOKBACK * MAX_TIMES_PER_CYCLE,
       },
     },

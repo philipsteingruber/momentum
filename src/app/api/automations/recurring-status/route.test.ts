@@ -79,6 +79,20 @@ describe("GET /api/automations/recurring-status", () => {
     );
   });
 
+  it("orders cycle-less history by due date so pre-backfill tasks stay newest first", async () => {
+    mockDb.recurringTemplate.findMany.mockResolvedValue([]);
+    await GET(makeRequest());
+    expect(mockDb.recurringTemplate.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({
+          tasks: expect.objectContaining({
+            orderBy: [{ cycleStart: { sort: "desc", nulls: "last" } }, { sessionIndex: "desc" }, { dueDate: "desc" }],
+          }),
+        }),
+      }),
+    );
+  });
+
   it("reports completedThisCycle true when the newest instance is completed", async () => {
     mockDb.recurringTemplate.findMany.mockResolvedValue([
       template("t1", "Dishwasher", RecurrenceType.DAILY, [{ status: TaskStatus.COMPLETED }]),

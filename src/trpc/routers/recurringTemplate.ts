@@ -1,4 +1,5 @@
 import { TaskStatus } from "@/generated/prisma/enums";
+import { firstSessionFields } from "@/lib/recurring-sessions";
 import { computeNextDueDate, RecurrenceValidationError } from "@/lib/recurring-template-utils";
 import { addDays } from "date-fns";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
@@ -79,6 +80,7 @@ export const recurringTemplateRouter = createTRPCRouter({
           reminderTime: input.reminderTime,
           userId: ctx.currentUser.id,
           dueDate: firstDueDate,
+          ...firstSessionFields(firstDueDate),
           recurringTemplateId: template.id,
         },
       });
@@ -134,7 +136,7 @@ export const recurringTemplateRouter = createTRPCRouter({
               userId: ctx.currentUser.id,
               status: { in: [...ACTIVE_TASK_STATUSES] },
             },
-            data: { status: TaskStatus.CANCELLED },
+            data: { status: TaskStatus.CANCELLED, cycleStart: null, sessionIndex: null },
           });
           await tx.task.create({
             data: {
@@ -146,6 +148,7 @@ export const recurringTemplateRouter = createTRPCRouter({
               reminderTime: reminderTimeProvided ? input.data.reminderTime : existing.reminderTime,
               userId: ctx.currentUser.id,
               dueDate: newTaskDueDate,
+              ...firstSessionFields(newTaskDueDate),
               recurringTemplateId: input.templateId,
             },
           });

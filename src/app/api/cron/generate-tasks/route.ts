@@ -3,6 +3,7 @@ import { cronLog } from "@/lib/cron-logger";
 import { verifyCronAuth } from "@/lib/cron-utils";
 import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
+import { firstSessionFields } from "@/lib/recurring-sessions";
 import { computeDailyTaskDueDate, computeNextDueDate } from "@/lib/recurring-template-utils";
 import { ACTIVE_TASK_STATUSES } from "@/lib/task-utils";
 import { addDays, isBefore, startOfDay } from "date-fns";
@@ -148,6 +149,7 @@ export const handler = async (req: Request): Promise<Response> => {
                   description: template.description,
                   status: TaskStatus.PENDING,
                   dueDate: taskDueDate,
+                  ...firstSessionFields(taskDueDate),
                   externalContact: template.externalContact,
                   categoryId: template.categoryId,
                   recurringTemplateId: template.id,

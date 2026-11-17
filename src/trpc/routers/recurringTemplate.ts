@@ -45,7 +45,7 @@ export const recurringTemplateRouter = createTRPCRouter({
         userId: ctx.currentUser.id,
         status: { in: [TaskStatus.COMPLETED, TaskStatus.CANCELLED, TaskStatus.SKIPPED] },
       },
-      orderBy: { dueDate: "desc" },
+      orderBy: [{ dueDate: "desc" }, { sessionIndex: "desc" }],
       take: 10,
       select: {
         id: true,

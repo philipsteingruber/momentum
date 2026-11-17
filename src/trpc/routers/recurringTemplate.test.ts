@@ -81,3 +81,17 @@ describe("recurringTemplate.update", () => {
     );
   });
 });
+
+// ─── recurringTemplate.getHistory ─────────────────────────────────────────────
+
+describe("recurringTemplate.getHistory", () => {
+  it("orders sessions sharing a due date newest session first", async () => {
+    mockDb.task.findMany.mockResolvedValue([]);
+
+    await createCaller(makeCtx()).getHistory({ templateId: "cm0000000000000000000000a" });
+
+    expect(mockDb.task.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ orderBy: [{ dueDate: "desc" }, { sessionIndex: "desc" }] }),
+    );
+  });
+});

@@ -166,6 +166,47 @@ describe("groupTasksByStatus", () => {
 
     expect(result[TaskStatus.COMPLETED]).toEqual([justCompleted]);
   });
+
+  it("keeps a partly done cycle in Done while its next session is open", () => {
+    const cycleStart = new Date("2024-06-14T22:00:00Z");
+    const completedSession = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: "c_template_sessions",
+      cycleStart,
+      sessionIndex: 1,
+      createdAt: new Date("2024-06-15T07:00:00Z"),
+    });
+    const openSession = createMockTask({
+      status: TaskStatus.PENDING,
+      recurringTemplateId: "c_template_sessions",
+      cycleStart,
+      sessionIndex: 2,
+      createdAt: new Date("2024-06-15T07:05:00Z"),
+    });
+
+    const result = groupTasksByStatus([completedSession, openSession], TZ);
+
+    expect(result[TaskStatus.COMPLETED]).toEqual([completedSession]);
+  });
+
+  it("hides the previous cycle's completed session once a new cycle has started", () => {
+    const previous = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: "c_template_sessions",
+      cycleStart: new Date("2024-06-13T22:00:00Z"),
+      sessionIndex: 2,
+    });
+    const current = createMockTask({
+      status: TaskStatus.PENDING,
+      recurringTemplateId: "c_template_sessions",
+      cycleStart: new Date("2024-06-14T22:00:00Z"),
+      sessionIndex: 1,
+    });
+
+    const result = groupTasksByStatus([previous, current], TZ);
+
+    expect(result[TaskStatus.COMPLETED]).toEqual([]);
+  });
 });
 
 // ─── keepLatestTerminalPerTemplate ───────────────────────────────────────────
@@ -223,6 +264,26 @@ describe("keepLatestTerminalPerTemplate", () => {
     const second = createMockTask({ status: TaskStatus.COMPLETED });
 
     expect(keepLatestTerminalPerTemplate([first, second])).toEqual([first, second]);
+  });
+
+  it("keeps only the highest completed session of a cycle", () => {
+    const cycleStart = new Date("2024-06-14T22:00:00Z");
+    const first = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      cycleStart,
+      sessionIndex: 1,
+      createdAt: new Date("2024-06-15T07:00:00Z"),
+    });
+    const second = createMockTask({
+      status: TaskStatus.COMPLETED,
+      recurringTemplateId: templateId,
+      cycleStart,
+      sessionIndex: 2,
+      createdAt: new Date("2024-06-15T07:05:00Z"),
+    });
+
+    expect(keepLatestTerminalPerTemplate([first, second])).toEqual([second]);
   });
 });
 

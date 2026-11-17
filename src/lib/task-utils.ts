@@ -72,15 +72,21 @@ export const groupTasksByStatus = (tasks: Task[], timezone: string) => {
     >,
   );
 
-  const activeRecurringTemplateIds = new Set(
-    tasks
-      .filter((t) => t.recurringTemplateId && (ACTIVE_TASK_STATUSES as readonly TaskStatus[]).includes(t.status))
-      .map((t) => t.recurringTemplateId),
+  const cycleKey = (t: Task) => `${t.recurringTemplateId}:${t.cycleStart?.getTime() ?? "none"}`;
+  const activeTasks = tasks.filter(
+    (t) => t.recurringTemplateId && (ACTIVE_TASK_STATUSES as readonly TaskStatus[]).includes(t.status),
   );
+  const activeRecurringTemplateIds = new Set(activeTasks.map((t) => t.recurringTemplateId));
+  const activeCycleKeys = new Set(activeTasks.filter((t) => t.cycleStart).map(cycleKey));
 
+  // A finished instance is hidden once its template has moved on to a new cycle, but stays
+  // visible while a later session of the *same* cycle is still open (e.g. "1/2" in Done).
   for (const status of TERMINAL_TASK_STATUSES) {
     tasksByGroup[status] = tasksByGroup[status].filter(
-      (t) => !t.recurringTemplateId || !activeRecurringTemplateIds.has(t.recurringTemplateId),
+      (t) =>
+        !t.recurringTemplateId ||
+        !activeRecurringTemplateIds.has(t.recurringTemplateId) ||
+        (t.cycleStart !== null && activeCycleKeys.has(cycleKey(t))),
     );
   }
 

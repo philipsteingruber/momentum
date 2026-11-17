@@ -81,10 +81,13 @@ model Task {
     categoryId          String?
     recurringTemplate   RecurringTemplate? @relation(fields: [recurringTemplateId], references: [id], onDelete: SetNull)
     recurringTemplateId String?
+    cycleStart          DateTime?
+    sessionIndex        Int?
 
     @@index([userId, status])
     @@index([userId, dueDate])
     @@index([userId, recurringTemplateId, status])
+    @@unique([recurringTemplateId, cycleStart, sessionIndex])
 }
 
 enum RecurrenceType {
@@ -115,6 +118,7 @@ model RecurringTemplate {
     snoozeCount    Int            @default(0)
     pausedFrom     DateTime?
     pausedUntil    DateTime?
+    timesPerCycle  Int            @default(1)
 
     user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
     tasks      Task[]

@@ -1,4 +1,5 @@
 import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
+import { TaskNotFoundError, applyTaskStatusChange } from "@/lib/apply-task-status-change";
 import { computeNextMondayDueDate, computeSnoozeDueDate } from "@/lib/date-utils";
 import { createTaskSchema, updateTaskSchema } from "@/lib/schemas";
 import { TERMINAL_TASK_STATUSES, keepLatestTerminalPerTemplate } from "@/lib/task-utils";
@@ -145,24 +146,16 @@ export const taskRouter = createTRPCRouter({
   updateStatus: authedProcedure
     .input(z.object({ taskId: z.cuid(), newStatus: z.enum(TaskStatus) }))
     .mutation(async ({ ctx, input }) => {
-      const isTerminal = (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(input.newStatus);
-
       try {
-        const updatedTask = await ctx.db.task.update({
-          where: { id: input.taskId, userId: ctx.currentUser.id },
-          data: {
-            status: input.newStatus,
-            completedAt: isTerminal ? new Date() : null,
-          },
-        });
-
-        return updatedTask;
+        const { task } = await ctx.db.$transaction((tx) =>
+          applyTaskStatusChange(tx, { taskId: input.taskId, userId: ctx.currentUser.id, newStatus: input.newStatus }),
+        );
+        return task;
       } catch (err) {
-        if (err instanceof PrismaClientKnownRequestError && err.code === "P2025") {
+        if (err instanceof TaskNotFoundError) {
           throw new TRPCError({ code: "NOT_FOUND" });
-        } else {
-          throw err;
         }
+        throw err;
       }
     }),
 

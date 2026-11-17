@@ -1,7 +1,9 @@
 import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
+import { applyTaskStatusChange } from "@/lib/apply-task-status-change";
 import { computeSnoozeDueDate, endOfDayInTz } from "@/lib/date-utils";
 import { followUpInteraction, formatDigestEmbeds, sendDmToChannel } from "@/lib/discord";
 import { prisma } from "@/lib/prisma";
+import { appendSessionProgress } from "@/lib/recurring-sessions";
 import { groupTasksForDigest } from "@/lib/task-utils";
 import {
   InteractionResponseType,
@@ -113,15 +115,14 @@ const handleComplete = async (
     return;
   }
 
-  await prisma.task.update({
-    where: { id: taskId },
-    data: { status: TaskStatus.COMPLETED, completedAt: new Date() },
-  });
+  const { task: completed, timesPerCycle } = await prisma.$transaction((tx) =>
+    applyTaskStatusChange(tx, { taskId, userId, newStatus: TaskStatus.COMPLETED }),
+  );
 
   await followUpInteraction(APPLICATION_ID, token, {
     embeds: [
       {
-        description: `✅ Completed: **${task.title}**`,
+        description: `✅ Completed: **${appendSessionProgress(completed.title, completed, timesPerCycle)}**`,
         color: 0x22c55e,
       },
     ],

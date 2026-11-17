@@ -76,3 +76,17 @@ describe("task.getById", () => {
     );
   });
 });
+
+// ─── task.updateStatus ────────────────────────────────────────────────────────
+
+describe("task.updateStatus", () => {
+  it("throws NOT_FOUND when the task does not belong to the user", async () => {
+    mockDb.$transaction.mockImplementation(((fn: (tx: PrismaClient) => Promise<unknown>) =>
+      fn(mockDb as unknown as PrismaClient)) as never);
+    mockDb.task.findFirst.mockResolvedValue(null);
+
+    await expect(
+      createCaller(makeCtx()).updateStatus({ taskId: "cxxxxxxx00000000000000001", newStatus: "COMPLETED" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" } satisfies Partial<TRPCError>);
+  });
+});

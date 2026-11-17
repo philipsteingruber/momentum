@@ -32,6 +32,8 @@ export function groupIntoCycles(tasksNewestFirst: CycleTaskEntry[], timesPerCycl
 function cycleOutcome(sessionsNewestFirst: CycleTaskEntry[], timesPerCycle: number): TaskStatus {
   const completed = sessionsNewestFirst.filter((s) => s.status === TaskStatus.COMPLETED).length;
   if (completed >= timesPerCycle) return TaskStatus.COMPLETED;
+  // A cycle finished under a lower target (template later raised) stays completed.
+  if (completed > 0 && completed === sessionsNewestFirst.length) return TaskStatus.COMPLETED;
   if (sessionsNewestFirst.every((s) => s.status === TaskStatus.CANCELLED)) return TaskStatus.CANCELLED;
 
   const latest = sessionsNewestFirst[0].status;

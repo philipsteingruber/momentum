@@ -17,6 +17,10 @@ describe("groupIntoCycles", () => {
     expect(groupIntoCycles(history, 2)).toEqual([{ status: TaskStatus.COMPLETED }]);
   });
 
+  it("keeps a cycle completed under a lower target counted as complete", () => {
+    expect(groupIntoCycles([entry(TaskStatus.COMPLETED, day1)], 2)).toEqual([{ status: TaskStatus.COMPLETED }]);
+  });
+
   it("excludes a cycle whose sessions were all cancelled", () => {
     expect(groupIntoCycles([entry(TaskStatus.CANCELLED, day1)], 2)).toEqual([{ status: TaskStatus.CANCELLED }]);
   });
@@ -25,6 +29,7 @@ describe("groupIntoCycles", () => {
     const history = [
       entry(TaskStatus.PENDING, day2),
       entry(TaskStatus.COMPLETED, day2),
+      entry(TaskStatus.SKIPPED, day1),
       entry(TaskStatus.COMPLETED, day1),
     ];
     expect(groupIntoCycles(history, 2)).toEqual([{ status: TaskStatus.PENDING }, { status: TaskStatus.SKIPPED }]);

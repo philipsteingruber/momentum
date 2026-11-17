@@ -46,14 +46,18 @@ model Task {
 - Postgres treats NULLs as distinct, so non-recurring tasks (NULL
   `cycleStart`/`sessionIndex`) never collide on the unique constraint.
 - The unique constraint is the race guard: a second "spawn session k+1" from
-  a double-click or concurrent Discord/web completion fails with `P2002`.
+  a double-click or concurrent Discord/web completion hits the constraint and
+  is silently skipped (see rule 1 below).
 - Changing `timesPerCycle` on a template takes effect on the next spawn or
   next cycle. A cycle already at 2/2 does not reopen if the target is raised
   to 3; it displays 2/3 until it ends. No per-task target snapshot.
 
 ### Backfill
 
-One-off script, run before the `db push` that adds the unique constraint:
+One-off script, run **after** the `db push` that adds the columns and the
+unique constraint. Every existing row has NULL `cycleStart`/`sessionIndex`
+and NULLs never collide, so the push cannot fail on existing data; the
+backfill then does its own collision check before writing:
 
 1. Query for existing collisions: tasks with the same
    `(recurringTemplateId, dueDate)`. Report them and abort if any exist
@@ -88,9 +92,13 @@ New module `src/lib/recurring-sessions.ts`:
 Rules:
 
 1. **→ COMPLETED, `sessionIndex < timesPerCycle`:** create session k+1:
-   PENDING, title/description/categoryId/reminderTime copied from the
-   template, same `cycleStart`, same `dueDate`, `sessionIndex = k + 1`. A
-   `P2002` on this insert means it already exists — treat as success.
+   PENDING, title/description/categoryId/reminderTime/externalContact/link
+   copied from the template (matching the cron), same `cycleStart`, same
+   `dueDate`, `sessionIndex = k + 1`. The insert uses
+   `createMany({ skipDuplicates: true })` (`ON CONFLICT DO NOTHING`), so an
+   already-existing session is treated as success. Catching `P2002` is not an
+   option: inside an interactive Postgres transaction a failed statement
+   aborts the whole transaction and every later statement in it fails.
 2. **COMPLETED → non-terminal status** (dragged out of Done): delete the
    cycle's open (non-terminal) session k+1 if it exists. The collapsed Done
    card represents the highest completed session, so un-completing reverses
@@ -125,13 +133,25 @@ ill-defined mid-cycle.
   per cycle is open.
 - At cycle end the open session is marked SKIPPED, as today.
 - New tasks are created with `cycleStart = taskDueDate`, `sessionIndex = 1`.
+- The cron is not the only creation path. `recurringTemplate.create` and
+  `recurringTemplate.update` (schedule change) also create recurring tasks
+  and set the cycle fields the same way (`firstSessionFields`).
+- The schedule-change path cancels the template's active tasks. Those
+  cancelled tasks are detached (`cycleStart` and `sessionIndex` set to null),
+  otherwise re-selecting the same due date would collide on the unique
+  constraint with the cancelled row.
+- The `update` path creates the regenerated session 1 with
+  `createMany({ skipDuplicates: true })`. The update form always submits
+  `recurrenceType`, so every save takes this path, and the cycle may already
+  have its session 1; the duplicate is skipped instead of failing.
 
 ## Web UI
 
 ### Badge
 
 Shown only when `timesPerCycle > 1`. `task.getAll` (and the shared-access
-equivalent) include `recurringTemplate.timesPerCycle`.
+equivalent) include `recurringTemplate.timesPerCycle`; the include also feeds
+the optimistic transform below.
 
 - **Done card:** `sessionIndex/timesPerCycle`. Complete style (green tone,
   ✓) when equal to target, partial style (amber tone) otherwise. ShadCN
@@ -142,10 +162,14 @@ equivalent) include `recurringTemplate.timesPerCycle`.
 
 ### Done column collapse
 
-Already provided by `keepLatestTerminalPerTemplate` (`src/lib/task-utils.ts`),
-which keeps the newest terminal instance per template by `createdAt`. Session
-k+1 is always created after session k, so the newest terminal row is the
-highest completed session. No change needed beyond verifying with a test.
+`keepLatestTerminalPerTemplate` (`src/lib/task-utils.ts`) keeps the newest
+terminal instance per template by `createdAt`. Session k+1 is always created
+after session k, so the newest terminal row is the highest completed session.
+
+`groupTasksByStatus` also hides a recurring template's terminal instance while
+the template has an active task. Left as is, that would hide the "1/2" Done
+card the moment session 2 spawns. The rule is therefore same-cycle aware: it
+only hides terminal instances from a *different* cycle than the active task's.
 
 ### Optimistic updates (`src/_components/task-view/task-list.tsx`)
 
@@ -158,9 +182,9 @@ Extract the cache transform into a pure function
   renders but is not draggable or clickable until replaced.
 - **COMPLETED → non-terminal for a multi-session task:** remove the cycle's
   open session k+1 from the cache.
-- In both cases `onSettled` invalidates `task.getAll` so the placeholder is
-  swapped for the real row. Other status changes keep the current
-  no-invalidation behaviour from `34327b5`.
+- No new invalidation is needed: `task-list.tsx` already invalidates
+  `task.getAll` in `onSettled` for every status change, which swaps the
+  placeholder for the real row.
 - On error the existing snapshot rollback restores the cache, including
   removing the placeholder.
 
@@ -182,9 +206,11 @@ cycle in this version.
   to one `HistoryEntry` per cycle using the outcome table above.
 - `computeStreak` and `computeCompletionPercentage` run unchanged on the
   per-cycle entries.
-- Query: fetch templates, then one `task.findMany` per template with
-  `take: HISTORY_LOOKBACK * timesPerCycle`, ordered by
-  `cycleStart desc, sessionIndex desc` (`Promise.all`).
+- Query: keep the existing single `recurringTemplate.findMany` with a nested
+  `tasks` include using `take: HISTORY_LOOKBACK * MAX_TIMES_PER_CYCLE` (not one
+  query per template), ordered by `cycleStart desc, sessionIndex desc` with
+  nulls last (un-backfilled rows sort after cycle-tagged ones). This keeps
+  the existing route tests' mock shape valid.
 - `completedThisCycle` means the newest cycle is fully completed. Response
   shape is unchanged; Nucleus is unaffected.
 
@@ -195,7 +221,7 @@ Open sessions of multi-session templates get a `(x/y)` suffix in their title
 
 ## Momentum CLI
 
-- `template:create` gains `--times N` (default 1).
+- `template:create` and `template:update` gain `--times N` (default 1 on create).
 - `templates` prints `timesPerCycle`; `tasks` prints the session badge for
   multi-session tasks.
 - `task:complete` needs no change (goes through tRPC).

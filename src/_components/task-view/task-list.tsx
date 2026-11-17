@@ -10,8 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { useTaskColumns } from "@/hooks/use-task-columns";
-import type { TaskStatus } from "@/generated/prisma/enums";
-import { TERMINAL_TASK_STATUSES, parseTaskStatus } from "@/lib/task-utils";
+import { applyOptimisticStatusChange } from "@/lib/recurring-sessions";
+import { parseTaskStatus } from "@/lib/task-utils";
 import { trpc } from "@/trpc/client";
 import { KanbanSquareIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -44,11 +44,9 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
     onMutate: async ({ taskId, newStatus }) => {
       await trpcUtils.task.getAll.cancel({ categoryId: activeCategoryId });
       const taskCache = trpcUtils.task.getAll.getData({ categoryId: activeCategoryId });
-      // Mirror the server: terminal statuses stamp completedAt, active statuses clear it.
-      const completedAt = (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(newStatus) ? new Date() : null;
-      trpcUtils.task.getAll.setData({ categoryId: activeCategoryId }, (oldTasks) => {
-        return oldTasks?.map((task) => (task.id === taskId ? { ...task, status: newStatus, completedAt } : task));
-      });
+      trpcUtils.task.getAll.setData({ categoryId: activeCategoryId }, (oldTasks) =>
+        oldTasks ? applyOptimisticStatusChange(oldTasks, taskId, newStatus, new Date()) : oldTasks,
+      );
       return taskCache;
     },
     onError: (_error, _variables, context) => {

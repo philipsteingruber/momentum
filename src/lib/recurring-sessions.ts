@@ -1,5 +1,6 @@
 import type { Task } from "@/generated/prisma/client";
 import { TaskStatus } from "@/generated/prisma/enums";
+import { ACTIVE_TASK_STATUSES, TERMINAL_TASK_STATUSES } from "@/lib/task-utils";
 
 // Client-safe: no Prisma runtime imports. Server-side execution lives in apply-task-status-change.ts.
 
@@ -66,4 +67,58 @@ export function appendSessionProgress(
 ): string {
   const progress = getSessionProgress(task, timesPerCycle);
   return progress ? `${title} (${formatSessionProgress(progress)})` : title;
+}
+
+export const OPTIMISTIC_ID_PREFIX = "optimistic:";
+
+export function isOptimisticPlaceholderId(id: string): boolean {
+  return id.startsWith(OPTIMISTIC_ID_PREFIX);
+}
+
+export type OptimisticTask = Pick<
+  Task,
+  "id" | "status" | "completedAt" | "createdAt" | "recurringTemplateId" | "cycleStart" | "sessionIndex"
+> & { recurringTemplate?: { timesPerCycle: number } | null };
+
+/**
+ * Client mirror of applyTaskStatusChange for the task.getAll cache. The placeholder
+ * is replaced by the real row when onSettled refetches.
+ */
+export function applyOptimisticStatusChange<T extends OptimisticTask>(
+  tasks: T[],
+  taskId: string,
+  newStatus: TaskStatus,
+  now: Date,
+): T[] {
+  const target = tasks.find((t) => t.id === taskId);
+  if (!target) return tasks;
+
+  const completedAt = (TERMINAL_TASK_STATUSES as readonly TaskStatus[]).includes(newStatus) ? now : null;
+  const updated = tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus, completedAt } : t));
+
+  const timesPerCycle = target.recurringTemplate?.timesPerCycle ?? 1;
+  const [action] = planStatusChange(target, timesPerCycle, newStatus);
+  if (!action) return updated;
+
+  if (action.kind === "spawnNextSession") {
+    const placeholder = {
+      ...target,
+      id: `${OPTIMISTIC_ID_PREFIX}${target.id}:next`,
+      status: TaskStatus.PENDING,
+      completedAt: null,
+      createdAt: now,
+      sessionIndex: action.sessionIndex,
+    } as T;
+    return [...updated, placeholder];
+  }
+
+  return updated.filter(
+    (t) =>
+      !(
+        t.recurringTemplateId === target.recurringTemplateId &&
+        t.cycleStart?.getTime() === action.cycleStart.getTime() &&
+        t.sessionIndex === action.sessionIndex &&
+        (ACTIVE_TASK_STATUSES as readonly TaskStatus[]).includes(t.status)
+      ),
+  );
 }

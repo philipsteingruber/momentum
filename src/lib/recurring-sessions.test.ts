@@ -2,9 +2,11 @@ import { TaskStatus } from "@/generated/prisma/enums";
 import { describe, expect, it } from "vitest";
 import {
   appendSessionProgress,
+  applyOptimisticStatusChange,
   firstSessionFields,
   formatSessionProgress,
   getSessionProgress,
+  isOptimisticPlaceholderId,
   planStatusChange,
 } from "./recurring-sessions";
 
@@ -94,5 +96,62 @@ describe("appendSessionProgress", () => {
 
   it("leaves the title unchanged for a single-session task", () => {
     expect(appendSessionProgress("Brush teeth", session(1), 1)).toBe("Brush teeth");
+  });
+});
+
+describe("applyOptimisticStatusChange", () => {
+  const now = new Date("2026-11-18T07:00:00Z");
+  const cached = (sessionIndex: number, status: TaskStatus, id = `c_session_${sessionIndex}`) => ({
+    id,
+    status,
+    completedAt: null,
+    createdAt: new Date("2026-11-18T06:00:00Z"),
+    recurringTemplateId: "c_template",
+    cycleStart,
+    sessionIndex,
+    recurringTemplate: { timesPerCycle: 2 },
+  });
+
+  it("inserts a placeholder next session when a session below the target is completed", () => {
+    const result = applyOptimisticStatusChange(
+      [cached(1, TaskStatus.PENDING)],
+      "c_session_1",
+      TaskStatus.COMPLETED,
+      now,
+    );
+
+    expect(result).toHaveLength(2);
+    expect(result[1]).toMatchObject({ status: TaskStatus.PENDING, sessionIndex: 2, completedAt: null, createdAt: now });
+    expect(isOptimisticPlaceholderId(result[1].id)).toBe(true);
+  });
+
+  it("stamps completedAt on the completed session", () => {
+    const [completed] = applyOptimisticStatusChange(
+      [cached(1, TaskStatus.PENDING)],
+      "c_session_1",
+      TaskStatus.COMPLETED,
+      now,
+    );
+
+    expect(completed).toMatchObject({ status: TaskStatus.COMPLETED, completedAt: now });
+  });
+
+  it("removes the open next session when a completed session is reopened", () => {
+    const result = applyOptimisticStatusChange(
+      [cached(1, TaskStatus.COMPLETED), cached(2, TaskStatus.PENDING)],
+      "c_session_1",
+      TaskStatus.PENDING,
+      now,
+    );
+
+    expect(result.map((t) => t.id)).toEqual(["c_session_1"]);
+  });
+
+  it("changes only the status of a task outside any cycle", () => {
+    const plain = { ...cached(1, TaskStatus.PENDING), recurringTemplateId: null, cycleStart: null, sessionIndex: null };
+
+    const result = applyOptimisticStatusChange([plain], plain.id, TaskStatus.COMPLETED, now);
+
+    expect(result).toEqual([{ ...plain, status: TaskStatus.COMPLETED, completedAt: now }]);
   });
 });

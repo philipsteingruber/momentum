@@ -37,8 +37,9 @@ model Task {
 ```
 
 - A **cycle** is identified by `(recurringTemplateId, cycleStart)`.
-  `cycleStart` is set to the cycle's due date when the cron creates session 1
-  and never changes afterwards — editing or snoozing `dueDate` does not move a
+  `cycleStart` is set to the cycle's due date when session 1 is created (by
+  the cron, template create, or a template schedule change) and never changes
+  afterwards — editing or snoozing `dueDate` does not move a
   session to another cycle.
 - `sessionIndex` is 1-based. Session k+1 exists only if session k was
   completed, so the highest completed `sessionIndex` in a cycle equals the
@@ -73,11 +74,18 @@ Used by stats (see `recurring-status` below):
 | Cycle state | Outcome |
 | --- | --- |
 | completed sessions ≥ `timesPerCycle` | COMPLETED |
+| at least one session, and every session COMPLETED | COMPLETED |
 | every session CANCELLED | CANCELLED (excluded from stats) |
 | newest cycle, an open session remains | PENDING (forgiven, as today) |
 | anything else (e.g. 1/2 at cycle end) | SKIPPED (miss) |
 
 There is no partial credit and no new `TaskStatus` value.
+
+The second COMPLETED row keeps a cycle completed under a lower target counted
+as complete: raising a template from 1x to 2x must not turn past completed
+cycles into misses. It cannot hide a real miss, because under the session
+invariant a cycle that ended short always ends with a SKIPPED or CANCELLED
+row.
 
 ## Server: shared status-change logic
 
@@ -99,10 +107,19 @@ Rules:
    already-existing session is treated as success. Catching `P2002` is not an
    option: inside an interactive Postgres transaction a failed statement
    aborts the whole transaction and every later statement in it fails.
+   - **Newer-cycle guard:** before spawning, the executor counts the
+     template's tasks with `cycleStart` later than this session's. If any
+     exist the cycle has already ended (the cron moved on), so completing a
+     leftover session spawns nothing. The client's optimistic placeholder is
+     not guarded; the refetch removes it.
+   - The spawned session copies `reminderSentAt` from the completed session,
+     so the reminder cron doesn't re-send the same day's reminder for every
+     session.
 2. **COMPLETED → non-terminal status** (dragged out of Done): delete the
    cycle's open (non-terminal) session k+1 if it exists. The collapsed Done
    card represents the highest completed session, so un-completing reverses
-   exactly one step.
+   exactly one step. Deleting the row also deletes its notes (cascade); this
+   is an accepted trade-off, since an open session rarely carries notes.
 3. **→ SKIPPED or CANCELLED:** no spawn; the cycle ends.
 4. **`timesPerCycle = 1`:** rule 1 never applies; behaviour is identical to
    today.
@@ -127,6 +144,13 @@ tasks. It additionally rejects any task whose template has
 `recurringTemplate` select gains `timesPerCycle`. Snooze shifts the template schedule, which is
 ill-defined mid-cycle.
 
+Discord `/snooze` rejects the same tasks with a plain-English reply ("Tasks
+that repeat several times per cycle cannot be snoozed."). The web UI doesn't
+offer snooze for them either: the board's row menu shows an explanatory label
+instead of the snooze options (as it does for daily tasks), and the task
+detail page hides its snooze buttons; `task.getById` selects
+`recurringTemplate.timesPerCycle` for this.
+
 ### Cron (`generate-tasks`)
 
 - The "one active task per template" lookup still holds — only one session
@@ -140,10 +164,18 @@ ill-defined mid-cycle.
   cancelled tasks are detached (`cycleStart` and `sessionIndex` set to null),
   otherwise re-selecting the same due date would collide on the unique
   constraint with the cancelled row.
-- The `update` path creates the regenerated session 1 with
-  `createMany({ skipDuplicates: true })`. The update form always submits
-  `recurrenceType`, so every save takes this path, and the cycle may already
-  have its session 1; the duplicate is skipped instead of failing.
+- `recurringTemplate.update` counts as a schedule change only when a provided
+  `recurrenceType`, `dayOfWeek` or `dayOfMonth` differs from the stored value.
+  The update form always resends `recurrenceType`, so comparing values (not
+  mere presence) keeps a plain edit from cancelling the open session.
+- Without a schedule change, the open session stays. Whichever of `title`,
+  `description`, `externalContact`, `link`, `categoryId` and `reminderTime`
+  were provided are copied onto the template's active tasks in one
+  `updateMany`, so template edits still show on the current task.
+- With a schedule change, the `update` path creates the regenerated session 1
+  with `createMany({ skipDuplicates: true })`. The new due date may match the
+  cycle that already has its session 1; the duplicate is skipped instead of
+  failing.
 
 ## Web UI
 
@@ -198,7 +230,8 @@ default 1). Validation in `src/lib/schemas.ts`; labels via next-intl
 ### Template history
 
 `template-history.tsx` renders the session badge on each row. No grouping by
-cycle in this version.
+cycle in this version. `getHistory` orders by `dueDate desc, sessionIndex
+desc`, so sessions of one cycle list newest session first.
 
 ## `recurring-status` route
 
@@ -209,8 +242,10 @@ cycle in this version.
 - Query: keep the existing single `recurringTemplate.findMany` with a nested
   `tasks` include using `take: HISTORY_LOOKBACK * MAX_TIMES_PER_CYCLE` (not one
   query per template), ordered by `cycleStart desc, sessionIndex desc` with
-  nulls last (un-backfilled rows sort after cycle-tagged ones). This keeps
-  the existing route tests' mock shape valid.
+  nulls last (un-backfilled rows sort after cycle-tagged ones), then
+  `dueDate desc` as a tiebreaker so un-backfilled rows (both cycle columns
+  NULL) keep a deterministic newest-first order. This keeps the existing
+  route tests' mock shape valid.
 - `completedThisCycle` means the newest cycle is fully completed. Response
   shape is unchanged; Nucleus is unaffected.
 
@@ -246,6 +281,25 @@ All unit tests (Vitest), co-located with the source.
 | badge formatter: shows sessions done so far for an open card | Off-by-one progress on open cards |
 | `keepLatestTerminalPerTemplate`: keeps only the highest completed session of a cycle | Done column shows multiple cards per cycle |
 | cron: starts each new cycle at session one with `cycleStart` equal to the due date | Broken cycle grouping from day one |
+
+## Rollout
+
+Run in this order:
+
+1. `pnpm prisma db push` against production. It adds nullable columns and the
+   unique index; all existing values are NULL, so nothing conflicts. Never use
+   `--force-reset`.
+2. `pnpm tsx scripts/backfill-recurring-cycles.ts --dry-run`, then run it
+   again without `--dry-run`.
+3. Merge and deploy. Deploying before step 1 breaks every task and template
+   query, because the new client selects the new columns.
+4. Re-run the backfill with `--dry-run`; it must report 0. If it doesn't, run
+   the real backfill immediately, before anyone edits a template: old code
+   created NULL-cycle rows in the gap, and after deploy NULL also means
+   "detached cancelled row".
+
+Avoid running steps 1–3 across 07:00 Europe/Stockholm, when the
+`generate-tasks` cron runs.
 
 ## Decisions made during brainstorming
 

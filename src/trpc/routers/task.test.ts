@@ -90,3 +90,19 @@ describe("task.updateStatus", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" } satisfies Partial<TRPCError>);
   });
 });
+
+// ─── task.snooze ──────────────────────────────────────────────────────────────
+
+describe("task.snooze", () => {
+  it("rejects snoozing a session of a multi-session template", async () => {
+    const task = {
+      ...createMockTask({ dueDate: new Date("2026-11-20T23:00:00Z"), recurringTemplateId: "c_template" }),
+      recurringTemplate: { recurrenceType: "WEEKLY" as const, timesPerCycle: 2 },
+    };
+    mockDb.task.findUnique.mockResolvedValue(task as never);
+
+    await expect(createCaller(makeCtx()).snooze({ taskId: task.id, days: 1 })).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+    } satisfies Partial<TRPCError>);
+  });
+});

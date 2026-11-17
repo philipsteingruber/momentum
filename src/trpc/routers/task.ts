@@ -17,7 +17,7 @@ async function executeSnooze(
   const timezone = ctx.currentUser.userSettings.timezone;
   const task = await ctx.db.task.findUnique({
     where: { id: taskId, userId: ctx.currentUser.id },
-    include: { recurringTemplate: { select: { recurrenceType: true } } },
+    include: { recurringTemplate: { select: { recurrenceType: true, timesPerCycle: true } } },
   });
 
   if (!task) throw new TRPCError({ code: "NOT_FOUND" });
@@ -25,6 +25,13 @@ async function executeSnooze(
 
   if (task.recurringTemplate?.recurrenceType === RecurrenceType.DAILY) {
     throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Daily recurring tasks cannot be snoozed" });
+  }
+
+  if ((task.recurringTemplate?.timesPerCycle ?? 1) > 1) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "Tasks that repeat several times per cycle cannot be snoozed",
+    });
   }
 
   const newDueDate = computeNewDate(task.dueDate, timezone);

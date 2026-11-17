@@ -234,7 +234,7 @@ export function TemplateFormFields<T extends FieldValues>({
                 min={1}
                 max={MAX_TIMES_PER_CYCLE}
                 step={1}
-                value={(f.value as number | undefined) ?? 1}
+                value={(f.value as number | undefined) ?? ""}
                 onChange={(e) => f.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
                 aria-invalid={fieldState.invalid}
               />

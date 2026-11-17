@@ -75,6 +75,7 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
     onSuccess: (data) => {
       toast.success(t("statusUpdatedToast", { status: parseTaskStatus(data.status) }));
       trpcUtils.task.getById.invalidate({ taskId });
+      trpcUtils.task.getAll.invalidate();
       trpcUtils.category.getAll.invalidate();
     },
   });

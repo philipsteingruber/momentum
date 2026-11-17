@@ -5,6 +5,7 @@ import { DEFAULT_TIMEZONE } from "@/lib/date-utils";
 import { formatDigestEmbeds, sendDmToChannel } from "@/lib/discord";
 import { sendDailyDigest } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { appendSessionProgress } from "@/lib/recurring-sessions";
 import { groupTasksForDigest } from "@/lib/task-utils";
 import pLimit from "p-limit";
 
@@ -23,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
     include: {
       tasks: {
         where: { dueDate: { not: null } },
-        include: { recurringTemplate: { select: { recurrenceType: true } } },
+        include: { recurringTemplate: { select: { recurrenceType: true, timesPerCycle: true } } },
         orderBy: { dueDate: "asc" },
       },
       userSettings: { select: { discordDmChannelId: true, timezone: true } },
@@ -39,16 +40,19 @@ const handler = async (req: Request): Promise<Response> => {
 
         const timezone = user.userSettings?.timezone ?? DEFAULT_TIMEZONE;
 
-        const dailyRecurring = user.tasks.filter(
+        const tasks = user.tasks.map((t) => ({
+          ...t,
+          title: appendSessionProgress(t.title, t, t.recurringTemplate?.timesPerCycle ?? 1),
+        }));
+
+        const dailyRecurring = tasks.filter(
           (t) =>
             t.recurringTemplate?.recurrenceType === RecurrenceType.DAILY &&
             t.status !== TaskStatus.CANCELLED &&
             t.status !== TaskStatus.COMPLETED &&
             t.status !== TaskStatus.SKIPPED,
         );
-        const otherTasks = user.tasks.filter(
-          (t) => t.recurringTemplate?.recurrenceType !== RecurrenceType.DAILY,
-        );
+        const otherTasks = tasks.filter((t) => t.recurringTemplate?.recurrenceType !== RecurrenceType.DAILY);
 
         const { overdue, dueToday, dueThisWeek } = groupTasksForDigest(otherTasks, timezone);
         const groups = { overdue, dueToday, dueThisWeek, dailyRecurring };

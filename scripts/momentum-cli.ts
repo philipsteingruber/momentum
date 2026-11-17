@@ -3,6 +3,7 @@ import { fromZonedTime } from "date-fns-tz";
 import { TaskStatus, RecurrenceType } from "@/generated/prisma/enums";
 import { formatInUserTz } from "@/lib/date-utils";
 import { prisma } from "@/lib/prisma";
+import { appendSessionProgress } from "@/lib/recurring-sessions";
 import { createCallerFactory, createTRPCContext } from "@/trpc/init";
 import { appRouter } from "@/trpc/routers/_app";
 
@@ -79,7 +80,8 @@ async function main() {
       const status = flags.status as TaskStatus | undefined;
       const tasks = await caller.task.getAll({ status, search: flags.search });
       for (const t of tasks) {
-        console.log(`${t.id}  [${t.status}]  ${t.title}  due:${t.dueDate?.toISOString().slice(0, 10) ?? "-"}`);
+        const title = appendSessionProgress(t.title, t, t.recurringTemplate?.timesPerCycle ?? 1);
+        console.log(`${t.id}  [${t.status}]  ${title}  due:${t.dueDate?.toISOString().slice(0, 10) ?? "-"}`);
       }
       break;
     }
@@ -140,7 +142,8 @@ async function main() {
           t.pausedFrom && t.pausedUntil
             ? `  [PAUSED ${formatInUserTz(t.pausedFrom, "yyyy-MM-dd", timezone)} to ${formatInUserTz(t.pausedUntil, "yyyy-MM-dd", timezone)}]`
             : "";
-        console.log(`${t.id}  ${t.title}  (${t.recurrenceType})${pausedSuffix}`);
+        const timesSuffix = t.timesPerCycle > 1 ? `  x${t.timesPerCycle}/cycle` : "";
+        console.log(`${t.id}  ${t.title}  (${t.recurrenceType})${timesSuffix}${pausedSuffix}`);
       }
       break;
     }
@@ -160,6 +163,7 @@ async function main() {
         dayOfWeek: flags.dayOfWeek ? Number(flags.dayOfWeek) : undefined,
         dayOfMonth: flags.dayOfMonth ? Number(flags.dayOfMonth) : undefined,
         reminderTime: flags.reminder,
+        timesPerCycle: flags.times ? Number(flags.times) : undefined,
       });
       console.log(`Created template ${template.id}: ${template.title}`);
       break;
@@ -180,6 +184,7 @@ async function main() {
           dayOfWeek: flags.dayOfWeek ? Number(flags.dayOfWeek) : undefined,
           dayOfMonth: flags.dayOfMonth ? Number(flags.dayOfMonth) : undefined,
           reminderTime: flags.reminder,
+          timesPerCycle: flags.times ? Number(flags.times) : undefined,
         },
       });
       console.log(`Updated template ${template.id}: ${template.title}`);
@@ -228,8 +233,8 @@ async function main() {
           "  task:snooze <taskId> <days>",
           "  task:delete <taskId>",
           "  templates",
-          "  template:create --title T --category NAME_OR_ID --recurrence DAILY|WEEKLY|MONTHLY [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm]",
-          "  template:update <templateId> [--title T] [--category NAME_OR_ID] [--recurrence D|W|M] [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm] [--desc D] [--link L] [--contact C]",
+          "  template:create --title T --category NAME_OR_ID --recurrence DAILY|WEEKLY|MONTHLY [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm] [--times N]",
+          "  template:update <templateId> [--title T] [--category NAME_OR_ID] [--recurrence D|W|M] [--dayOfWeek N] [--dayOfMonth N] [--reminder HH:mm] [--times N] [--desc D] [--link L] [--contact C]",
           "  template:delete <templateId>",
           "  template:pause <templateId> --from YYYY-MM-DD --until YYYY-MM-DD",
           "  template:resume <templateId>",

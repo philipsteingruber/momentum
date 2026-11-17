@@ -10,10 +10,26 @@ import { use, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-const Page = ({ params }: { params: Promise<{ userId: string }> }) => {
+type SearchParams = { [key: string]: string | string[] | undefined };
+
+const firstValue = (value: string | string[] | undefined): string | undefined =>
+  Array.isArray(value) ? value[0] : value;
+
+const Page = ({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ userId: string }>;
+  searchParams: Promise<SearchParams>;
+}) => {
   const { userId } = use(params);
+  const query = use(searchParams);
   const router = useRouter();
   const t = useTranslations("SharedView");
+
+  const linkedCategoryId = firstValue(query.category);
+  const viewParam = firstValue(query.view);
+  const linkedView = viewParam === "kanban" || viewParam === "list" ? viewParam : undefined;
 
   const { data: grants, isPending } = trpc.sharedAccess.getGrantsReceived.useQuery();
   const grantor = grants?.find((g) => g.grantor.id === userId && g.status === GrantStatus.ACCEPTED);
@@ -35,7 +51,7 @@ const Page = ({ params }: { params: Promise<{ userId: string }> }) => {
 
   return (
     <MaxWidthWrapper>
-      <SharedTaskList grantorId={userId} />
+      <SharedTaskList grantorId={userId} linkedCategoryId={linkedCategoryId} linkedView={linkedView} />
     </MaxWidthWrapper>
   );
 };

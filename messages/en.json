@@ -93,7 +93,13 @@
     "noCategoriesEmpty": "No categories found. Create one to get started.",
     "deletedToast": "Successfully deleted task(s)",
     "statusUpdatedToast": "Successfully marked task(s) as {status}",
-    "failedStatusUpdate": "Failed to update task status"
+    "failedStatusUpdate": "Failed to update task status",
+    "copyShareLink": "Copy share link",
+    "shareLinkCopied": "Share link copied to clipboard",
+    "shareLinkCopyFailed": "Couldn't copy the link to the clipboard",
+    "sharedWith": "Shared with {names}",
+    "notShared": "Not shared with anyone. Share it under Settings → Shared access.",
+    "shareLinkUnavailable": "Couldn't load who this board is shared with"
   },
   "DataTable": {
     "noResults": "No results.",

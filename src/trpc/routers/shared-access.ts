@@ -155,6 +155,39 @@ export const sharedAccessRouter = createTRPCRouter({
     });
   }),
 
+  /**
+   * Who can currently open this category through /shared/<ownerId>: accepted grantees
+   * that have not excluded it. Pending grantees are omitted because the shared page
+   * rejects them. Also returns the owner's id so the client can build the share link.
+   */
+  getCategoryAudience: authedProcedure.input(z.object({ categoryId: z.cuid() })).query(async ({ ctx, input }) => {
+    const category = await ctx.db.category.findFirst({
+      where: { id: input.categoryId, userId: ctx.currentUser.id },
+      select: { id: true },
+    });
+
+    if (!category) {
+      throw new TRPCError({ code: "NOT_FOUND" });
+    }
+
+    const grants = await ctx.db.userAccessGrant.findMany({
+      where: {
+        grantorId: ctx.currentUser.id,
+        status: GrantStatus.ACCEPTED,
+        categoryExclusions: { none: { categoryId: input.categoryId } },
+      },
+      select: {
+        grantee: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return {
+      ownerId: ctx.currentUser.id,
+      grantees: grants.map((g) => g.grantee),
+    };
+  }),
+
   // ─── Exclusions ───────────────────────────────────────────────────────────
 
   getExclusionsForGrant: authedProcedure

@@ -93,7 +93,13 @@
     "noCategoriesEmpty": "Inga kategorier hittades. Skapa en för att komma igång.",
     "deletedToast": "Uppgifter borttagna",
     "statusUpdatedToast": "Status uppdaterad till {status}",
-    "failedStatusUpdate": "Kunde inte uppdatera uppgiftsstatus"
+    "failedStatusUpdate": "Kunde inte uppdatera uppgiftsstatus",
+    "copyShareLink": "Kopiera delningslänk",
+    "shareLinkCopied": "Delningslänken kopierades",
+    "shareLinkCopyFailed": "Kunde inte kopiera länken",
+    "sharedWith": "Delad med {names}",
+    "notShared": "Inte delad med någon. Dela den under Inställningar → Delad åtkomst.",
+    "shareLinkUnavailable": "Kunde inte hämta vilka tavlan är delad med"
   },
   "DataTable": {
     "noResults": "Inga träffar.",

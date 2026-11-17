@@ -22,6 +22,7 @@ import { CreateCategoryDialog } from "../forms/create-category-dialog";
 import CreateTemplateDialog from "../forms/create-template-dialog";
 import { KanbanBoard } from "../kanban/kanban-board";
 import CreateTaskDialog from "../task/create-task-dialog";
+import { CopyShareLinkButton } from "./copy-share-link-button";
 
 export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) => {
   const t = useTranslations("TaskList");
@@ -127,6 +128,9 @@ export const TaskList = ({ defaultCategoryId }: { defaultCategoryId?: string }) 
                   id="switchView"
                 />
               </div>
+              {selectedView === "kanban" && selectedCategory && (
+                <CopyShareLinkButton categoryId={selectedCategory.id} />
+              )}
               <CreateCategoryDialog />
               <CreateTaskDialog categories={categories ?? []} defaultCategoryId={selectedCategoryId ?? undefined} />
               <CreateTemplateDialog categories={categories ?? []} defaultCategoryId={selectedCategoryId ?? undefined} />

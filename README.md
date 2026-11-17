@@ -26,7 +26,7 @@ A full-stack task management application built with Next.js, featuring recurring
 - **Recurring templates** — Auto-generate tasks on daily/weekly/monthly schedules
 - **Daily digest** — Email + Discord DM digests grouped by overdue / due today / due this week
 - **Discord bot** — Slash commands for listing, creating, completing, snoozing, and annotating tasks
-- **Shared access** — Grant read-only access to your task list to other users
+- **Shared access** — Grant read-only access to your task list to other users. From a category's kanban view, "Copy share link" copies a link that opens that board in kanban view for the recipient
 - **Admin panel** — Cron job log viewer at `/admin` with filtering and search
 - **Internationalization** — English and Swedish supported
 

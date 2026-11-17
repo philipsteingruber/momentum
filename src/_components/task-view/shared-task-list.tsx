@@ -16,7 +16,15 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { KanbanBoardReadonly } from "../kanban/kanban-board-readonly";
 
-export const SharedTaskList = ({ grantorId }: { grantorId: string }) => {
+type SharedTaskListProps = {
+  grantorId: string;
+  /** From ?category= on a copied share link; wins over localStorage until the viewer picks a tab. */
+  linkedCategoryId?: string;
+  /** From ?view= on a copied share link; wins over localStorage until the viewer toggles the view. */
+  linkedView?: "list" | "kanban";
+};
+
+export const SharedTaskList = ({ grantorId, linkedCategoryId, linkedView }: SharedTaskListProps) => {
   const t = useTranslations("TaskList");
   const { data: categories, isPending: isLoadingCategories } = trpc.sharedAccess.getCategoriesForGrantor.useQuery({
     grantorId,
@@ -27,12 +35,26 @@ export const SharedTaskList = ({ grantorId }: { grantorId: string }) => {
     undefined,
   );
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [selectedView, setSelectedView] = useLocalStorage<"list" | "kanban">(
-    `shared-task-view-${grantorId}`,
-    "list",
-  );
+  const [selectedView, setSelectedView] = useLocalStorage<"list" | "kanban">(`shared-task-view-${grantorId}`, "list");
 
-  const activeCategoryId = selectedCategoryId ?? categories?.[0]?.id;
+  // Link overrides are dropped as soon as the viewer makes their own choice.
+  const [categoryOverride, setCategoryOverride] = useState<string | undefined>(linkedCategoryId);
+  const [viewOverride, setViewOverride] = useState<"list" | "kanban" | undefined>(linkedView);
+
+  // Ignore a linked category the viewer can't see (excluded, deleted, or a stale link).
+  const visibleOverride = categories?.some((c) => c.id === categoryOverride) ? categoryOverride : undefined;
+  const activeCategoryId = visibleOverride ?? selectedCategoryId ?? categories?.[0]?.id;
+  const activeView = viewOverride ?? selectedView;
+
+  const handleCategoryChange = (categoryId: string) => {
+    setCategoryOverride(undefined);
+    setSelectedCategoryId(categoryId);
+  };
+
+  const handleViewChange = (checked: boolean) => {
+    setViewOverride(undefined);
+    setSelectedView(checked ? "kanban" : "list");
+  };
   const selectedCategory = categories?.find((c) => c.id === activeCategoryId);
 
   const { data: tasks, isPending: isLoadingTasks } = trpc.sharedAccess.getTasksForGrantor.useQuery({ grantorId });
@@ -49,7 +71,7 @@ export const SharedTaskList = ({ grantorId }: { grantorId: string }) => {
 
   return (
     <div className="flex w-full items-center justify-between">
-      <Tabs className="w-full" value={activeCategoryId} onValueChange={(val) => setSelectedCategoryId(val)}>
+      <Tabs className="w-full" value={activeCategoryId} onValueChange={handleCategoryChange}>
         <TabsList className="w-full px-4">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-x-2">
@@ -83,8 +105,8 @@ export const SharedTaskList = ({ grantorId }: { grantorId: string }) => {
                   {t("kanbanView")}
                 </Label>
                 <Switch
-                  checked={selectedView === "kanban"}
-                  onCheckedChange={(checked) => setSelectedView(checked ? "kanban" : "list")}
+                  checked={activeView === "kanban"}
+                  onCheckedChange={handleViewChange}
                   id={`switchView-${grantorId}`}
                 />
               </div>
@@ -93,7 +115,7 @@ export const SharedTaskList = ({ grantorId }: { grantorId: string }) => {
         </TabsList>
         {selectedCategory ? (
           <TabsContent value={selectedCategory.id}>
-            {selectedView === "list" ? (
+            {activeView === "list" ? (
               <Card>
                 <CardContent>
                   <SharedTaskDataTable

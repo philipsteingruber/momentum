@@ -138,19 +138,23 @@ export const recurringTemplateRouter = createTRPCRouter({
             },
             data: { status: TaskStatus.CANCELLED, cycleStart: null, sessionIndex: null },
           });
-          await tx.task.create({
-            data: {
-              title: input.data.title ?? existing.title,
-              description: input.data.description ?? existing.description,
-              externalContact: input.data.externalContact ?? existing.externalContact,
-              categoryId: input.data.categoryId ?? existing.categoryId,
-              link: input.data.link ?? existing.link,
-              reminderTime: reminderTimeProvided ? input.data.reminderTime : existing.reminderTime,
-              userId: ctx.currentUser.id,
-              dueDate: newTaskDueDate,
-              ...firstSessionFields(newTaskDueDate),
-              recurringTemplateId: input.templateId,
-            },
+          // The cycle may already have session 1, and skipDuplicates keeps the transaction alive instead of P2002.
+          await tx.task.createMany({
+            data: [
+              {
+                title: input.data.title ?? existing.title,
+                description: input.data.description ?? existing.description,
+                externalContact: input.data.externalContact ?? existing.externalContact,
+                categoryId: input.data.categoryId ?? existing.categoryId,
+                link: input.data.link ?? existing.link,
+                reminderTime: reminderTimeProvided ? input.data.reminderTime : existing.reminderTime,
+                userId: ctx.currentUser.id,
+                dueDate: newTaskDueDate,
+                ...firstSessionFields(newTaskDueDate),
+                recurringTemplateId: input.templateId,
+              },
+            ],
+            skipDuplicates: true,
           });
         } else if (reminderTimeProvided) {
           await tx.task.updateMany({

@@ -327,7 +327,7 @@ const handleSnooze = async (
 
   const task = await prisma.task.findFirst({
     where: { id: taskId, userId },
-    include: { recurringTemplate: { select: { recurrenceType: true } } },
+    include: { recurringTemplate: { select: { recurrenceType: true, timesPerCycle: true } } },
   });
   if (!task) {
     await followUpInteraction(APPLICATION_ID, token, {
@@ -346,6 +346,13 @@ const handleSnooze = async (
   if (task.recurringTemplate?.recurrenceType === RecurrenceType.DAILY) {
     await followUpInteraction(APPLICATION_ID, token, {
       content: "Daily recurring tasks cannot be snoozed.",
+    });
+    return;
+  }
+
+  if ((task.recurringTemplate?.timesPerCycle ?? 1) > 1) {
+    await followUpInteraction(APPLICATION_ID, token, {
+      content: "Tasks that repeat several times per cycle cannot be snoozed.",
     });
     return;
   }

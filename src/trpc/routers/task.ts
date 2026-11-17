@@ -102,7 +102,7 @@ export const taskRouter = createTRPCRouter({
       include: {
         notes: { orderBy: { createdAt: "desc" } },
         category: true,
-        recurringTemplate: { select: { recurrenceType: true } },
+        recurringTemplate: { select: { recurrenceType: true, timesPerCycle: true } },
       },
     });
 

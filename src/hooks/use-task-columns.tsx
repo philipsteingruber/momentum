@@ -146,6 +146,10 @@ export function useTaskColumns() {
                   <DropdownMenuLabel className="font-normal text-muted-foreground">
                     {t("snoozeUnavailableDaily")}
                   </DropdownMenuLabel>
+                ) : (task.recurringTemplate?.timesPerCycle ?? 1) > 1 ? (
+                  <DropdownMenuLabel className="font-normal text-muted-foreground">
+                    {t("snoozeUnavailableMultiSession")}
+                  </DropdownMenuLabel>
                 ) : (
                   <>
                     <DropdownMenuLabel>{t("snoozeLabel")}</DropdownMenuLabel>

@@ -202,7 +202,9 @@ const Page = ({ params }: { params: Promise<{ taskId: string }> }) => {
                 </div>
               )}
             </Button>
-            {task.dueDate && task.recurringTemplate?.recurrenceType !== RecurrenceType.DAILY && (
+            {task.dueDate &&
+              task.recurringTemplate?.recurrenceType !== RecurrenceType.DAILY &&
+              (task.recurringTemplate?.timesPerCycle ?? 1) <= 1 && (
               <>
                 {SNOOZE_OPTIONS.map((days) => {
                   const newDate = computeSnoozeDueDate(task.dueDate!, days, timezone);

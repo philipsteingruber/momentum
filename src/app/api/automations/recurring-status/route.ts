@@ -4,6 +4,8 @@ import type { NextRequest } from "next/server";
 import { RecurrenceType, TaskStatus } from "@/generated/prisma/enums";
 import { cronLog } from "@/lib/cron-logger";
 import { prisma } from "@/lib/prisma";
+import { groupIntoCycles } from "@/lib/recurring-cycles";
+import { MAX_TIMES_PER_CYCLE } from "@/lib/recurring-sessions";
 
 // Read-only status route for external "how am I doing on my recurring
 // commitments" views (Nucleus's dashboard Recurring widget). Same auth
@@ -29,10 +31,10 @@ function isAuthorized(req: NextRequest): boolean {
 type HistoryEntry = { status: TaskStatus };
 
 /**
- * Each template generates exactly one Task per cycle (day or week), so
- * "N consecutive completed instances" IS the streak — no calendar
- * arithmetic needed, cadence-agnostic by construction. The newest
- * instance, if still PENDING (cycle not yet resolved), is set aside
+ * Each entry is one cycle (day or week; sessions are collapsed by
+ * `groupIntoCycles`), so "N consecutive completed cycles" IS the streak — no
+ * calendar arithmetic needed, cadence-agnostic by construction. The newest
+ * cycle, if still PENDING (cycle not yet resolved), is set aside
  * rather than treated as a break — this is the "forgiving" rule: only a
  * genuinely resolved-but-missed cycle breaks the streak, not one still
  * in progress.
@@ -110,23 +112,28 @@ export async function GET(req: NextRequest): Promise<Response> {
       id: true,
       title: true,
       recurrenceType: true,
+      timesPerCycle: true,
       tasks: {
-        select: { status: true },
-        orderBy: { dueDate: "desc" },
-        take: HISTORY_LOOKBACK,
+        select: { status: true, cycleStart: true },
+        // nulls last: detached (cycle-less) cancelled tasks must not push real cycles out of the window
+        orderBy: [{ cycleStart: { sort: "desc", nulls: "last" } }, { sessionIndex: "desc" }],
+        take: HISTORY_LOOKBACK * MAX_TIMES_PER_CYCLE,
       },
     },
     orderBy: { title: "asc" },
   });
 
-  const response = templates.map((template) => ({
-    id: template.id,
-    title: template.title,
-    recurrenceType: template.recurrenceType,
-    completedThisCycle: template.tasks[0]?.status === TaskStatus.COMPLETED,
-    currentStreak: computeStreak(template.tasks),
-    completionPercentage: computeCompletionPercentage(template.tasks),
-  }));
+  const response = templates.map((template) => {
+    const cycles = groupIntoCycles(template.tasks, template.timesPerCycle ?? 1).slice(0, HISTORY_LOOKBACK);
+    return {
+      id: template.id,
+      title: template.title,
+      recurrenceType: template.recurrenceType,
+      completedThisCycle: cycles[0]?.status === TaskStatus.COMPLETED,
+      currentStreak: computeStreak(cycles),
+      completionPercentage: computeCompletionPercentage(cycles),
+    };
+  });
 
   await cronLog({ runId, job: JOB, event: "list", level: "info", data: { count: response.length } });
 

@@ -236,4 +236,46 @@ describe("GET /api/automations/recurring-status", () => {
       expect.objectContaining({ event: "list", level: "info", data: { count: 1 } }),
     );
   });
+
+  it("reports a multi-session habit as not done this cycle until every session is completed", async () => {
+    const today = new Date("2026-11-17T23:00:00Z");
+    mockDb.recurringTemplate.findMany.mockResolvedValue([
+      {
+        id: "c_teeth",
+        title: "Brush teeth",
+        recurrenceType: RecurrenceType.DAILY,
+        timesPerCycle: 2,
+        tasks: [
+          { status: TaskStatus.PENDING, cycleStart: today },
+          { status: TaskStatus.COMPLETED, cycleStart: today },
+        ],
+      },
+    ] as never);
+
+    const res = await GET(makeRequest());
+    const [teeth] = (await res.json()) as { completedThisCycle: boolean }[];
+
+    expect(teeth.completedThisCycle).toBe(false);
+  });
+
+  it("counts a fully completed multi-session cycle once in the streak", async () => {
+    const day1 = new Date("2026-11-16T23:00:00Z");
+    mockDb.recurringTemplate.findMany.mockResolvedValue([
+      {
+        id: "c_teeth",
+        title: "Brush teeth",
+        recurrenceType: RecurrenceType.DAILY,
+        timesPerCycle: 2,
+        tasks: [
+          { status: TaskStatus.COMPLETED, cycleStart: day1 },
+          { status: TaskStatus.COMPLETED, cycleStart: day1 },
+        ],
+      },
+    ] as never);
+
+    const res = await GET(makeRequest());
+    const [teeth] = (await res.json()) as { currentStreak: number }[];
+
+    expect(teeth.currentStreak).toBe(1);
+  });
 });
